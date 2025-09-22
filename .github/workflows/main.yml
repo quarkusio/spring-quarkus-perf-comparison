@@ -1,0 +1,66 @@
+name: Build and test
+
+on:
+  push:
+    paths-ignore:
+      - '.editorconfig'
+      - '**/*.md'
+      - '**/images/**'
+      - '.github/dependabot.yml'
+      - '.github/workflows/main.yml'
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+    branches:
+      - main
+    paths-ignore:
+      - '.editorconfig'
+      - '**/*.md'
+      - '**/images/**'
+      - '.github/dependabot.yml'
+      - '.github/workflows/main.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: "workflow = ${{ github.workflow }}, ref = ${{ github.event.ref }}, pr = ${{ github.event.pull_request.id }}"
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  jvm-build-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+          - '21'
+          - '25'
+        app:
+          - springboot3
+          - quarkus3
+          - quarkus3-spring-compatibility
+    name: "[jvm-build-test]: ${{ matrix.app }}-java${{ matrix.java }}"
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Java ${{ matrix.java }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: temurin
+          cache: maven
+
+      - name: Build and test
+        working-directory: ${{ matrix.app }}
+        run: |
+          ./mvnw -B clean verify \
+            -Dmaven.compiler.release=${{ matrix.java }} \
+            -Djava.version=${{ matrix.java }}
