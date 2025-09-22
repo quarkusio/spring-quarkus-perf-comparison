@@ -3,11 +3,11 @@ name: Build and test
 on:
   push:
     paths-ignore:
-      - '.editorconfig'
       - '**/*.md'
       - '**/images/**'
       - '.github/dependabot.yml'
       - '.github/workflows/main.yml'
+      - 'scripts/**'
     branches:
       - main
   pull_request:
@@ -19,11 +19,11 @@ on:
     branches:
       - main
     paths-ignore:
-      - '.editorconfig'
       - '**/*.md'
       - '**/images/**'
       - '.github/dependabot.yml'
       - '.github/workflows/main.yml'
+      - 'scripts/**'
   workflow_dispatch:
 
 concurrency:
