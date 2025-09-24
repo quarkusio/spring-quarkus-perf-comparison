@@ -62,7 +62,7 @@ else
   exit_abnormal
 fi
 
-echo "Using $engine to start containers"
+echo "Using $engine to start/stop containers"
 
 # Process the input options
 while getopts "dhs" option; do

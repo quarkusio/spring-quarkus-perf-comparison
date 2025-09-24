@@ -26,6 +26,10 @@ for (( i=0; i<$NUM_ITERATIONS; i++))
 do
   # drop OS page cache entries, inode etc etc
   sync && sudo purge
+
+  # Start the infra
+  ./infra.sh -s
+
   ts=$(gdate +%s%N)
   $COMMAND &
   CURRENT_PID=$!
@@ -42,11 +46,15 @@ do
   wait $CURRENT_PID 2> /dev/null
   TOTAL_RSS=$((TOTAL_RSS + RSS))
   TOTAL_TTFR=$((TOTAL_TTFR + TTFR))
+
   echo
   echo "-------------INTERMEDIATE RESULTS ---------------"
   printf "RSS (after 1st request): %.1f MB\n" $(echo "$RSS / 1024" | bc -l)
   printf "time to first request: %.3f sec\n" $(echo "$TTFR / 1000" | bc -l)
   echo "-------------------------------------------------"
+
+  # Stop the infra
+  ./infra.sh -d
 done
 
 echo
