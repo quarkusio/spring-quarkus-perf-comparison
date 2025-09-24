@@ -6,6 +6,6 @@
       jdbc:
         url: jdbc:postgresql://localhost:5432/fruits
     hibernate-orm:
-      database:
-        generation: drop-and-create
-      sql-load-script: import.sql
+      schema-management:
+        strategy: drop-and-create
+      sql-load-script: data.sql
