@@ -17,4 +17,4 @@ To compile for native mode:
 `./mvnw clean native:compile -Pnative`
 
 To run in native mode:
-`target/app`
+`target/springboot3`

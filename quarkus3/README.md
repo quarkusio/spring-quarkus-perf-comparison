@@ -10,4 +10,4 @@ To compile for native mode:
 `./mvnw clean package -Pnative`
 
 To run in native mode:
-`target/app`
+`target/app-runner`
