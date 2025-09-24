@@ -1,3 +1,9 @@
+quarkus:
+  rest:
+    jackson:
+      optimization:
+        enable-reflection-free-serializers: true
+
 "%prod":
   quarkus:
     datasource:
@@ -8,4 +14,4 @@
     hibernate-orm:
       schema-management:
         strategy: drop-and-create
-      sql-load-script: data.sql
+      sql-load-script: import.sql
