@@ -63,4 +63,5 @@ jobs:
         run: |
           ./mvnw -B clean verify \
             -Dmaven.compiler.release=${{ matrix.java }} \
-            -Djava.version=${{ matrix.java }}
+            -Djava.version=${{ matrix.java }} \
+            -Dquarkus.hibernate-orm.sql-load-script=import.sql
