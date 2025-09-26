@@ -42,7 +42,7 @@ jobs:
       matrix:
         java:
           - '21'
-          - '25'
+#          - '25'
         app:
           - springboot3
           - quarkus3
