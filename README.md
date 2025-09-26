@@ -15,16 +15,18 @@ This project contains the following modules:
 
 The application expects a PostgreSQL database to be running on localhost:5432. You can use Docker or Podman to start a PostgreSQL container:
 
-### Docker
-
 ```shell
-docker run -it --rm=true --name fruits -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17
+cd scripts
+./infra.sh -s
 ```
 
-### Podman
+This will start the database, create the required tables and populate them with some data.
+
+To stop the database:
 
 ```shell
-podman run -it --rm=true --name fruits -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17
+cd scripts
+./infra.sh -d
 ```
 
 ## Scripts
@@ -34,3 +36,5 @@ There are some [scripts](scripts) available to help you run the application:
     - Runs an application X times and computes the time to 1st request and RSS for each iteration as well as an average over the X iterations.
 - [`run-requests.sh`](scripts/run-requests.sh)
     - Runs a set of requests against a running application.
+- [`infra.sh`](scripts/infra.sh)
+    - Starts/stops required infrastructure 
