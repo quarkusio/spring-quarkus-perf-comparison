@@ -47,7 +47,7 @@ jobs:
           - springboot3
           - quarkus3
           - quarkus3-spring-compatibility
-    name: "[jvm-build-test]: ${{ matrix.app }}-java${{ matrix.java }}"
+    name: "[jvm-build-test-java${{ matrix.java }}]: ${{ matrix.app }}"
     steps:
       - uses: actions/checkout@v5
 
