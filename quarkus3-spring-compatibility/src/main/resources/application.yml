@@ -1,4 +1,6 @@
 quarkus:
+  jackson:
+    serialization-inclusion: non-empty
   rest:
     jackson:
       optimization:
@@ -11,7 +13,3 @@ quarkus:
       password: fruits
       jdbc:
         url: jdbc:postgresql://localhost:5432/fruits
-    hibernate-orm:
-      schema-management:
-        strategy: drop-and-create
-      sql-load-script: import.sql

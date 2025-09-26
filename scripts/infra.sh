@@ -19,7 +19,7 @@ exit_abnormal() {
 
 start_postgres() {
   echo "Starting PostgreSQL database '${DB_CONTAINER_NAME}'"
-  local pid=$(${engine} run -d --rm=true --name ${DB_CONTAINER_NAME} -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17)
+  local pid=$(${engine} run -d --rm=true --name ${DB_CONTAINER_NAME} -v ./dbdata:/docker-entrypoint-initdb.d/ -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17)
   echo "PostgreSQL DB process: $pid"
 
   echo "Waiting for PostgreSQL to be ready..."

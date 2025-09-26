@@ -3,6 +3,12 @@ spring:
     username: fruits
     password: fruits
     url: jdbc:postgresql://localhost:5432/fruits
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
     defer-datasource-initialization: true
   jackson:
     default-property-inclusion: non_empty
+  sql:
+    init:
+      mode: always
