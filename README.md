@@ -8,6 +8,10 @@ This project contains the following modules:
     - A Quarkus 3.x version of the application
 - [quarkus3-spring-compatibility](quarkus3-spring-compatibility)
     - A Quarkus 3.x version of the application using the Spring compatibility layer
+ 
+## Building
+
+`./mvnw clean verify -Dquarkus.hibernate-orm.sql-load-script=import.sql`
 
 ## Application requirements/dependencies
 
