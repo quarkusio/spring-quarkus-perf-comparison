@@ -14,6 +14,11 @@ This project contains the following modules:
 `./mvnw clean verify -Dquarkus.hibernate-orm.sql-load-script=import.sql`
 
 ## Application requirements/dependencies
+             
+- (macOS) You need to have a `timeout` compatible command:
+  - Via `coreutils` (installed via Homebrew): `brew install coreutils` but note that this will install lots of GNU utils that will duplicate native commands and prefix them with `g` (e.g. `gdate`)
+  - Use [this implementation](https://github.com/aisk/timeout) via Homebrew: `brew install aisk/homebrew-tap/timeout`
+  - More options at https://stackoverflow.com/questions/3504945/timeout-command-on-mac-os-x
 
 - Base JVM Version: 21
 
