@@ -18,6 +18,14 @@ NUM_ITERATIONS=1
 TOTAL_RSS=0
 TOTAL_TTFR=0
 
+function _date() {
+    current=$(date +%s%N)
+    if [ $? -ne 0 ]; then
+      current=$(gdate +%s%N)
+    fi
+    echo "$current"
+}
+
 if [ "$#" -eq 2 ]; then
   NUM_ITERATIONS=$2
 fi
@@ -30,7 +38,7 @@ do
   # Start the infra
   ./infra.sh -s
 
-  ts=$(gdate +%s%N)
+  ts=$(_date)
   $COMMAND &
   CURRENT_PID=$!
 
@@ -40,7 +48,7 @@ do
     :
   done
 
-  TTFR=$((($(gdate +%s%N) - $ts)/1000000))
+  TTFR=$((($(_date) - ts)/1000000))
   RSS=`ps -o rss= -p $CURRENT_PID | sed 's/^ *//g'`
   kill $CURRENT_PID
   wait $CURRENT_PID 2> /dev/null
