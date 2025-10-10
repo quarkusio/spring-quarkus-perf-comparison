@@ -11,7 +11,7 @@
 # $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus3/target/quarkus-app/quarkus-run.jar" 10
 #
 # 3) Run the Quarkus with spring compatibility app 10 times
-# $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus3-spring-compat/target/quarkus-app/quarkus-run.jar" 10
+# $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar" 10
 
 COMMAND=$1
 NUM_ITERATIONS=1
