@@ -47,3 +47,50 @@ There are some [scripts](scripts) available to help you run the application:
     - Runs a set of requests against a running application.
 - [`infra.sh`](scripts/infra.sh)
     - Starts/stops required infrastructure 
+
+## Running performance comparisons
+
+Of course you want to start generating some numbers and doing some comparisons, that's why you're here! 
+There are lots of *wrong* ways to run benchmarks, and running them reliably requires a controlled environment, strong automation, and multiple machines.
+That kind of setup isn't always possible, so here are some 
+
+
+### Quick and dirty: Single laptop, simple scripts
+
+Before we go any further, know that this kind of test is not going to be reliable. 
+Laptops usually have a number of other processes running on them, and modern laptop CPUs are subject to power management which can wildly skew results. 
+Often, some cores are 'fast' and some are 'slow', and without extra care, you don't know which core your test is running on. 
+Thermal management also means 'fast' jobs get throttled, while 'slow' jobs might run at their normal speed.
+
+Load shouldn't be generated on the same machine as the one running the workload, because the work of load generation can interfere with what's being measured. 
+
+But if you accept all that, and know these results should be treated with caution, here's our recommendation for the least-worst way of running a quick and dirty test. 
+We use Hyperfoil instead of wrk, to avoid coordinated omission issues. For simplicity, we use the wrk2 Hyperfoil bindings. 
+
+You can run these in any order. 
+
+```shell
+scripts/stress.sh quarkus3/target/quarkus3.jar
+scripts/stress.sh quarkus3-spring-compatibility/target/app.jar
+scripts/stress.sh springboot3/target/springboot3.jar
+```
+
+For each test, you should see output like 
+
+```shell
+  6001 requests in 30.002s,   4.84MB read
+Requests/sec: 200.02
+Transfer/sec: 165.29kB
+```
+### Acceptable: Run on a single machine, with solid automation and detailed output
+
+These scripts are being developed.
+
+### The best: Run tests in a controlled lab
+
+These tests are run on a regular schedule in Red Hat/IBM performance labs.
+The results are available in an internal Horreum instance.
+
+
+
+

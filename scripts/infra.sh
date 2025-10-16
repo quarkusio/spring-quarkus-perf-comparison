@@ -1,6 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
+thisdir=`dirname "$0"`
+
 help() {
   echo "This script starts the necessary services for the app in question"
   echo
@@ -19,7 +21,7 @@ exit_abnormal() {
 
 start_postgres() {
   echo "Starting PostgreSQL database '${DB_CONTAINER_NAME}'"
-  local pid=$(${engine} run -d --rm=true --name ${DB_CONTAINER_NAME} -v ./dbdata:/docker-entrypoint-initdb.d/ -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17 > /dev/null)
+  local pid=$(cd ${thisdir} && ${engine} run -d --rm=true --name ${DB_CONTAINER_NAME} -v ./dbdata:/docker-entrypoint-initdb.d/ -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17 > /dev/null)
   echo "PostgreSQL DB process: $pid"
 
   echo "Waiting for PostgreSQL to be ready..."
