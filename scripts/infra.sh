@@ -2,8 +2,6 @@
 set -euo pipefail
 thisdir="$(realpath $(dirname "$0"))"
 
-thisdir="$(realpath $(dirname "$0"))"
-
 help() {
   echo "This script starts the necessary services for the app in question"
   echo
