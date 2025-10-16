@@ -1,0 +1,60 @@
+name: OS-specific/detection scripts
+scripts:
+  detect-os:
+    - sh: uname -a
+      then:
+        - regex: ".*Darwin.*"
+          then:
+            - set-state: RUN.os macos
+        - regex: ".*Linux.*"
+          then:
+            - set-state: RUN.os linux
+
+  capture-os-info:
+    - sh: uname -m
+    - set-state: RUN.env.host.ARCH
+    - sh: uname -r
+    - set-state: RUN.env.host.RELEASE_LEVEL
+    - sh: uname -s
+    - set-state: RUN.env.host.OS
+    - sh: uname -v
+    - set-state: RUN.env.host.VERSION_LEVEL
+
+  check-and-install-package:
+    - sh: which ${{command}}
+    - regex: ".*no ${{command}} in.*"
+      then:
+        - script: install-package
+          with:
+            package: ${{package}}
+
+  install-package-linux:
+    - sh: sudo dnf install -y ${{package}}
+    - regex: "Error: Unable to find a match: ${{package}}"
+      then:
+        - abort: "Unable to install package: ${{package}}"
+    - set-state:
+        key: RUN.INSTALLED_PACKAGES
+        value: ${{= [...${{RUN.INSTALLED_PACKAGES:[]}}, '${{package}}'] }}
+
+  install-package-macos:
+    - script: install-brew-package ${{package}}
+    - regex: "Error: No formulae or casks found for ${{package}}"
+      then:
+        - abort: "Unable to install package: ${{package}}"
+
+  install-package:
+    - script: install-package-${{os}}
+
+  sync-drop-fs-cache-linux:
+    - sh: sync && sudo sh -c "echo 3 > /proc/sys/vm/drop_caches"
+
+  sync-drop-fs-cache-macos:
+    - sh: sync && sudo purge
+
+  sync-drop-fs-cache:
+    - read-state: ${{DROP_OS_FILESYSTEM_CACHES:false}}
+      then:
+        - regex: true
+          then:
+            - script: sync-drop-fs-cache-${{os}}

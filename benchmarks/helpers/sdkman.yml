@@ -1,0 +1,52 @@
+name: sdkman helper scripts
+scripts:
+  sdkman-uninstall: #https://sdkman.io/install
+    - sh: which sdk
+    - regex: "no sdk in"
+      else:
+        - sh: whoami
+        - regex: (?<me>.*)
+        - sh: "[[ -d /home/${{me}}/.sdkman ]] && rm -rf /home/${{me}}/.sdkman"
+        - sh: sed -i 's/#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!.*//g' /home/${{me}}/.bashrc
+        - sh: sed -i 's/export SDKMAN_DIR=.*//g' /home/${{me}}/.bashrc
+        - sh: sed -i 's/.*.sdkman.*//g' /home/${{me}}/.bashrc
+
+  sdkman-install: #https://sdkman.io/install
+    - sh:
+        command: sdk help
+        ignore-exit-code: true
+        prompt:
+          "Would you like to upgrade now? (Y/n): ": "Y"
+    - regex: ".*command not found"
+      then:
+        - sh: curl -s "https://get.sdkman.io" | bash
+          then:
+            - regex: "Enjoy"
+              else:
+                - abort: failed to install SDKMAN
+        - sh: source "$HOME/.sdkman/bin/sdkman-init.sh"
+      else:
+        - sh: sdk flush
+        - sh: sdk selfupdate force
+          then:
+            - regex: "Successfully upgraded SDKMAN"
+              else:
+                - abort: failed to upgrade SDKMAN
+    - sh:
+        command: sdk version
+        prompt:
+          "Would you like to upgrade now? (Y/n): ": "Y"
+      then:
+        - regex: "SDKMAN (?<RUN.sdk_version>[\\d\\.\\+]+)"
+
+  sdk-select-java:
+    - sh: echo ${{install_if_missing:false}}
+      then:
+        - regex: true
+          then:
+            - script: sdkman-install
+    - sh:
+        command: sdk flush && sdk install java ${{java_version}}
+        prompt:
+          "set as default? (Y/n): ": "${{set_as_default:N}}"
+    - sh: sdk use java ${{java_version}}

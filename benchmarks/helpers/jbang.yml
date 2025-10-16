@@ -1,0 +1,16 @@
+name: JBang scripts
+scripts:
+  ensure-jbang-mac:
+    - script: check-and-install-package
+      with:
+        command: jbang
+        package: jbangdev/tap/jbang
+
+  ensure-jbang-linux:
+    - sh: which jbang
+    - regex: ".*no jbang in.*"
+      then:
+        - sh: "curl -Ls https://sh.jbang.dev | bash -s - app setup"
+
+  ensure-jbang:
+    - script: ensure-jbang-${{os}}

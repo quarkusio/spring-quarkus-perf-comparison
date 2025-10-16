@@ -1,0 +1,77 @@
+name: Requirements needed to run benchmarks
+scripts:
+  ensure-requirements:
+    - script: ensure-graalvm
+    - script: ensure-java
+    - script: ensure-git
+    - script: ensure-gh-cli
+    - script: ensure-gcc
+    - script: ensure-nvm
+    - script: ensure-jbang
+
+  ensure-gh-cli-linux:
+    - sh: sudo dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
+    - script: check-and-install-package
+      with:
+        command: gh
+        package: dnf5-plugins
+    - script: check-and-install-package
+      with:
+        command: gh
+        package: gh --repo
+
+  ensure-gh-cli-macos:
+    - script: check-and-install-package
+      with:
+        command: gh
+        package: gh
+
+  ensure-gh-cli:
+    - script: ensure-gh-cli-${{os}}
+
+  ensure-gcc-linux:
+    - script: check-and-install-package
+      with:
+        command: gcc
+        package: gcc.x86_64 zlib-devel.x86_64
+
+  ensure-gcc-macos:
+    - script: check-and-install-package
+      with:
+        command: gcc
+        package: gcc
+
+  ensure-gcc:
+    - script: ensure-gcc-${{os}}
+
+  install-nvm-linux:
+    - sh: curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+
+  install-nvm-macos:
+    - script: check-and-install-package
+      with:
+        command: nvm
+        package: nvm
+
+  ensure-nvm:
+    - sh: which nvm
+    - regex: ".*no nvm in.*"
+      then:
+        - script: install-nvm-${{os}}
+    - sh: nvm install --lts
+    - sh: nvm use --lts
+
+  ensure-git-linux:
+    - script: check-and-install-package
+      with:
+        command: git
+        package: git-all
+
+  ensure-git-macos:
+    - script: check-and-install-package
+      with:
+        command: git
+        package: git
+
+  ensure-git:
+    - script: ensure-git-${{os}}

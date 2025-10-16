@@ -1,0 +1,52 @@
+name: async-profiler #https://github.com/apangin/async-profiler.git
+scripts:
+  async-profiler-configure:
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - sh: sudo sh -c "echo 1 > /proc/sys/kernel/perf_event_paranoid"
+            - sh: sudo sh -c "echo 0 > /proc/sys/kernel/kptr_restrict"
+
+  # downloads the latest async-profiler release to ${{BASE_DIR}}/${{ASYNC_PROFILER}}
+  download-unpack-async-profiler:
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - set-state: platform linux-x64
+            - set-state: filesuffix .tar.gz
+            - set-state: unpack_command tar xvf
+          else:
+            - set-state: platform macos
+            - set-state: filesuffix .zip
+            - set-state: unpack_command unzip
+    - sh: curl -L -o ${{ASYNC_PROFILER}}${{filesuffix}} $(curl -s -L https://api.github.com/repos/${{ASYNC_PROFILER}}/${{ASYNC_PROFILER}}/releases/latest  | jq -r '.assets[] | select(.name | contains ("${{platform}}${{filesuffix}}")) | .browser_download_url') 2>/dev/null
+    - sh: ${{unpack_command}} ${{ASYNC_PROFILER}}${{filesuffix}}
+      then:
+        - regex: (?<subDir>^[^/]+)/
+          then:
+            - sh: mv ${{subDir}}/ ${{ASYNC_PROFILER}}
+
+  async-profiler-install:
+    - sh: if test -d ${{ASYNC_PROFILER_DIR}} ; then rm -rf ${{ASYNC_PROFILER_DIR}}; fi
+    - sh: cd ${{BASE_DIR}}
+    - script: download-unpack-async-profiler
+
+  #waits for ${{WAIT_START}} then ${{DELAY}}, creates a profile using the configured parameters then downloads it immediately
+  #works with 3.x, not 2.x
+  async-profiler-run:
+    - sh: cd ${{ASYNC_PROFILER_DIR}}
+    - wait-for: ${{wait_start:}} # don't wait by default
+    - sleep: ${{delay:0}}
+    - sh: >
+        bin/asprof 
+        -d ${{duration__10}} 
+        -f /tmp/flamegraph.${{suffix__html}} 
+        -o ${{format__flamegraph}} 
+        -e ${{events__cpu}} 
+        ${{="${{enableTotal __ }}".toLowerCase() == "true" ? "--total" : ""}} 
+        --title ${{title__async-profiler}} 
+        ${{pid}}
+      separator: __
+    - download: /tmp/flamegraph.${{suffix:html}}

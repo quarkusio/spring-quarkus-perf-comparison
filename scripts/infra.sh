@@ -1,5 +1,6 @@
 #!/bin/bash
 set -euo pipefail
+thisdir="$(realpath $(dirname "$0"))"
 
 thisdir="$(realpath $(dirname "$0"))"
 

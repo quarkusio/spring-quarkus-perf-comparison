@@ -1,0 +1,11 @@
+name: Maven scripts
+scripts:
+  check-dependency-exists:
+    - sh: cd ${{DIR}}
+    - sh: ./mvnw dependency:get -Dartifact=${{groupId}}:${{artifactId}}:${{version}} -Dpackaging=pom
+      then:
+        - regex: BUILD FAILURE
+          then:
+            - abort: Unable to find ${{groupId}}:${{artifactId}}:${{version}} in maven central
+          else:
+            - log: Artifact ${{groupId}}:${{artifactId}}:${{version}} is available in maven central

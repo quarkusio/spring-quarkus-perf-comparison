@@ -1,0 +1,41 @@
+name: cgroups related scripts
+scripts:
+  join-cgroup:
+    - set-signal: CGROUP_${{CGROUP_NAME:perf-cgroup}}_SET 1
+    - wait-for: CGROUP_${{CGROUP_NAME:perf-cgroup}}_SET
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - sh: echo ${{SHELL_PID}} >> /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/cgroup.procs
+          else:
+            - log: "Non-Linux OS doesn't support cgroups"
+    - signal: CGROUP_${{CGROUP_NAME:perf-cgroup}}_DONE
+
+  create-cgroup:
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - sh: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
+            - sh: echo "+cpu" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - sh: echo "+cpuset" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - sh: echo "+memory" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - sh: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/
+            - sh: echo ${{CGROUP_CPUSET}} > /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/cpuset.cpus
+            - sh: echo ${{CGROUP_MAX_MEM}} >  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/memory.max
+          else:
+            - log: "Non-Linux OS doesn't support cgroups"
+
+  delete-cgroup:
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - sh: echo "-cpu" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - sh: echo "-cpuset" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - sh: echo "-memory" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - sh: rmdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/
+            - sh: rmdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
+          else:
+            - log: "Non-Linux OS doesn't support cgroups"

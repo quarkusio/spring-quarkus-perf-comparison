@@ -1,0 +1,16 @@
+name: Homebrew scripts
+scripts:
+  ensure-homebrew:
+    - sh:
+        command: brew help
+        ignore-exit-code: true
+    - regex: ".*command not found"
+      then:
+        - script: install-homebrew
+
+  install-homebrew:
+    - sh: curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh
+
+  install-brew-package:
+    - script: ensure-homebrew
+    - sh: brew install -q ${{package}}
