@@ -52,7 +52,10 @@ There are some [scripts](scripts) available to help you run the application:
 
 Of course you want to start generating some numbers and doing some comparisons, that's why you're here! 
 There are lots of *wrong* ways to run benchmarks, and running them reliably requires a controlled environment, strong automation, and multiple machines.
-That kind of setup isn't always possible, so here are some 
+Realistically, that kind of setup isn't always possible. 
+
+Here's a range of options, from easiest to best practice. 
+Remember that the easy setup will *not* be particularly accurate, but it does sidestep some of the worst pitfalls of casual benchmarking.
 
 
 ### Quick and dirty: Single laptop, simple scripts
@@ -65,7 +68,7 @@ Thermal management also means 'fast' jobs get throttled, while 'slow' jobs might
 Load shouldn't be generated on the same machine as the one running the workload, because the work of load generation can interfere with what's being measured. 
 
 But if you accept all that, and know these results should be treated with caution, here's our recommendation for the least-worst way of running a quick and dirty test. 
-We use Hyperfoil instead of wrk, to avoid coordinated omission issues. For simplicity, we use the wrk2 Hyperfoil bindings. 
+We use [Hyperfoil](https://hyperfoil.io/https://hyperfoil.io/) instead of [wrk](https://github.com/wg/wrk), to avoid [coordinated omission](https://redhatperf.github.io/post/coordinated-omission/) issues. For simplicity, we use the [wrk2](https://github.com/giltene/wrk2) Hyperfoil bindings. 
 
 You can run these in any order. 
 
@@ -89,7 +92,8 @@ These scripts are being developed.
 ### The best: Run tests in a controlled lab
 
 These tests are run on a regular schedule in Red Hat/IBM performance labs.
-The results are available in an internal Horreum instance.
+The results are available in an internal [Horreum](https://github.com/Hyperfoil/Horreum) instance. 
+We are working on publishing these externally.
 
 
 
