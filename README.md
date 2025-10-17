@@ -73,8 +73,8 @@ We use [Hyperfoil](https://hyperfoil.io/https://hyperfoil.io/) instead of [wrk](
 You can run these in any order. 
 
 ```shell
-scripts/stress.sh quarkus3/target/quarkus3.jar
-scripts/stress.sh quarkus3-spring-compatibility/target/app.jar
+scripts/stress.sh quarkus3/target/quarkus-app/quarkus-run.jar
+scripts/stress.sh quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar
 scripts/stress.sh springboot3/target/springboot3.jar
 ```
 
