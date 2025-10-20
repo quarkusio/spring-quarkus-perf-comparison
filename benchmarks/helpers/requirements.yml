@@ -8,6 +8,14 @@ scripts:
     - script: ensure-gcc
     - script: ensure-nvm
     - script: ensure-jbang
+    - script: ensure-jvm-opts
+
+  ensure-jvm-opts:
+    - read-state: config.profiler.name
+      then:
+        - regex: jfr|flamegraph
+          then:
+            - set-state: PROFILER_JVM_ARGS -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints
 
   ensure-gh-cli-linux:
     - script: sudo
