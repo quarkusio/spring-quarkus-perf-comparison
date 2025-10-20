@@ -91,21 +91,27 @@ states:
   TARGET_URL: http://localhost:8080/fruits
   QUARKUS-PLATFORM-ARTIFACT-ID: quarkus-bom
   PROJ_REPO_NAME: spring-quarkus-perf-comparison
-  BASE_DIR: "$(echo ${HOME})"
+  BASE_DIR: "~${{env.USER}}"
   METRICS_DIR: /tmp
   ASYNC_PROFILER: async-profiler
   ASYNC_PROFILER_DIR: ${{BASE_DIR}}/${{ASYNC_PROFILER}}
 
 scripts:
   cleanup-env:
-    - sh: sudo rm -Rf ${{REPO_DIR}}
+    - script: sudo
+      with:
+        command: rm -Rf ${{REPO_DIR}}/${{PROJ_REPO_NAME}}
 
   config-env:
-    - sh: sudo rm -Rf ${{REPO_DIR}}/logs
+    - script: sudo
+      with:
+        command: rm -Rf ${{REPO_DIR}}/logs
     - sh: mkdir -p ${{REPO_DIR}}/logs
 
   clone-repo:
-    - sh: sudo rm -Rf ${{REPO_DIR}}
+    - script: sudo
+      with:
+        command: rm -Rf ${{REPO_DIR}}
     - sh: mkdir -p ${{REPO_DIR}}/logs
     - sh: cd ${{REPO_DIR}}
     - log: Cloning project repo ${{config.repo.branch}}@${{config.repo.url}}
@@ -379,7 +385,9 @@ scripts:
 
   download-metrics:
     - sh: mkdir -p ${{METRICS_DIR}}
-    - sh: sudo rm -Rf ${{METRICS_DIR}}/metrics.json
+    - script: sudo
+      with:
+        command: rm -Rf ${{METRICS_DIR}}/metrics.json
     - set-state: RUN.output.config ${{RUN.config}}
     - set-state: RUN.output.env ${{RUN.env}}
     - sh: echo '${{RUN.output}}' > ${{METRICS_DIR}}/metrics.json

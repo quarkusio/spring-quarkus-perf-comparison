@@ -115,6 +115,7 @@ run_benchmarks() {
 
   if [[ "$HOST" == "LOCAL" ]]; then
     local target="LOCAL"
+    USER=$(whoami)
   else
     local target="${USER}@${HOST}"
   fi
@@ -139,7 +140,9 @@ run_benchmarks() {
     -S config.profiler.events=cpu \
     -S config.repo.branch=${SCM_REPO_BRANCH} \
     -S config.repo.url=${SCM_REPO_URL} \
+    -S env.USER=${USER} \
     -S env.TARGET=${target} \
+    -S BASE_DIR=${HOME} \
     -S ITERATIONS=${ITERATIONS} \
     -S PROJ_REPO_NAME="$(basename ${SCM_REPO_URL} .git)" \
     -S RUNTIMES="$(make_json_array ${RUNTIMES})" \

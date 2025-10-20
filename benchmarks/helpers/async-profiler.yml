@@ -5,8 +5,12 @@ scripts:
       then:
         - regex: linux
           then:
-            - sh: sudo sh -c "echo 1 > /proc/sys/kernel/perf_event_paranoid"
-            - sh: sudo sh -c "echo 0 > /proc/sys/kernel/kptr_restrict"
+            - script: sudo
+              with:
+                command: sh -c "echo 1 > /proc/sys/kernel/perf_event_paranoid"
+            - script: sudo
+              with:
+                command: sh -c "echo 0 > /proc/sys/kernel/kptr_restrict"
 
   # downloads the latest async-profiler release to ${{BASE_DIR}}/${{ASYNC_PROFILER}}
   download-unpack-async-profiler:

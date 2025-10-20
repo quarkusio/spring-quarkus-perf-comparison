@@ -1,11 +1,11 @@
 name: timestamps helper scripts
 scripts:
   start-timestamp:
-    - sh: date --utc +%FT%TZ
+    - sh: date -u +%FT%TZ
       then:
         - set-state: RUN.output.timing.start
 
   stop-timestamp:
-    - sh: date --utc +%FT%TZ
+    - sh: date -u +%FT%TZ
       then:
         - set-state: RUN.output.timing.stop

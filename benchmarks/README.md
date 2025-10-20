@@ -18,11 +18,14 @@ The main entrypoint is the `run-benchmarks.sh` script. This script has many opti
 
 > [!TIP]
 > This automation currently supports Linux and macOS hosts. Running on Windows Subsystem for Linux (WSL) has not been tested. Running on Windows directly is not supported.
+> 
+> ALSO - it only supports `bash` shell on both local & remote hosts.
 
 The script also has 3 dependencies that need to be resolved before it can be run:
 - [git](https://github.com/git-guides/install-git)
 - [jbang](https://www.jbang.dev/download)
 - [jq](https://stedolan.github.io/jq)
+- bash shell
 
 ## Usage
 

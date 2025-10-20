@@ -1,6 +1,7 @@
-name: jsFunctions
+name: state-array functions
 scripts:
   state-array-push:
+    - log: Pushing ${{value}} to ${{array}}
     - set-state:
         key: ${{array}}
         value: ${{=[...${{${{array}}¬[]}}, ${{value}}]}}

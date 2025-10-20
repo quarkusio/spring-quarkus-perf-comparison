@@ -10,7 +10,9 @@ scripts:
     - script: ensure-jbang
 
   ensure-gh-cli-linux:
-    - sh: sudo dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
+    - script: sudo
+      with:
+        command: dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
     - script: check-and-install-package
       with:
         command: gh
