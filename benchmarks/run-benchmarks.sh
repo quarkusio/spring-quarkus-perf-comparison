@@ -9,6 +9,7 @@ help() {
   echo
   echo "Syntax: run-benchmarks.sh [options]"
   echo "options:"
+  echo "  -a <JVM_ARGS>                       Any JVM args to be passed to the apps"
   echo "  -b <SCM_REPO_BRANCH>                The branch in the SCM repo"
   echo "                                          Default: 'main'"
   echo "  -c <CGROUPS_CPUS>                   Constrain to certain CPUs via cgroups"
@@ -102,6 +103,7 @@ print_values() {
   echo "  SCM_REPO_URL: $SCM_REPO_URL"
   echo "  SCM_REPO_BRANCH: $SCM_REPO_BRANCH"
   echo "  DROP_OS_FILESYSTEM_CACHES: $DROP_OS_FILESYSTEM_CACHES"
+  echo "  JVM_ARGS: $JVM_ARGS"
 }
 
 make_json_array() {
@@ -129,6 +131,7 @@ run_benchmarks() {
     -S config.GRAALVM_VERSION=${GRAALVM_VERSION} \
     -S config.JAVA_VERSION=${JAVA_VERSION} \
     -S config.NATIVE_QUARKUS_BUILD_OPTIONS=${NATIVE_QUARKUS_BUILD_OPTIONS} \
+    -S config.JVM_ARGS=${JVM_ARGS} \
     -S config.profiler.name=${PROFILER} \
     -S config.cgroup.mem_max=${CGROUPS_MAX_MEMORY} \
     -S config.cgroup.cpu=${CGROUPS_CPUS} \
@@ -175,10 +178,14 @@ JVM_MEMORY=""
 WAIT_TIME="20"
 CMD_PREFIX=""
 DROP_OS_FILESYSTEM_CACHES=false
+JVM_ARGS=""
 
 # Process the inputs
-while getopts "b:c:dg:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
+while getopts "a:b:c:dg:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
   case $option in
+    a) JVM_ARGS=$OPTARG
+      ;;
+
     b) SCM_REPO_BRANCH=$OPTARG
       ;;
 

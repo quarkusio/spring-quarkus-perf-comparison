@@ -11,6 +11,7 @@ states:
   config.SPRING_BOOT_VERSION: #3.5.6
 
   config.JVM_MEMORY: #-Xmx128m
+  config.JVM_ARGS:
   config.CMD_PREFIX: #taskset --cpu-list 0-3
 
   config.NATIVE_QUARKUS_BUILD_OPTIONS: #-Dquarkus.native.native-image-xmx=<maximum_memory>
@@ -32,7 +33,7 @@ states:
   QUARKUS_MAVEN_OPTIONS:
   PAUSE_TIME: 5
   ITERATIONS: 3
-  BASE_JAVA_CMD: ${{config.CMD_PREFIX}} java ${{config.JVM_MEMORY}} -jar
+  BASE_JAVA_CMD: ${{config.CMD_PREFIX}} java ${{config.JVM_MEMORY}} ${{config.JVM_ARGS}} -jar
   TESTS : [test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test]
   RUNTIMES: [quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native]
 
