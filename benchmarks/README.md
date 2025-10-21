@@ -91,6 +91,44 @@ The `-t` option accepts one or more of the following values (comma-separated):
 
 **Default:** All tests are executed
 
+## Output
+The output of the run will be a bunch of files, whose location will be output at the end of the run:
+
+```shell
+09:14:14.985 run-1761051869844 downloading queued downloads
+09:14:14.985 Local.download(hyperfoil@deathstar:22:/tmp/metrics.json,/tmp/20251021_090429/target-host/)
+09:14:15.375 Local.download(hyperfoil@deathstar:22:/home/hyperfoil/spring-quarkus-perf-comparison/logs/*,/tmp/20251021_090429/target-host/)
+Finished in 09:44.800 at /tmp/20251021_090429 
+```
+
+If you examine the output directory:
+
+```shell
+/tmp/20251021_090429
+├── run.json
+├── run.log
+└── target-host
+    ├── build-times-quarkus3-jvm-0.log
+    ├── build-times-quarkus3-jvm-1.log
+    ├── build-times-quarkus3-jvm-2.log
+    ├── build-times-quarkus3-native-0.log
+    ├── build-times-quarkus3-native-1.log
+    ├── build-times-quarkus3-native-2.log
+    ├── build-times-spring3-jvm-0.log
+    ├── build-times-spring3-jvm-1.log
+    ├── build-times-spring3-jvm-2.log
+    ├── build-times-spring3-jvm-aot-0.log
+    ├── build-times-spring3-jvm-aot-1.log
+    ├── build-times-spring3-jvm-aot-2.log
+    ├── build-times-spring3-native-0.log
+    ├── build-times-spring3-native-1.log
+    ├── build-times-spring3-native-2.log
+    └── <potentially more .log files based on which tests were run>
+    └── metrics.json
+```
+
+All of the `*.log` files contain the output from the individual tests. The `metrics.json` file contains all the recorded metrics.
+
 ## Examples
 ### Basic Local Benchmark
 

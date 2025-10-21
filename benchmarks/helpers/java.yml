@@ -3,17 +3,17 @@ scripts:
   ensure-graalvm:
     - script: sdk-select-java
       with:
-        java_version: ${{config.GRAALVM_VERSION}}
+        java_version: ${{config.jvm.graalvm.version}}
         install_if_missing: true
     - log: Setting GRAALVM_HOME
-    - sh: export GRAALVM_HOME=$(sdk home java ${{config.GRAALVM_VERSION}})
+    - sh: export GRAALVM_HOME=$(sdk home java ${{config.jvm.graalvm.version}})
     - log: Showing GraalVM version
     - sh: $GRAALVM_HOME/bin/java -version
 
   ensure-java:
     - script: sdk-select-java
       with:
-        java_version: ${{config.JAVA_VERSION}}
+        java_version: ${{config.jvm.version}}
         set_as_default: Y
         install_if_missing: true
     - log: Showing Java version

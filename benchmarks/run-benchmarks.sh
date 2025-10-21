@@ -122,31 +122,32 @@ run_benchmarks() {
     local target="${USER}@${HOST}"
   fi
 
+#  print_values
+
   jbang qDup@hyperfoil \
     -C \
     -b /tmp/ \
     -ix \
     ./main.yml \
     ./helpers/ \
-    -S config.GRAALVM_VERSION=${GRAALVM_VERSION} \
-    -S config.JAVA_VERSION=${JAVA_VERSION} \
-    -S config.NATIVE_QUARKUS_BUILD_OPTIONS=${NATIVE_QUARKUS_BUILD_OPTIONS} \
-    -S config.JVM_ARGS=${JVM_ARGS} \
+    -S config.jvm.graalvm.version=${GRAALVM_VERSION} \
+    -S config.jvm.version=${JAVA_VERSION} \
+    -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
+    -S config.jvm.args="${JVM_ARGS}" \
     -S config.profiler.name=${PROFILER} \
     -S config.cgroup.mem_max=${CGROUPS_MAX_MEMORY} \
     -S config.cgroup.cpu=${CGROUPS_CPUS} \
-    -S config.SPRING_BOOT_VERSION=${SPRING_BOOT_VERSION} \
-    -S config.JVM_MEMORY=${JVM_MEMORY} \
-    -S config.CMD_PREFIX=${CMD_PREFIX} \
-    -S config.QUARKUS_VERSION=${QUARKUS_VERSION} \
-    -S config.NATIVE_SPRING_BUILD_OPTIONS=${NATIVE_SPRING_BUILD_OPTIONS} \
+    -S config.springboot.version=${SPRING_BOOT_VERSION} \
+    -S config.jvm.memory="${JVM_MEMORY}" \
+    -S config.CMD_PREFIX="${CMD_PREFIX}" \
+    -S config.quarkus.version=${QUARKUS_VERSION} \
+    -S config.springboot.native_build_options="${NATIVE_SPRING_BUILD_OPTIONS}" \
     -S config.profiler.events=cpu \
     -S config.repo.branch=${SCM_REPO_BRANCH} \
     -S config.repo.url=${SCM_REPO_URL} \
     -S env.USER=${USER} \
     -S env.TARGET=${target} \
-    -S BASE_DIR=${HOME} \
-    -S ITERATIONS=${ITERATIONS} \
+    -S config.num_iterations=${ITERATIONS} \
     -S PROJ_REPO_NAME="$(basename ${SCM_REPO_URL} .git)" \
     -S RUNTIMES="$(make_json_array ${RUNTIMES})" \
     -S PAUSE_TIME=${WAIT_TIME} \
@@ -274,6 +275,5 @@ while getopts "a:b:c:dg:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
   esac
 done
 
-#print_values
 validate_values
 run_benchmarks

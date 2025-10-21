@@ -4,18 +4,18 @@ states:
   env.HOST: 127.0.0.1
   env.TARGET: ${{env.USER}}@${{env.HOST}}
 
-  config.JAVA_VERSION: 25-tem
-  config.GRAALVM_VERSION: 25-graalce
+  config.jvm.version: 25-tem
+  config.jvm.graalvm.version: 25-graalce
 
-  config.QUARKUS_VERSION: #3.28.3
-  config.SPRING_BOOT_VERSION: #3.5.6
+  config.quarkus.version: #3.28.3
+  config.springboot.version: #3.5.6
 
-  config.JVM_MEMORY: #-Xmx128m
-  config.JVM_ARGS:
+  config.jvm.memory: #-Xmx128m
+  config.jvm.args:
   config.CMD_PREFIX: #taskset --cpu-list 0-3
 
-  config.NATIVE_QUARKUS_BUILD_OPTIONS: #-Dquarkus.native.native-image-xmx=<maximum_memory>
-  config.NATIVE_SPRING_BUILD_OPTIONS:
+  config.quarkus.native_build_options: #-Dquarkus.native.native-image-xmx=<maximum_memory>
+  config.springboot.native_build_options:
 
   config.cgroup.cpu: "0,2,4,6,8,10,12,14"
   config.cgroup.mem_max: "14G"
@@ -27,14 +27,15 @@ states:
   config.repo.branch: main
   config.repo.url: https://github.com/quarkusio/spring-quarkus-perf-comparison.git
 
+  config.num_iterations: 3
+
   RUN.WRK_BIN: jbang wrk@hyperfoil
 
   DROP_OS_FILESYSTEM_CACHES:
   QUARKUS_MAVEN_OPTIONS:
   PAUSE_TIME: 5
-  ITERATIONS: 3
   PROFILER_JVM_ARGS:
-  BASE_JAVA_CMD: ${{config.CMD_PREFIX}} java ${{config.JVM_MEMORY}} ${{config.JVM_ARGS}} ${{PROFILER_JVM_ARGS}}
+  BASE_JAVA_CMD: ${{config.CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
   TESTS : [test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test]
   RUNTIMES: [quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native]
 
@@ -43,7 +44,7 @@ states:
       "name": "quarkus3-jvm"
       , type: "jvm"
       , updateScript: "update-quarkus-version"
-      , updateVersion: "${{config.QUARKUS_VERSION}}"
+      , updateVersion: "${{config.quarkus.version}}"
       , dir: "${{QUARKUS3_DIR}}"
       , buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests"
       , "runCmd" : "${{BASE_JAVA_CMD}} -jar ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar"
@@ -52,16 +53,16 @@ states:
       "name": "quarkus3-native"
       , type: "native"
       , updateScript: "update-quarkus-version"
-      , updateVersion: "${{config.QUARKUS_VERSION}}"
+      , updateVersion: "${{config.quarkus.version}}"
       ,  dir: "${{QUARKUS3_DIR}}"
-      , buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests -Pnative ${{config.NATIVE_QUARKUS_BUILD_OPTIONS}}"
-      , "runCmd" : "${{config.CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.JVM_MEMORY}}"
+      , buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
+      , "runCmd" : "${{config.CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
       },
     "spring3-jvm" : {
       "name": "spring3-jvm"
       , type: "jvm"
       , updateScript: "update-spring-boot-version"
-      , updateVersion: "${{config.SPRING_BOOT_VERSION}}"
+      , updateVersion: "${{config.springboot.version}}"
       , dir: "${{SPRING3_BOOT_DIR}}"
       , buildCmd: "./mvnw clean package -DskipTests"
       , "runCmd" : "${{BASE_JAVA_CMD}} -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
@@ -70,7 +71,7 @@ states:
       "name": "spring3-jvm-aot"
       , type: "jvm"
       , updateScript: "update-spring-boot-version"
-      , updateVersion: "${{config.SPRING_BOOT_VERSION}}"
+      , updateVersion: "${{config.springboot.version}}"
       , dir: "${{SPRING3_BOOT_DIR}}"
       , buildCmd: "./mvnw clean compile spring-boot:process-aot package -DskipTests"
       , "runCmd" : "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
@@ -79,10 +80,10 @@ states:
       "name": "spring3-native"
       , type: "native"
       , updateScript: "update-spring-boot-version"
-      , updateVersion: "${{config.SPRING_BOOT_VERSION}}"
+      , updateVersion: "${{config.springboot.version}}"
       , dir: "${{SPRING3_BOOT_DIR}}"
-      , buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.NATIVE_SPRING_BUILD_OPTIONS}}"
-      , "runCmd" : "${{config.CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.JVM_MEMORY}}"
+      , buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot.native_build_options}}"
+      , "runCmd" : "${{config.CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.jvm.memory}}"
       }
   }
 
@@ -93,12 +94,22 @@ states:
   TARGET_URL: http://localhost:8080/fruits
   QUARKUS-PLATFORM-ARTIFACT-ID: quarkus-bom
   PROJ_REPO_NAME: spring-quarkus-perf-comparison
-  BASE_DIR: "~${{env.USER}}"
+  BASE_DIR: "~"
   METRICS_DIR: /tmp
   ASYNC_PROFILER: async-profiler
   ASYNC_PROFILER_DIR: ${{BASE_DIR}}/${{ASYNC_PROFILER}}
 
 scripts:
+  output-vars:
+    - log: |
+        "Config: ${{config}}"
+        "ENV: ${{env}}"
+        "BASE_DIR: ${{BASE_DIR}}"
+        "REPO_DIR: ${{REPO_DIR}}"
+        "SCRIPTS_DIR: ${{SCRIPTS_DIR}}"
+        "SPRING3_BOOT_DIR: ${{SPRING3_BOOT_DIR}}"
+        "QUARKUS3_DIR : ${{QUARKUS3_DIR }}"
+
   cleanup-env:
     - script: sudo
       with:
@@ -193,7 +204,7 @@ scripts:
     - log: Graal VM Version
     - sh: $GRAALVM_HOME/bin/java -version
     - set-state: TYPE ${{RUNTIME.type}}
-    - for-each: ITERATION ${{=[...Array(${{ITERATIONS}}).keys()]}}
+    - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - script: sync-drop-fs-cache
         - sh: /usr/bin/time -p ${{RUNTIME.buildCmd}} 2>&1 >${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log | grep real | awk '{ print $2}'
@@ -262,7 +273,7 @@ scripts:
     - sh: java -version
     - sh: cd ${{RUNTIME.dir}}
     - sh: ${{RUNTIME.buildCmd}}
-    - for-each: ITERATION ${{=[...Array(${{ITERATIONS}}).keys()]}}
+    - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - script: sync-drop-fs-cache
         - sh: node ${{SCRIPTS_DIR}}/time.js "${{= "${{RUNTIME.runCmd}}".trim().replace(/  +/g, ' ') }}" ${{TARGET_URL}} | awk '{print $1}'
@@ -283,7 +294,7 @@ scripts:
     - sh: java -version
     - sh: cd ${{RUNTIME.dir}}
     - sh: ${{RUNTIME.buildCmd}}
-    - for-each: ITERATION ${{=[...Array(${{ITERATIONS}}).keys()]}}
+    - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - script: sync-drop-fs-cache
         - sh: ${{RUNTIME.runCmd}} 2>&1 >${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log &
@@ -320,7 +331,7 @@ scripts:
     - log: Running workload
     - sh: cd ${{RUNTIME.dir}}
     - sh: ${{RUNTIME.buildCmd}}
-    - for-each: ITERATION ${{=[...Array(${{ITERATIONS}}).keys()]}}
+    - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
@@ -429,6 +440,7 @@ roles:
     hosts:
       - target-host
     setup-scripts:
+      - output-vars
       - detect-os
       - capture-os-info
       - start-timestamp
