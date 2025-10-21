@@ -27,6 +27,12 @@ The script also has 3 dependencies that need to be resolved before it can be run
 - [jq](https://stedolan.github.io/jq)
 - bash shell
 
+> [!IMPORTANT]
+> There are several requirements to run the benchmarks in remote mode:
+> 1. The remote host must have `bash` shell installed.
+> 2. The ssh connection to the remote host must be configured to allow [passwordless login](https://www.strongdm.com/blog/ssh-passwordless-login).
+> 3. The ssh user on the remote host must have [passwordless sudo privileges](https://unix.stackexchange.com/questions/468416/setting-up-passwordless-sudo-on-linux-distributions).
+
 ## Usage
 
 ```bash
