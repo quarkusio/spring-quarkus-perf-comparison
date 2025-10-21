@@ -32,7 +32,7 @@ The script also has 3 dependencies that need to be resolved before it can be run
 > 1. The host must have `bash` shell installed.
 > 2. If running on a remote host, the ssh connection to the remote host must be configured to allow [passwordless login](https://www.strongdm.com/blog/ssh-passwordless-login).
 > 3. If running on Linux, the user on the host (local or remote) must have [passwordless sudo privileges](https://unix.stackexchange.com/questions/468416/setting-up-passwordless-sudo-on-linux-distributions).
->     - If this isn't an option, then the host must have the following software installed:
+>     - If this isn't an option, then the host must have the following software installed (see [requirements.yml](helpers/requirements.yml) for details):
 >         - [SDKMAN!](https://sdkman.io/)
 >             - `sdk i java <-j flag passed to the script>`
 >             - `sdk i java <-g flag passed to the script>`
