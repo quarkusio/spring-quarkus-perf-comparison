@@ -207,7 +207,7 @@ scripts:
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - script: sync-drop-fs-cache
-        - sh: /usr/bin/time -p ${{RUNTIME.buildCmd}} 2>&1 >${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log | grep real | awk '{ print $2}'
+        - sh: /usr/bin/time -p ${{RUNTIME.buildCmd}} 2>&1 >${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log | grep real | awk '{print $2}'
         - set-state: BUILD_TIME
         - script: state-array-push
           with:
@@ -444,6 +444,7 @@ roles:
       - detect-os
       - capture-os-info
       - start-timestamp
+      - cleanup-env
       - config-env
       - ensure-requirements
       - clone-repo
@@ -455,5 +456,5 @@ roles:
       - stop-timestamp
       - download-metrics
       - stop-test-services
-      - cleanup-env
+#      - cleanup-env
       # - remove-installed-packages

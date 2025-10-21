@@ -124,7 +124,7 @@ run_benchmarks() {
 
 #  print_values
 
-  jbang qDup@hyperfoil \
+  jbang qDup@hyperfoil --trace="target" \
     -C \
     -b /tmp/ \
     -ix \
@@ -152,8 +152,7 @@ run_benchmarks() {
     -S RUNTIMES="$(make_json_array ${RUNTIMES})" \
     -S PAUSE_TIME=${WAIT_TIME} \
     -S TESTS="$(make_json_array ${TESTS_TO_RUN})" \
-    -S DROP_OS_FILESYSTEM_CACHES=${DROP_OS_FILESYSTEM_CACHES} \
-    --stream-logging
+    -S DROP_OS_FILESYSTEM_CACHES=${DROP_OS_FILESYSTEM_CACHES}
 }
 
 # Define defaults

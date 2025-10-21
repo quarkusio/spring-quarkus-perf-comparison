@@ -127,7 +127,10 @@ If you examine the output directory:
     └── metrics.json
 ```
 
-All of the `*.log` files contain the output from the individual tests. The `metrics.json` file contains all the recorded metrics.
+- The `run.json` file contains the run metadata.
+- The `run.log` file contains the full run log.
+- All of the `target-host/*.log` files contain the output from the individual tests.
+- The `target-host/metrics.json` file contains all the recorded metrics.
 
 ## Examples
 ### Basic Local Benchmark
