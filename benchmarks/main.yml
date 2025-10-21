@@ -440,7 +440,7 @@ roles:
     hosts:
       - target-host
     setup-scripts:
-      - output-vars
+#      - output-vars
       - detect-os
       - capture-os-info
       - start-timestamp
