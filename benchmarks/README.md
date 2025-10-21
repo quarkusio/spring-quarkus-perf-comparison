@@ -28,10 +28,10 @@ The script also has 3 dependencies that need to be resolved before it can be run
 - bash shell
 
 > [!IMPORTANT]
-> There are several requirements to run the benchmarks in remote mode:
-> 1. The remote host must have `bash` shell installed.
-> 2. The ssh connection to the remote host must be configured to allow [passwordless login](https://www.strongdm.com/blog/ssh-passwordless-login).
-> 3. The ssh user on the remote host must have [passwordless sudo privileges](https://unix.stackexchange.com/questions/468416/setting-up-passwordless-sudo-on-linux-distributions).
+> There are several requirements to run the benchmarks:
+> 1. The host must have `bash` shell installed.
+> 2. If running on a remote host, the ssh connection to the remote host must be configured to allow [passwordless login](https://www.strongdm.com/blog/ssh-passwordless-login).
+> 3. If running on Linux, the user on the host must have [passwordless sudo privileges](https://unix.stackexchange.com/questions/468416/setting-up-passwordless-sudo-on-linux-distributions).
 
 ## Usage
 
