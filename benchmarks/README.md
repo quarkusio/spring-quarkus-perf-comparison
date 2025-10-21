@@ -31,7 +31,20 @@ The script also has 3 dependencies that need to be resolved before it can be run
 > There are several requirements to run the benchmarks:
 > 1. The host must have `bash` shell installed.
 > 2. If running on a remote host, the ssh connection to the remote host must be configured to allow [passwordless login](https://www.strongdm.com/blog/ssh-passwordless-login).
-> 3. If running on Linux, the user on the host must have [passwordless sudo privileges](https://unix.stackexchange.com/questions/468416/setting-up-passwordless-sudo-on-linux-distributions).
+> 3. If running on Linux, the user on the host (local or remote) must have [passwordless sudo privileges](https://unix.stackexchange.com/questions/468416/setting-up-passwordless-sudo-on-linux-distributions).
+>     - If this isn't an option, then the host must have the following software installed:
+>         - [SDKMAN!](https://sdkman.io/)
+>             - `sdk i java <-j flag passed to the script>`
+>             - `sdk i java <-g flag passed to the script>`
+>             - `export GRAALVM_HOME=$(sdk home java <-g flag passed to the script>)`
+>         - [git](https://github.com/git-guides/install-git)
+>         - [jbang](https://www.jbang.dev/download)
+>         - [jq](https://stedolan.github.io/jq)
+>         - [GitHub CLI](https://cli.github.com/)
+>         - gcc
+>         - [NVM](https://github.com/nvm-sh/nvm/blob/master/README.md)
+>             - `nvm install --lts`
+>             - `nvm use --lts`
 
 ## Usage
 
