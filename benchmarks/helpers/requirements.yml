@@ -4,7 +4,6 @@ scripts:
     - script: ensure-graalvm
     - script: ensure-java
     - script: ensure-git
-    - script: ensure-gh-cli
     - script: ensure-gcc
     - script: ensure-nvm
     - script: ensure-jbang
@@ -16,28 +15,6 @@ scripts:
         - regex: jfr|flamegraph
           then:
             - set-state: PROFILER_JVM_ARGS -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints
-
-  ensure-gh-cli-linux:
-    - script: sudo
-      with:
-        command: dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
-    - script: check-and-install-package
-      with:
-        command: gh
-        package: dnf5-plugins
-    - script: check-and-install-package
-      with:
-        command: gh
-        package: gh --repo
-
-  ensure-gh-cli-macos:
-    - script: check-and-install-package
-      with:
-        command: gh
-        package: gh
-
-  ensure-gh-cli:
-    - script: ensure-gh-cli-${{os}}
 
   ensure-gcc-linux:
     - script: check-and-install-package

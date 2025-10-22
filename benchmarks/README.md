@@ -40,7 +40,6 @@ The script also has 3 dependencies that need to be resolved before it can be run
 >         - [git](https://github.com/git-guides/install-git)
 >         - [jbang](https://www.jbang.dev/download)
 >         - [jq](https://stedolan.github.io/jq)
->         - [GitHub CLI](https://cli.github.com/)
 >         - gcc
 >         - [NVM](https://github.com/nvm-sh/nvm/blob/master/README.md)
 >             - `nvm install --lts`
