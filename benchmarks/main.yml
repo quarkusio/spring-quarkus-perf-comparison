@@ -370,6 +370,30 @@ scripts:
           with:
             array: RUN.output.results.${{RUNTIME.name}}.load.throughput
             value: ${{THROUGHPUT}}
+        - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log | grep "Socket errors:" | sed -E 's/.*connectionErrors ([0-9]+).*/\1/'
+          then:
+            - regex: ^$
+              then:
+                - set-state: CONNECTION_ERRORS 0
+              else:
+                - set-state: CONNECTION_ERRORS
+        - script: state-array-push
+          with:
+            array: RUN.output.results.${{RUNTIME.name}}.load.connectionErrors
+            value: ${{CONNECTION_ERRORS}}
+
+        - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log | grep "Socket errors:" | sed -E 's/.*requestTimeouts ([0-9]+)/\1/'
+          then:
+            - regex: ^$
+              then:
+                - set-state: REQUEST_TIMEOUTS 0
+              else:
+                - set-state: REQUEST_TIMEOUTS
+        - script: state-array-push
+          with:
+            array: RUN.output.results.${{RUNTIME.name}}.load.requestTimeouts
+            value: ${{REQUEST_TIMEOUTS}}
+
         - sh: pmap -x $APP_PID | grep total | awk '{print $4}'
           then:
             - set-state: RSS
@@ -395,6 +419,14 @@ scripts:
       with:
         var-name: RUN.output.results.${{RUNTIME.name}}.load.maxThroughputDensity
         array: RUN.output.results.${{RUNTIME.name}}.load.throughputDensity
+    - script: state-array-calc-avg
+      with:
+        var-name: RUN.output.results.${{RUNTIME.name}}.load.avConnectionErrors
+        array: RUN.output.results.${{RUNTIME.name}}.load.connectionErrors
+    - script: state-array-calc-avg
+      with:
+        var-name: RUN.output.results.${{RUNTIME.name}}.load.avRequestTimeouts
+        array: RUN.output.results.${{RUNTIME.name}}.load.requestTimeouts
 
   download-metrics:
     - sh: mkdir -p ${{METRICS_DIR}}
