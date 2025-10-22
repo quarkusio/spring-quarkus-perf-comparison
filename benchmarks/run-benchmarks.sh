@@ -15,11 +15,12 @@ help() {
   echo "  -c <CGROUPS_CPUS>                   Constrain to certain CPUs via cgroups"
   echo "                                          NOTE: Can be a comma-separated list (i.e. '0,2,4,6,8,10,12,14')"
   echo "  -d                                  Purge/drop OS filesystem caches between iterations"
+  echo "  -e <EXTRA_QDUP_ARGS>                Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
+  echo "                                          NOTE: This is an advanced option. Make sure you know what you are doing when using it."
   echo "  -g <GRAALVM_VERSION>                The GraalVM version to use if running any native tests (from SDKMAN)"
   echo "                                          Default: 25-graalce"
   echo "  -h <HOST>                           The HOST to run the benchmarks on"
   echo "                                          LOCAL is a keyword that can be used to run everything on the local machine"
-  echo "                                          NOTE: In the future we may have a container image that will spin up automatically"
   echo "                                          Default: LOCAL"
   echo "  -i <ITERATIONS>                     The number of iterations to run each test"
   echo "                                          Default: 3"
@@ -104,6 +105,7 @@ print_values() {
   echo "  SCM_REPO_BRANCH: $SCM_REPO_BRANCH"
   echo "  DROP_OS_FILESYSTEM_CACHES: $DROP_OS_FILESYSTEM_CACHES"
   echo "  JVM_ARGS: $JVM_ARGS"
+  echo "  EXTRA_QDUP_ARGS: $EXTRA_QDUP_ARGS"
 }
 
 make_json_array() {
@@ -122,12 +124,14 @@ run_benchmarks() {
     local target="${USER}@${HOST}"
   fi
 
-#  print_values
+#print_values
 
-  jbang qDup@hyperfoil --trace="target" \
+#  jbang qDup@hyperfoil --trace="target" \
+jbang qDup@hyperfoil \
     -C \
     -b /tmp/ \
     -ix \
+    ${EXTRA_QDUP_ARGS} \
     ./main.yml \
     ./helpers/ \
     -S config.jvm.graalvm.version=${GRAALVM_VERSION} \
@@ -179,9 +183,10 @@ WAIT_TIME="20"
 CMD_PREFIX=""
 DROP_OS_FILESYSTEM_CACHES=false
 JVM_ARGS=""
+EXTRA_QDUP_ARGS=""
 
 # Process the inputs
-while getopts "a:b:c:dg:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
+while getopts "a:b:c:de:g:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
   case $option in
     a) JVM_ARGS=$OPTARG
       ;;
@@ -193,6 +198,9 @@ while getopts "a:b:c:dg:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
       ;;
 
     d) DROP_OS_FILESYSTEM_CACHES=true
+      ;;
+
+    e) EXTRA_QDUP_ARGS=$OPTARG
       ;;
 
     g) GRAALVM_VERSION=$OPTARG
