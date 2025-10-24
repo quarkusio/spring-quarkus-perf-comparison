@@ -17,6 +17,8 @@ help() {
   echo "  -d                                  Purge/drop OS filesystem caches between iterations"
   echo "  -e <EXTRA_QDUP_ARGS>                Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                          NOTE: This is an advanced option. Make sure you know what you are doing when using it."
+  echo "  -f <OUTPUT_DIR>                     The directory containing the run output"
+  echo "                                          Default: /tmp"
   echo "  -g <GRAALVM_VERSION>                The GraalVM version to use if running any native tests (from SDKMAN)"
   echo "                                          Default: 25-graalce"
   echo "  -h <HOST>                           The HOST to run the benchmarks on"
@@ -80,6 +82,15 @@ validate_values() {
     echo "!! [ERROR] Please set the USER!!"
     exit_abnormal
   fi
+
+  if [ -z "$OUTPUT_DIR" ]; then
+    echo " [ERROR] Please set the OUTPUT_DIR!!"
+    exit_abnormal
+  fi
+
+  if [ ! -d "$OUTPUT_DIR" ]; then
+    mkdir -p $OUTPUT_DIR
+  fi
 }
 
 print_values() {
@@ -106,6 +117,7 @@ print_values() {
   echo "  DROP_OS_FILESYSTEM_CACHES: $DROP_OS_FILESYSTEM_CACHES"
   echo "  JVM_ARGS: $JVM_ARGS"
   echo "  EXTRA_QDUP_ARGS: $EXTRA_QDUP_ARGS"
+  echo "  OUTPUT_DIR: $OUTPUT_DIR"
 }
 
 make_json_array() {
@@ -129,7 +141,7 @@ run_benchmarks() {
 #  jbang qDup@hyperfoil --trace="target" \
 jbang qDup@hyperfoil \
     -C \
-    -b /tmp/ \
+    -B ${OUTPUT_DIR} \
     -ix \
     ${EXTRA_QDUP_ARGS} \
     ./main.yml \
@@ -184,9 +196,10 @@ CMD_PREFIX=""
 DROP_OS_FILESYSTEM_CACHES=false
 JVM_ARGS=""
 EXTRA_QDUP_ARGS=""
+OUTPUT_DIR="/tmp"
 
 # Process the inputs
-while getopts "a:b:c:de:g:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
+while getopts "a:b:c:de:f:g:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
   case $option in
     a) JVM_ARGS=$OPTARG
       ;;
@@ -201,6 +214,9 @@ while getopts "a:b:c:de:g:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
       ;;
 
     e) EXTRA_QDUP_ARGS=$OPTARG
+      ;;
+
+    f) OUTPUT_DIR=$OPTARG
       ;;
 
     g) GRAALVM_VERSION=$OPTARG
