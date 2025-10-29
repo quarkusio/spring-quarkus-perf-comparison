@@ -95,6 +95,9 @@ These tests are run on a regular schedule in Red Hat/IBM performance labs.
 The results are available in an internal [Horreum](https://github.com/Hyperfoil/Horreum) instance. 
 We are working on publishing these externally.
 
+## Further reading 
 
+- Why Quarkus is Fast: https://quarkus.io/performance/
+- How the Quarkus team measure performance (and some anti-patterns to be aware of): https://quarkus.io/guides/performance-measure
 
 
