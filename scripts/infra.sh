@@ -20,7 +20,29 @@ exit_abnormal() {
 
 start_postgres() {
   echo "Starting PostgreSQL database '${DB_CONTAINER_NAME}'"
-  local pid=$(${engine} run -d --rm --name ${DB_CONTAINER_NAME} -v ${thisdir}/dbdata:/docker-entrypoint-initdb.d:O -p 5432:5432 -e POSTGRES_USER=fruits -e POSTGRES_PASSWORD=fruits -e POSTGRES_DB=fruits postgres:17)
+  local pid=$(${engine} run \
+    -d \
+    --rm \
+    --name ${DB_CONTAINER_NAME} \
+    --mount type=tmpfs,destination=/var/lib/postgresql \
+    -v ${thisdir}/dbdata:/docker-entrypoint-initdb.d:O \
+    -p 5432:5432 \
+    -e POSTGRES_USER=fruits \
+    -e POSTGRES_PASSWORD=fruits \
+    -e POSTGRES_DB=fruits \
+    postgres:17 \
+    -c fsync=off \
+    -c synchronous_commit=off \
+    -c autovacuum=off \
+    -c full_page_writes=off \
+    -c wal_level=minimal \
+    -c archive_mode=off \
+    -c max_wal_senders=0 \
+    -c max_wal_size=4GB \
+    -c track_counts=off \
+    -c checkpoint_timeout=1h \
+    -c work_mem=32MB \
+    -c maintenance_work_mem=256MB)
   echo "PostgreSQL DB process: $pid"
 
   echo "Waiting for PostgreSQL to be ready..."
