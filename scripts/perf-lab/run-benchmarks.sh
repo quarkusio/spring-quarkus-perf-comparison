@@ -126,6 +126,24 @@ make_json_array() {
   echo "['${jsonArray// /','}']"
 }
 
+setup_jbang() {
+  if command -v jbang &> /dev/null; then
+    echo "Using installed jbang ($(jbang --version))"
+    JBANG_CMD="jbang"
+  else
+    echo "jbang not found locally. Using jbang wrapper..."
+
+    # Download the jbang wrapper if it doesn't exist
+    if [ ! -f ".jbang-wrapper" ]; then
+
+      chmod +x .jbang-wrapper
+    fi
+
+    JBANG_CMD="./.jbang-wrapper"
+    echo "Using jbang wrapper"
+  fi
+}
+
 run_benchmarks() {
 # jbang -Dqdup.console.level="ALL" qDup@hyperfoil \
 
@@ -139,7 +157,7 @@ run_benchmarks() {
 #print_values
 
 #  jbang qDup@hyperfoil --trace="target" \
-jbang qDup@hyperfoil \
+${JBANG_CMD} qDup@hyperfoil \
     -C \
     -B ${OUTPUT_DIR} \
     -ix \
@@ -299,4 +317,5 @@ while getopts "a:b:c:de:f:g:h:i:j:l:m:n:o:p:q:r:s:t:u:v:w:x:" option; do
 done
 
 validate_values
+setup_jbang
 run_benchmarks
