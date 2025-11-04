@@ -275,6 +275,7 @@ scripts:
     - sh: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - script: start-test-services
         - script: sync-drop-fs-cache
         - sh: node ${{SCRIPTS_DIR}}/time.js "${{= "${{RUNTIME.runCmd}}".trim().replace(/  +/g, ' ') }}" ${{TARGET_URL}} | awk '{print $1}'
           then:
@@ -284,6 +285,7 @@ scripts:
             array: RUN.output.results.${{RUNTIME.name}}.startup.timings
             value: ${{START_TIME}}
         - sh: sleep ${{PAUSE_TIME}}
+        - script: stop-test-services
     - script: state-array-calc-avg
       with:
         var-name: RUN.output.results.${{RUNTIME.name}}.startup.avStartTime
@@ -296,6 +298,7 @@ scripts:
     - sh: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - script: start-test-services
         - script: sync-drop-fs-cache
         - sh: ${{RUNTIME.runCmd}} 2>&1 >${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log &
         - sh: APP_PID=$!
@@ -318,6 +321,7 @@ scripts:
             value: ${{= ${{FIRST_REQUEST}}/1024 }}
         - sh: kill -15 $APP_PID
         - sh: sleep ${{PAUSE_TIME}}
+        - script: stop-test-services
     - script: state-array-calc-avg
       with:
         var-name: RUN.output.results.${{RUNTIME.name}}.rss.avStartupRss
@@ -333,6 +337,7 @@ scripts:
     - sh: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
         - sh: ${{RUNTIME.runCmd}} 2>&1 >${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log &
@@ -407,6 +412,7 @@ scripts:
             value: ${{= ${{THROUGHPUT}}/${{RSS}}*1024 }}
         - sh: kill -15 $APP_PID
         - sh: sleep ${{PAUSE_TIME}}
+        - script: stop-test-services
     - script: state-array-calc-avg
       with:
         var-name: RUN.output.results.${{RUNTIME.name}}.load.avThroughput
@@ -481,7 +487,6 @@ roles:
       - ensure-requirements
       - clone-repo
       - stop-test-services
-      - start-test-services
     run-scripts:
       - run-tests
     cleanup-scripts:
