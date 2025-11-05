@@ -458,8 +458,10 @@ roles:
   test-cgroups:
     hosts:
       - target-host
-      # - target-host-root
+      - target-host-root
     setup-scripts:
+      - detect-os
+      - capture-os-info
       - create-cgroup:
         with:
           CGROUP_NAME: ${{config.cgroup.name}}

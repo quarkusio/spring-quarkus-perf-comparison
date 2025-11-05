@@ -203,6 +203,7 @@ ${JBANG_CMD} qDup@hyperfoil \
     -S config.repo.url=${SCM_REPO_URL} \
     -S env.USER=${USER} \
     -S env.TARGET=${target} \
+    -S env.HOST=${HOST} \
     -S config.num_iterations=${ITERATIONS} \
     -S PROJ_REPO_NAME="$(basename ${SCM_REPO_URL} .git)" \
     -S RUNTIMES="$(make_json_array $RUNTIMES)" \
