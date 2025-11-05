@@ -82,11 +82,11 @@ push_results() {
 
   # Issue a PR
   echo "Creating PR"
-#  gh pr create \
-#    -l perf-lab-run \
-#    -t "Adding results from perf lab run ${jobName}.${currentDateTime}" \
-#    -b "This PR was automatically created to add the results from the perf lab run ${jobName}.${currentDateTime}." \
-#    -B main
+  gh pr create \
+    -l perf-lab-run \
+    -t "Adding results from perf lab run ${jobName}.${currentDateTime}" \
+    -b "This PR was automatically created to add the results from the perf lab run ${jobName}.${currentDateTime}." \
+    -B main
 
   # Log out GH CLI
   gh auth logout -u quarkusbot
