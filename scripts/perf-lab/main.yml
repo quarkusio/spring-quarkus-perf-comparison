@@ -457,7 +457,7 @@ hosts:
 roles:
   test-cgroups:
     hosts:
-      - target-host
+#      - target-host
       - target-host-root
     setup-scripts:
       - detect-os
