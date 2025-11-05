@@ -142,12 +142,6 @@ make_json_array() {
   echo "$json"
 }
 
-#make_json_array() {
-#  local bashArray=("$@")
-#  local jsonArray="${bashArray[*]}"
-#  echo "['${jsonArray// /','}']"
-#}
-
 setup_jbang() {
   if command -v jbang &> /dev/null; then
     echo "Using installed jbang ($(jbang --version))"
@@ -176,8 +170,6 @@ run_benchmarks() {
   fi
 
 #print_values
-
-set -x
 
 #  jbang qDup@hyperfoil --trace="target" \
 ${JBANG_CMD} qDup@hyperfoil \
