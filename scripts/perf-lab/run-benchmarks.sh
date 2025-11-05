@@ -124,10 +124,29 @@ print_values() {
 }
 
 make_json_array() {
-  local bashArray=("$@")
-  local jsonArray="${bashArray[*]}"
-  echo "['${jsonArray// /','}']"
+  local items=($@)  # Split on whitespace into array
+  local json="["
+  local first=true
+
+  for item in "${items[@]}"; do
+    if [ "$first" = true ]; then
+      first=false
+    else
+      json+=","
+    fi
+
+    json+="\"$item\""
+  done
+
+  json+="]"
+  echo "$json"
 }
+
+#make_json_array() {
+#  local bashArray=("$@")
+#  local jsonArray="${bashArray[*]}"
+#  echo "['${jsonArray// /','}']"
+#}
 
 setup_jbang() {
   if command -v jbang &> /dev/null; then
@@ -186,9 +205,9 @@ ${JBANG_CMD} qDup@hyperfoil \
     -S env.TARGET=${target} \
     -S config.num_iterations=${ITERATIONS} \
     -S PROJ_REPO_NAME="$(basename ${SCM_REPO_URL} .git)" \
-    -S RUNTIMES="$(make_json_array ${RUNTIMES})" \
+    -S RUNTIMES="$(make_json_array $RUNTIMES)" \
     -S PAUSE_TIME=${WAIT_TIME} \
-    -S TESTS="$(make_json_array ${TESTS_TO_RUN})" \
+    -S TESTS="$(make_json_array $TESTS_TO_RUN)" \
     -S DROP_OS_FILESYSTEM_CACHES=${DROP_OS_FILESYSTEM_CACHES}
 }
 
