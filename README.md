@@ -7,7 +7,7 @@ This project contains the following modules:
 - [quarkus3](quarkus3)
     - A Quarkus 3.x version of the application
 - [quarkus3-spring-compatibility](quarkus3-spring-compatibility)
-    - A Quarkus 3.x version of the application using the Spring compatibility layer
+    - A Quarkus 3.x version of the application using the Spring compatibility layer. You can also recreate this application from the spring application using [a few manual steps](spring-conversion.md).
  
 ## Building
 
