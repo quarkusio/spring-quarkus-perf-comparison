@@ -89,6 +89,7 @@ states:
 
   REPO_DIR: ${{BASE_DIR}}/spring-quarkus-perf-comparison
   SCRIPTS_DIR: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/perf-lab
+  JS_SCRIPTS_DIR: ${{SCRIPTS_DIR}}/scripts
   SPRING3_BOOT_DIR: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/springboot3
   QUARKUS3_DIR : ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/quarkus3
   TARGET_URL: http://localhost:8080/fruits
@@ -133,7 +134,7 @@ scripts:
     - log: Checked out repo
     - sh: git remote get-url origin
     - sh: git branch --show-current
-    - sh: cd ${{SCRIPTS_DIR}}
+    - sh: cd ${{JS_SCRIPTS_DIR}}
     - sh: npm install axios@0.27.2
 
   update-spring-boot-version:
@@ -277,7 +278,7 @@ scripts:
       then:
         - script: start-test-services
         - script: sync-drop-fs-cache
-        - sh: node ${{SCRIPTS_DIR}}/time.js "${{= "${{RUNTIME.runCmd}}".trim().replace(/  +/g, ' ') }}" ${{TARGET_URL}} | awk '{print $1}'
+        - sh: node ${{JS_SCRIPTS_DIR}}/time.js "${{= "${{RUNTIME.runCmd}}".trim().replace(/  +/g, ' ') }}" ${{TARGET_URL}} | awk '{print $1}'
           then:
           - set-state:   START_TIME
         - script: state-array-push
