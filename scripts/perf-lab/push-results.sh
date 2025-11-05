@@ -57,9 +57,7 @@ push_results() {
   # Copy over the results into a new directory named with the current date/time
   mkdir -p ${resultsDir}
 
-  cp -vR ${RUN_RESULTS_DIR}/* ${resultsDir}/
-  
-  echo "resultsDir (${resultsDir})"
+  cp -R ${RUN_RESULTS_DIR}/* ${resultsDir}/
 
   # Strip out the .env section of the json
   jq 'del(.env)' ${resultsDir}/metrics.json > ${resultsDir}/metrics.json.tmp && \
@@ -70,6 +68,8 @@ push_results() {
   cp -f ${resultsDir}/metrics.json results/${jobName}-latest.json
 
   # Add things to git
+  git config --local user.email quarkusio+quarkusbot@gmail.com
+  git config --local user.name quarkusbot
   git add results
 
   # Commit
