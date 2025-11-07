@@ -155,6 +155,33 @@ AVG time to first request: 0.150 sec
 -------------------------------------------------
 ```
 
+
+#### Measuring energy consumption 
+
+You can also measure energy consumption, rather than throughput. 
+This tooling is still evolving,  so the current process is a bit manual and needs several windows. The current tooling requires MacOS or Linux.
+
+1. Clone the `power-server` utilities, https://github.com/metacosm/power-server. These provide an hardware-independent abstraction layer over hardware power metric tooling. 
+2. Build with `mvn verify`
+3. Change directory to the cli: `cd cli`
+4. In the first window, launch the Spring or Quarkus application, wrapped in the power-server application:
+```shell
+<your-code-dir>/spring-quarkus-perf-comparison/scripts/infra.sh -s
+java -jar target/quarkus-app/quarkus-run.jar -c "java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m -jar <your-code-dir>/spring-quarkus-perf-comparison/quarkus3/target/quarkus-app/quarkus-run.jar"
+```
+or
+```shell
+<your-code-dir>/spring-quarkus-perf-comparison/scripts/infra.sh -s
+java -jar target/quarkus-app/quarkus-run.jar -c "java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m -jar <your-code-dir>/spring-quarkus-perf-comparison/springboot3/target/springboot3.jar"
+```
+5. Meanwhile, open a second window and start the load test. When it's finished it will stop the application, which will terminate the energy measurement:
+```
+<your-code-dir>/spring-quarkus-perf-comparison/scripts/energy-stress-and-stop.sh
+```
+
+The energy measurement is subject to the same qualifications as normal performance measurement; the processor's thermal regulation may affect results, without tuning the test paramers, on some systems the bottleneck may not be the application, and the timing between starting the application and starting the load test will also affect results.
+For more reliable, reproducible, results, these experiments should be done using the more advanced scripts, in a controlled environment.
+
 ### Acceptable: Run on a single machine, with solid automation and detailed output
 
 These scripts are being developed, but in the mean time if you are on a Linux machine with at least 12 cores you can use the [scripts used in Red Hat/IBM performance labs](https://github.com/quarkusio/spring-quarkus-perf-comparison/tree/main/scripts/perf-lab).
