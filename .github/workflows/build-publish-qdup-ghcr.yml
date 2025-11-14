@@ -1,0 +1,44 @@
+name: Build and publish orchestrator image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/perf-lab/**
+
+defaults:
+  run:
+    shell: bash
+    working-directory: scripts/perf-lab
+
+concurrency:
+  group: "workflow = ${{ github.workflow }}, ref = ${{ github.event.ref }}, pr = ${{ github.event.pull_request.id }}"
+  cancel-in-progress: false
+
+permissions:
+  packages: write
+
+jobs:
+  build-publish-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Podman
+        run: sudo apt-get update && sudo apt-get -y install podman
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and push container images
+        run: |
+          podman build \
+            -f benchmark-orchestrator.Dockerfile \
+            -t ghcr.io/${{ github.repository_owner }}/benchmark-orchestrator:latest \
+            -t ghcr.io/${{ github.repository_owner }}/benchmark-orchestrator:${{ github.sha }} \
+            -t ghcr.io/${{ github.repository_owner }}/benchmark-orchestrator:${{ github.ref_name }} \
+            --platform=linux/amd64,linux/arm64 \
+            --push
+            .
