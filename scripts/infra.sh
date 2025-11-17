@@ -21,6 +21,8 @@ exit_abnormal() {
 start_postgres() {
   echo "Starting PostgreSQL database '${DB_CONTAINER_NAME}'"
   local pid=$(${engine} run \
+    --cpus 2 \
+    --memory 128m \
     -d \
     --rm \
     --name ${DB_CONTAINER_NAME} \
