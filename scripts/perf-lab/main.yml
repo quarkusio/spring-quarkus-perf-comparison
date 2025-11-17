@@ -47,7 +47,7 @@ states:
       , updateVersion: "${{config.quarkus.version}}"
       , dir: "${{QUARKUS3_DIR}}"
       , buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests"
-      , "runCmd" : "${{BASE_JAVA_CMD}} -jar ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar"
+      , "runCmd" : "${{BASE_JAVA_CMD}} -jar $(realpath ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar)"
       },
     "quarkus3-native": {
       "name": "quarkus3-native"
@@ -56,7 +56,7 @@ states:
       , updateVersion: "${{config.quarkus.version}}"
       ,  dir: "${{QUARKUS3_DIR}}"
       , buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
-      , "runCmd" : "${{config.CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
+      , "runCmd" : "${{config.CMD_PREFIX}} $(realpath ${{QUARKUS3_DIR}}/target/quarkus3-runner) ${{config.jvm.memory}}"
       },
     "spring3-jvm" : {
       "name": "spring3-jvm"
@@ -65,7 +65,7 @@ states:
       , updateVersion: "${{config.springboot.version}}"
       , dir: "${{SPRING3_BOOT_DIR}}"
       , buildCmd: "./mvnw clean package -DskipTests"
-      , "runCmd" : "${{BASE_JAVA_CMD}} -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      , "runCmd" : "${{BASE_JAVA_CMD}} -jar $(realpath ${{SPRING3_BOOT_DIR}}/target/springboot3.jar)"
       },
     "spring3-jvm-aot" : {
       "name": "spring3-jvm-aot"
@@ -74,7 +74,7 @@ states:
       , updateVersion: "${{config.springboot.version}}"
       , dir: "${{SPRING3_BOOT_DIR}}"
       , buildCmd: "./mvnw clean compile spring-boot:process-aot package -DskipTests"
-      , "runCmd" : "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      , "runCmd" : "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar $(realpath ${{SPRING3_BOOT_DIR}}/target/springboot3.jar)"
       },
     "spring3-native" : {
       "name": "spring3-native"
@@ -83,7 +83,7 @@ states:
       , updateVersion: "${{config.springboot.version}}"
       , dir: "${{SPRING3_BOOT_DIR}}"
       , buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot.native_build_options}}"
-      , "runCmd" : "${{config.CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.jvm.memory}}"
+      , "runCmd" : "${{config.CMD_PREFIX}} $(realpath ${{SPRING3_BOOT_DIR}}/target/springboot3) ${{config.jvm.memory}}"
       }
   }
 
@@ -280,7 +280,7 @@ scripts:
         - script: sync-drop-fs-cache
         - sh: node ${{JS_SCRIPTS_DIR}}/time.js "${{= "${{RUNTIME.runCmd}}".trim().replace(/  +/g, ' ') }}" ${{TARGET_URL}} | awk '{print $1}'
           then:
-          - set-state:   START_TIME
+          - set-state: START_TIME
         - script: state-array-push
           with:
             array: RUN.output.results.${{RUNTIME.name}}.startup.timings

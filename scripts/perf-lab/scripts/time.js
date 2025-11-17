@@ -2,7 +2,7 @@ const spawn = require("child_process").spawn;
 const axios = require('axios');
 
 const pingIntervalMs = 5;
-const timeoutMs = 300000;
+const timeoutMs = 120000;
 
 const args = process.argv.slice(2);
 
