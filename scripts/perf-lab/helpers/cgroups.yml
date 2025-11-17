@@ -21,7 +21,7 @@ scripts:
           then:
             - script: sudo
               with:
-                command: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
+                command: mkdir -p /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks
             - script: sudo
               with:
                 command: chown -R ${{env.USER}} /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
@@ -34,9 +34,6 @@ scripts:
             - script: sudo
               with:
                 command: echo "+memory" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
-            - script: sudo
-              with:
-                command: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/
             - script: sudo
               with:
                 command: echo ${{CGROUP_CPUSET}} > /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/cpuset.cpus

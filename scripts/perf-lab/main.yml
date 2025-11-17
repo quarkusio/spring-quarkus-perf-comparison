@@ -17,8 +17,8 @@ states:
   config.quarkus.native_build_options: #-Dquarkus.native.native-image-xmx=<maximum_memory>
   config.springboot.native_build_options:
 
-  config.cgroup.cpu: "0,2,4,6,8,10,12,14"
-  config.cgroup.mem_max: "14G"
+  config.cgroup.cpu: #"0,2,4,6,8,10,12,14"
+  config.cgroup.mem_max: #"14G"
   config.cgroup.name: spring-quarkus-perf-comparison
 
   config.profiler.name: none #jfr flamegraph
