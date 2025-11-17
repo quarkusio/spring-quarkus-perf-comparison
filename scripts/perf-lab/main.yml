@@ -38,78 +38,69 @@ states:
   BASE_JAVA_CMD: ${{config.CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
   TESTS : [test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test]
   RUNTIMES: [quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native]
-
-  RUNTIMECMDS: {
-    "quarkus3-jvm": {
-      "name": "quarkus3-jvm"
-      , type: "jvm"
-      , updateScript: "update-quarkus-version"
-      , updateVersion: "${{config.quarkus.version}}"
-      , dir: "${{QUARKUS3_DIR}}"
-      , buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests"
-      , "runCmd" : "${{BASE_JAVA_CMD}} -jar $(realpath ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar)"
-      },
-    "quarkus3-native": {
-      "name": "quarkus3-native"
-      , type: "native"
-      , updateScript: "update-quarkus-version"
-      , updateVersion: "${{config.quarkus.version}}"
-      ,  dir: "${{QUARKUS3_DIR}}"
-      , buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
-      , "runCmd" : "${{config.CMD_PREFIX}} $(realpath ${{QUARKUS3_DIR}}/target/quarkus3-runner) ${{config.jvm.memory}}"
-      },
-    "spring3-jvm" : {
-      "name": "spring3-jvm"
-      , type: "jvm"
-      , updateScript: "update-spring-boot-version"
-      , updateVersion: "${{config.springboot.version}}"
-      , dir: "${{SPRING3_BOOT_DIR}}"
-      , buildCmd: "./mvnw clean package -DskipTests"
-      , "runCmd" : "${{BASE_JAVA_CMD}} -jar $(realpath ${{SPRING3_BOOT_DIR}}/target/springboot3.jar)"
-      },
-    "spring3-jvm-aot" : {
-      "name": "spring3-jvm-aot"
-      , type: "jvm"
-      , updateScript: "update-spring-boot-version"
-      , updateVersion: "${{config.springboot.version}}"
-      , dir: "${{SPRING3_BOOT_DIR}}"
-      , buildCmd: "./mvnw clean compile spring-boot:process-aot package -DskipTests"
-      , "runCmd" : "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar $(realpath ${{SPRING3_BOOT_DIR}}/target/springboot3.jar)"
-      },
-    "spring3-native" : {
-      "name": "spring3-native"
-      , type: "native"
-      , updateScript: "update-spring-boot-version"
-      , updateVersion: "${{config.springboot.version}}"
-      , dir: "${{SPRING3_BOOT_DIR}}"
-      , buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot.native_build_options}}"
-      , "runCmd" : "${{config.CMD_PREFIX}} $(realpath ${{SPRING3_BOOT_DIR}}/target/springboot3) ${{config.jvm.memory}}"
-      }
-  }
-
-  REPO_DIR: ${{BASE_DIR}}/spring-quarkus-perf-comparison
-  SCRIPTS_DIR: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/perf-lab
-  JS_SCRIPTS_DIR: ${{SCRIPTS_DIR}}/scripts
-  SPRING3_BOOT_DIR: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/springboot3
-  QUARKUS3_DIR : ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/quarkus3
   TARGET_URL: http://localhost:8080/fruits
   QUARKUS-PLATFORM-ARTIFACT-ID: quarkus-bom
   PROJ_REPO_NAME: spring-quarkus-perf-comparison
-  BASE_DIR: "~"
   METRICS_DIR: /tmp
   ASYNC_PROFILER: async-profiler
-  ASYNC_PROFILER_DIR: ${{BASE_DIR}}/${{ASYNC_PROFILER}}
+  RUNTIMECMDS:
+    - name: quarkus3-jvm
+      type: jvm
+      dir: ${{QUARKUS3_DIR}}
+      updateScript: update-quarkus-version
+      updateVersion: ${{config.quarkus.version}}
+      buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests"
+      runCmd: "${{BASE_JAVA_CMD}} -jar ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar"
+    - name: quarkus3-native
+      type: native
+      dir: ${{QUARKUS3_DIR}}
+      updateScript: update-quarkus-version
+      updateVersion: ${{config.quarkus.version}}
+      buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
+      runCmd: "${{config.CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
+    - name: spring3-jvm
+      type: jvm
+      dir: ${{SPRING3_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot.version}}
+      buildCmd: "./mvnw clean package -DskipTests"
+      runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+    - name: spring3-jvm-aot
+      type: jvm
+      dir: ${{SPRING3_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot.version}}
+      buildCmd: "./mvnw clean compile spring-boot:process-aot package -DskipTests"
+      runCmd: "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+    - name: spring3-native
+      type: native
+      dir: ${{SPRING3_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot.version}}
+      buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot.native_build_options}}"
+      runCmd: "${{config.CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.jvm.memory}}"
 
 scripts:
+  update-state:
+    - sh: echo $(realpath ~)
+    - set-state: RUN.BASE_DIR
+    - set-state: RUN.REPO_DIR ${{BASE_DIR}}/spring-quarkus-perf-comparison
+    - set-state: RUN.SCRIPTS_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/perf-lab
+    - set-state: RUN.JS_SCRIPTS_DIR ${{SCRIPTS_DIR}}/scripts
+    - set-state: RUN.SPRING3_BOOT_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/springboot3
+    - set-state: RUN.QUARKUS3_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/quarkus3
+    - set-state: RUN.ASYNC_PROFILER_DIR ${{BASE_DIR}}/${{ASYNC_PROFILER}}
+
   output-vars:
     - log: |
         "Config: ${{config}}"
         "ENV: ${{env}}"
         "BASE_DIR: ${{BASE_DIR}}"
         "REPO_DIR: ${{REPO_DIR}}"
-        "SCRIPTS_DIR: ${{SCRIPTS_DIR}}"
+        "SCRIPTS_DIR: ${{HOST,SCRIPTS_DIR}}"
         "SPRING3_BOOT_DIR: ${{SPRING3_BOOT_DIR}}"
-        "QUARKUS3_DIR : ${{QUARKUS3_DIR }}"
+        "QUARKUS3_DIR : ${{QUARKUS3_DIR}}"
+        "RUNTIMECMDS: ${{RUNTIMECMDS}}"
 
   cleanup-env:
     - script: sudo
@@ -154,10 +145,10 @@ scripts:
     - sh: ./mvnw versions:set-property -Dproperty=quarkus.platform.version -DnewVersion=${{VERSION}}
 
   start-test-services:
-    - sh: $(realpath ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh) -s
+    - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -s
 
   stop-test-services:
-    - sh: $(realpath ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh) -d
+    - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -d
 
   run-tests:
     - sh: java -version
@@ -169,17 +160,18 @@ scripts:
     - log: cgroups configured - continuing
     - for-each: RUNTIME ${{RUNTIMES}}
       then:
-        - log: "Updating version: ${{${{RUNTIMECMDS.${{RUNTIME}}}}.updateVersion:}}"
-        - script: ${{${{RUNTIMECMDS.${{RUNTIME}}}}.updateScript:abort-script-not-found}}
+        - set-state: RUNTIMECMD ${{RUNTIMECMDS[?(@.name == '${{RUNTIME}}')]}}
+        - log: "Updating version: ${{RUNTIMECMD.updateVersion:}}"
+        - script: ${{RUNTIMECMD.updateScript:abort-script-not-found}}
           with:
-            DIR: ${{${{RUNTIMECMDS.${{RUNTIME}}}}.dir}}
-            VERSION: ${{${{RUNTIMECMDS.${{RUNTIME}}}}.updateVersion:}}
+            DIR: ${{RUNTIMECMD.dir}}
+            VERSION: ${{RUNTIMECMD.updateVersion:}}
         - log: "Testing: ${{RUNTIME}}"
         - for-each: TEST ${{TESTS}}
           then:
           - script: ${{TEST}}
             with:
-              RUNTIME: ${{RUNTIMECMDS.${{RUNTIME}}}}
+              RUNTIME: ${{RUNTIMECMD}}
     - script: download-metrics
 
   abort-script-not-found:
@@ -477,6 +469,7 @@ roles:
     hosts:
       - target-host
     setup-scripts:
+      - update-state
 #      - output-vars
       - detect-os
       - capture-os-info
@@ -493,4 +486,3 @@ roles:
       - download-metrics
       - stop-test-services
 #      - cleanup-env
-      # - remove-installed-packages
