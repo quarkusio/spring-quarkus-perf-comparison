@@ -154,12 +154,10 @@ scripts:
     - sh: ./mvnw versions:set-property -Dproperty=quarkus.platform.version -DnewVersion=${{VERSION}}
 
   start-test-services:
-    - sh: cd ${{REPO_DIR}}/${{PROJ_REPO_NAME}}
-    - sh: scripts/infra.sh -s
+    - sh: $(realpath ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh) -s
 
   stop-test-services:
-    - sh: cd ${{REPO_DIR}}/${{PROJ_REPO_NAME}}
-    - sh: scripts/infra.sh -d
+    - sh: $(realpath ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh) -d
 
   run-tests:
     - sh: java -version

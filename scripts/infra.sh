@@ -20,6 +20,13 @@ exit_abnormal() {
 
 start_postgres() {
   echo "Starting PostgreSQL database '${DB_CONTAINER_NAME}'"
+
+  local image="postgres:17"
+
+  if [[ "$engine" == "podman" ]]; then
+    local image="docker.io/${image}"
+  fi
+
   local pid=$(${engine} run \
     --cpus 2 \
     --memory 2g \
@@ -32,7 +39,7 @@ start_postgres() {
     -e POSTGRES_USER=fruits \
     -e POSTGRES_PASSWORD=fruits \
     -e POSTGRES_DB=fruits \
-    postgres:17 \
+    ${image} \
     -c fsync=off \
     -c synchronous_commit=off \
     -c autovacuum=off \
