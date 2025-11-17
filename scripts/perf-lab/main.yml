@@ -97,7 +97,7 @@ scripts:
         "ENV: ${{env}}"
         "BASE_DIR: ${{BASE_DIR}}"
         "REPO_DIR: ${{REPO_DIR}}"
-        "SCRIPTS_DIR: ${{HOST,SCRIPTS_DIR}}"
+        "SCRIPTS_DIR: ${{SCRIPTS_DIR}}"
         "SPRING3_BOOT_DIR: ${{SPRING3_BOOT_DIR}}"
         "QUARKUS3_DIR : ${{QUARKUS3_DIR}}"
         "RUNTIMECMDS: ${{RUNTIMECMDS}}"
