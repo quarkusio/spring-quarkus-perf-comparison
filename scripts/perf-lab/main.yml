@@ -4,8 +4,8 @@ states:
   env.HOST: 127.0.0.1
   env.TARGET: ${{env.USER}}@${{env.HOST}}
 
-  config.jvm.version: 25-tem
-  config.jvm.graalvm.version: 25-graalce
+  config.jvm.version: 25.0.1-tem
+  config.jvm.graalvm.version: 25.0.1-graalce
 
   config.quarkus.version: #3.28.3
   config.springboot.version: #3.5.6
@@ -452,13 +452,11 @@ scripts:
 
 hosts:
   target-host: ${{env.TARGET}}
-  target-host-root: root@${{env.HOST}}
 
 roles:
   test-cgroups:
     hosts:
-#      - target-host
-      - target-host-root
+      - target-host
     setup-scripts:
       - detect-os
       - capture-os-info

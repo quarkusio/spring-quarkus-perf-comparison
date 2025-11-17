@@ -7,7 +7,9 @@ scripts:
       then:
         - regex: linux
           then:
-            - sh: echo ${{SHELL_PID}} >> /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/cgroup.procs
+            - script: sudo
+              with:
+                command: echo ${{SHELL_PID}} >> /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/cgroup.procs
           else:
             - log: "Non-Linux OS doesn't support cgroups"
     - signal: CGROUP_${{CGROUP_NAME:perf-cgroup}}_DONE
@@ -17,13 +19,27 @@ scripts:
       then:
         - regex: linux
           then:
-            - sh: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
-            - sh: echo "+cpu" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
-            - sh: echo "+cpuset" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
-            - sh: echo "+memory" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
-            - sh: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/
-            - sh: echo ${{CGROUP_CPUSET}} > /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/cpuset.cpus
-            - sh: echo ${{CGROUP_MAX_MEM}} >  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/memory.max
+            - script: sudo
+              with:
+                command: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
+            - script: sudo
+              with:
+                command: echo "+cpu" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - script: sudo
+              with:
+                command: echo "+cpuset" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - script: sudo
+              with:
+                command: echo "+memory" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - script: sudo
+              with:
+                command: mkdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/
+            - script: sudo
+              with:
+                command: echo ${{CGROUP_CPUSET}} > /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/cpuset.cpus
+            - script: sudo
+              with:
+                command: echo ${{CGROUP_MAX_MEM}} >  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/memory.max
           else:
             - log: "Non-Linux OS doesn't support cgroups"
 
@@ -32,10 +48,20 @@ scripts:
       then:
         - regex: linux
           then:
-            - sh: echo "-cpu" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
-            - sh: echo "-cpuset" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
-            - sh: echo "-memory" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
-            - sh: rmdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/
-            - sh: rmdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
+            - script: sudo
+              with:
+                command: echo "-cpu" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - script: sudo
+              with:
+                command: echo "-cpuset" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - script: sudo
+              with:
+                command: echo "-memory" >>  /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/cgroup.subtree_control
+            - script: sudo
+              with:
+                command: rmdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/tasks/
+            - script: sudo
+              with:
+                command: rmdir /sys/fs/cgroup/${{CGROUP_NAME:perf-cgroup}}/
           else:
             - log: "Non-Linux OS doesn't support cgroups"
