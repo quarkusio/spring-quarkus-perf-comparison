@@ -18,11 +18,28 @@ exit_abnormal() {
   exit 1
 }
 
+# Wrapper to handle rootless podman cgroup issues on Linux
+run_with_cgroup_support() {
+  # Check if we're on Linux with rootless podman
+  if [ "$(uname)" = "Linux" ] && [ "$engine" = "podman" ] && [ "$(id -u)" -ne 0 ]; then
+    # Linux rootless podman - use systemd-run for proper cgroup delegation
+    if command -v systemd-run >/dev/null 2>&1; then
+      systemd-run --user --scope --quiet -- "$@"
+    else
+    # systemd-run not found, running without cgroup delegation (resource limits may not work)
+      "$@"
+    fi
+  else
+    # macOS, Docker, or rootful podman - run directly
+    "$@"
+  fi
+}
+
 start_postgres() {
   echo "Starting PostgreSQL database '${DB_CONTAINER_NAME}'"
 
   local image="quay.io/rhappsvcs/postgres:17"
-  local pid=$(${engine} run \
+  local pid=$(run_with_cgroup_support ${engine} run \
     --cpus 2 \
     --memory 2g \
     -d \
