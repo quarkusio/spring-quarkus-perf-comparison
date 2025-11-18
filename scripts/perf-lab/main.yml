@@ -293,7 +293,6 @@ scripts:
         - script: sync-drop-fs-cache
         - sh: ${{RUNTIME.runCmd}} 2>&1 >${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log &
         - sh: APP_PID=$!
-        - log: $APP_PID
         - sh: sleep ${{PAUSE_TIME}}
         - sh: pmap -x $APP_PID | grep total | awk '{print $4}'
           then:
@@ -331,11 +330,11 @@ scripts:
         - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
-        - sh: ${{RUNTIME.runCmd}} 2>&1 >${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log &
-        - sh: APP_PID=$!
-        - sh: echo $APP_PID
-          then:
-            - set-state: JVM_PID
+        - sh: ${{RUNTIME.runCmd}} &>${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log &
+        - sh: PID=$!
+        - sh: echo $PID
+        - set-state: JVM_PID
+        - log: JVM_PID = ${{JVM_PID}}
         - read-state: ${{config.profiler.name}}
           then:
             - regex: "jfr|flamegraph"
@@ -390,7 +389,7 @@ scripts:
             array: RUN.output.results.${{RUNTIME.name}}.load.requestTimeouts
             value: ${{REQUEST_TIMEOUTS}}
 
-        - sh: pmap -x $APP_PID | grep total | awk '{print $4}'
+        - sh: pmap -x $PID | grep total | awk '{print $4}'
           then:
             - set-state: RSS
         - script: state-array-push
@@ -401,7 +400,7 @@ scripts:
           with:
             array: RUN.output.results.${{RUNTIME.name}}.load.throughputDensity
             value: ${{= ${{THROUGHPUT}}/${{RSS}}*1024 }}
-        - sh: kill -15 $APP_PID
+        - sh: kill -15 $PID
         - sh: sleep ${{PAUSE_TIME}}
         - script: stop-test-services
     - script: state-array-calc-avg
