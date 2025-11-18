@@ -145,6 +145,7 @@ scripts:
     - sh: ./mvnw versions:set-property -Dproperty=quarkus.platform.version -DnewVersion=${{VERSION}}
 
   start-test-services:
+    - script: check-cgroup-delegation
     - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -s
 
   stop-test-services:

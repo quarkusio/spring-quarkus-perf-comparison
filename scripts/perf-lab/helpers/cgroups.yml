@@ -1,5 +1,22 @@
 name: cgroups related scripts
 scripts:
+  check-cgroup-delegation:
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - script: sudo
+              with:
+                command: sh -c 'mkdir -p /etc/systemd/system/user@.service.d/'
+            - script: sudo
+              with:
+                command: sh -c 'echo -e "[Service]\nDelegate=yes" | tee /etc/systemd/system/user@.service.d/delegate.conf'
+            - script: sudo
+              with:
+                command: sh -c 'systemctl daemon-reload'
+          else:
+            - log: "Non-Linux OS doesn't support cgroups"
+
   join-cgroup:
     - set-signal: CGROUP_${{CGROUP_NAME:perf-cgroup}}_SET 1
     - wait-for: CGROUP_${{CGROUP_NAME:perf-cgroup}}_SET
