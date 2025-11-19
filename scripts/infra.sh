@@ -7,8 +7,12 @@ help() {
   echo
   echo "Syntax: infra.sh [options]"
   echo "options:"
+  echo " -c <CPUS>             The number of cpus to allocate"
   echo " -d                    Destroy the services"
   echo " -h                    Prints this help message"
+  echo " -m <MEMORY>           Memory to allocate"
+  echo "                         Default: ${MEMORY}"
+  echo " -p <CPUSET_CPUS>      CPUs in which to allow execution (0-3, 0,1)"
   echo " -s                    Start the services"
 }
 
@@ -38,20 +42,27 @@ run_with_cgroup_support() {
 start_postgres() {
   echo "Starting PostgreSQL database '${DB_CONTAINER_NAME}'"
 
-  local image="quay.io/rhappsvcs/postgres:17"
+  local cpuset_flag=""
+  local cpus_flag=""
+
+  if [ -n "$CPUS" ]; then
+    cpus_flag="--cpus ${CPUS}"
+  fi
+
+  if [ -n "${CPUSET_CPUS}" ] && [ "$(uname)" = "Linux" ]; then
+    # Only use --cpuset-cpus on Linux (if set at all)
+    cpuset_flag="--cpuset-cpus ${CPUSET_CPUS}"
+  fi
+
   local pid=$(run_with_cgroup_support ${engine} run \
-    --cpus 2 \
-    --memory 2g \
+    ${cpus_flag} \
+    ${cpuset_flag} \
+    --memory ${MEMORY} \
     -d \
     --rm \
     --name ${DB_CONTAINER_NAME} \
-    --mount type=tmpfs,destination=/var/lib/postgresql \
-    -v ${thisdir}/dbdata:/docker-entrypoint-initdb.d:O \
     -p 5432:5432 \
-    -e POSTGRES_USER=fruits \
-    -e POSTGRES_PASSWORD=fruits \
-    -e POSTGRES_DB=fruits \
-    ${image} \
+    ghcr.io/quarkusio/postgres-17-perf:main \
     -c fsync=off \
     -c synchronous_commit=off \
     -c autovacuum=off \
@@ -89,13 +100,12 @@ stop_services() {
   stop_postgres
 }
 
-if [ "$#" -ne 1 ]; then
-  exit_abnormal
-fi
-
 DB_CONTAINER_NAME="fruits_db"
-
+CPUS=""
+CPUSET_CPUS=""
+MEMORY="2g"
 engine=""
+IS_STARTING=true
 
 if command -v podman >/dev/null 2>&1; then
   engine="podman"
@@ -109,21 +119,34 @@ fi
 echo "Using $engine to start/stop containers"
 
 # Process the input options
-while getopts "dhs" option; do
+while getopts "c:dhm:p:s" option; do
   case $option in
-    d) stop_services
-       exit
+    c) CPUS=$OPTARG
+       ;;
+
+    d) IS_STARTING=false
        ;;
 
     h) help
        exit
        ;;
 
-    s) start_services
-       exit
+    m) MEMORY=$OPTARG
+       ;;
+
+    p) CPUSET_CPUS=$OPTARG
+       ;;
+
+    s) IS_STARTING=true
        ;;
 
     *) exit_abnormal
        ;;
   esac
 done
+
+if [ "${IS_STARTING}" = true ]; then
+  start_services
+else
+  stop_services
+fi

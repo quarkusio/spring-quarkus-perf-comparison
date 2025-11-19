@@ -11,15 +11,15 @@ states:
   config.springboot.version: #3.5.6
 
   config.jvm.memory: #-Xmx128m
-  config.jvm.args:
-  config.CMD_PREFIX: #taskset --cpu-list 0-3
+  config.jvm.args: #-XX:+UseNUMA
 
   config.quarkus.native_build_options: #-Dquarkus.native.native-image-xmx=<maximum_memory>
   config.springboot.native_build_options:
 
-  config.cgroup.cpu: #"0,2,4,6,8,10,12,14"
-  config.cgroup.mem_max: #"14G"
-  config.cgroup.name: spring-quarkus-perf-comparison
+  config.resources.cpu.app: 0-3
+  config.resources.cpu.db: 4-6
+  config.resources.cpu.load_generator: 7-9
+  config.resources.cpu.1st_request: 10
 
   config.profiler.name: none #jfr flamegraph
   config.profiler.events: cpu
@@ -29,13 +29,15 @@ states:
 
   config.num_iterations: 3
 
-  RUN.WRK_BIN: jbang wrk@hyperfoil
+  APP_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.app}}
+  LOAD_GEN_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.load_generator}}
+  RUN.WRK_BIN: ${{LOAD_GEN_CMD_PREFIX}} jbang -R -XX:+UseNUMA wrk@hyperfoil
 
   DROP_OS_FILESYSTEM_CACHES:
   QUARKUS_MAVEN_OPTIONS:
   PAUSE_TIME: 5
   PROFILER_JVM_ARGS:
-  BASE_JAVA_CMD: ${{config.CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
+  BASE_JAVA_CMD: ${{APP_CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
   TESTS : [test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test]
   RUNTIMES: [quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native]
   TARGET_URL: http://localhost:8080/fruits
@@ -57,7 +59,7 @@ states:
       updateScript: update-quarkus-version
       updateVersion: ${{config.quarkus.version}}
       buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
-      runCmd: "${{config.CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
+      runCmd: "${{APP_CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
     - name: spring3-jvm
       type: jvm
       dir: ${{SPRING3_BOOT_DIR}}
@@ -78,7 +80,7 @@ states:
       updateScript: update-spring-boot-version
       updateVersion: ${{config.springboot.version}}
       buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot.native_build_options}}"
-      runCmd: "${{config.CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.jvm.memory}}"
+      runCmd: "${{APP_CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.jvm.memory}}"
 
 scripts:
   update-state:
@@ -86,7 +88,7 @@ scripts:
     - set-state: RUN.BASE_DIR
     - set-state: RUN.REPO_DIR ${{BASE_DIR}}/spring-quarkus-perf-comparison
     - set-state: RUN.SCRIPTS_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/perf-lab
-    - set-state: RUN.JS_SCRIPTS_DIR ${{SCRIPTS_DIR}}/scripts
+    - set-state: RUN.HELPER_SCRIPTS_DIR ${{SCRIPTS_DIR}}/scripts
     - set-state: RUN.SPRING3_BOOT_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/springboot3
     - set-state: RUN.QUARKUS3_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/quarkus3
     - set-state: RUN.ASYNC_PROFILER_DIR ${{BASE_DIR}}/${{ASYNC_PROFILER}}
@@ -125,7 +127,7 @@ scripts:
     - log: Checked out repo
     - sh: git remote get-url origin
     - sh: git branch --show-current
-    - sh: cd ${{JS_SCRIPTS_DIR}}
+    - sh: cd ${{HELPER_SCRIPTS_DIR}}
     - sh: npm install axios@0.27.2
 
   update-spring-boot-version:
@@ -145,7 +147,7 @@ scripts:
     - sh: ./mvnw versions:set-property -Dproperty=quarkus.platform.version -DnewVersion=${{VERSION}}
 
   start-test-services:
-    - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -s
+    - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -c 3 -p '${{config.resources.cpu.db}}' -s
 
   stop-test-services:
     - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -d
@@ -154,10 +156,6 @@ scripts:
     - sh: java -version
     - sh: echo $$
     - set-state: RUN.SHELL_PID
-    - signal: CGROUP_${{config.cgroup.name}}_SET
-    - log: waiting for cgroups to be configured
-    - wait-for: CGROUP_${{config.cgroup.name}}_DONE
-    - log: cgroups configured - continuing
     - for-each: RUNTIME ${{RUNTIMES}}
       then:
         - set-state: RUNTIMECMD ${{RUNTIMECMDS[?(@.name == '${{RUNTIME}}')]}}
@@ -269,9 +267,12 @@ scripts:
       then:
         - script: start-test-services
         - script: sync-drop-fs-cache
-        - sh: node ${{JS_SCRIPTS_DIR}}/time.js "${{= "${{RUNTIME.runCmd}}".trim().replace(/  +/g, ' ') }}" ${{TARGET_URL}} | awk '{print $1}'
+        - sh: ${{RUNTIME.runCmd}} &>${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log &
+        - sh: APP_PID=$!
+        - sh: taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh ${{TARGET_URL}} | awk '{print $1}'
           then:
-          - set-state: START_TIME
+            - set-state: START_TIME
+        - sh: kill -15 $APP_PID
         - script: state-array-push
           with:
             array: RUN.output.results.${{RUNTIME.name}}.startup.timings
@@ -353,12 +354,12 @@ scripts:
                     events: ${{config.profiler.events}}
                     delay: 10s
         - sh: sleep ${{PAUSE_TIME}}
-        - sh: ${{RUN.WRK_BIN}} -t 16 -c 100 -d 120 ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
+        - sh: ${{RUN.WRK_BIN}} -t2 -c100 -d2m ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
         - regex: unable to connect
           then:
             - abort: unable to connect to target application
         - signal: LOAD_STEADY_STATE_START
-        - sh: ${{RUN.WRK_BIN}} -t 16 -c 100 -d 30 ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
+        - sh: ${{RUN.WRK_BIN}} -t2 -c100 -d30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log | grep "Requests/sec" | awk '{print $2}'
           then:
             - set-state: THROUGHPUT
@@ -444,27 +445,6 @@ hosts:
   target-host: ${{env.TARGET}}
 
 roles:
-  test-cgroups:
-    hosts:
-      - target-host
-    setup-scripts:
-      - detect-os
-      - capture-os-info
-      - create-cgroup:
-        with:
-          CGROUP_NAME: ${{config.cgroup.name}}
-          CGROUP_CPUSET: ${{config.cgroup.cpu}}
-          CGROUP_MAX_MEM: ${{config.cgroup.mem_max}}
-    run-scripts:
-      - join-cgroup:
-        with:
-          CGROUP_NAME: ${{config.cgroup.name}}
-          SHELL_PID: ${{RUN.SHELL_PID}}
-    cleanup-scripts:
-      - delete-cgroup:
-        with:
-          CGROUP_NAME: ${{config.cgroup.name}}
-
   test-runner:
     hosts:
       - target-host

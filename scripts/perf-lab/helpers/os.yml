@@ -68,9 +68,9 @@ scripts:
     - sh: sudo purge
 
   sync-drop-fs-cache:
-    - sh: sync
     - read-state: ${{DROP_OS_FILESYSTEM_CACHES:false}}
       then:
         - regex: true
           then:
+            - sh: sync
             - script: sync-drop-fs-cache-${{os}}
