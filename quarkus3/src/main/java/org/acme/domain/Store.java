@@ -1,6 +1,5 @@
 package org.acme.domain;
 
-import java.util.Objects;
 import java.util.StringJoiner;
 
 import jakarta.persistence.Column;
@@ -71,16 +70,4 @@ public class Store {
         .toString();
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    Store store = (Store) o;
-    return Objects.equals(id, store.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id);
-  }
 }

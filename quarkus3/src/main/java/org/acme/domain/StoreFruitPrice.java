@@ -1,7 +1,6 @@
 package org.acme.domain;
 
 import java.math.BigDecimal;
-import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -70,14 +69,4 @@ public class StoreFruitPrice {
   public BigDecimal getPrice() { return price; }
   public void setPrice(BigDecimal price) { this.price = price; }
 
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof StoreFruitPrice that)) return false;
-    return Objects.equals(id, that.id);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hashCode(id);
-  }
 }
