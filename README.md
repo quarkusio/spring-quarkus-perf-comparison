@@ -95,11 +95,26 @@ For each test, you should see output like
 
 These scripts are being developed.
 
+To produce charts from the output, you can use the scripts at https://github.com/quarkusio/benchmarks.
+
 ### The best: Run tests in a controlled lab
 
 These tests are run on a regular schedule in Red Hat/IBM performance labs.
-The results are available in an internal [Horreum](https://github.com/Hyperfoil/Horreum) instance. 
-We are working on publishing these externally.
+[The scripts](https://github.com/quarkusio/spring-quarkus-perf-comparison/tree/main/scripts/perf-lab) are viewable in this repository.
+
+#### Published results 
+
+The results are published to https://github.com/quarkusio/benchmarks/tree/main/results/spring-quarkus-perf-comparison, and also available in an internal [Horreum](https://github.com/Hyperfoil/Horreum) instance. 
+[Charts of the results](https://github.com/quarkusio/benchmarks/tree/main/images/spring-quarkus-perf-comparison) are also available. The latest results are shown below.
+
+![](https://github.com/quarkusio/benchmarks/blob/main/images/spring-quarkus-perf-comparison/results-latest-throughput-light.svg#gh-light-mode-only)
+![](https://github.com/quarkusio/benchmarks/blob/main/images/spring-quarkus-perf-comparison/results-latest-throughput.svg#gh-dark-mode-only)
+
+![](https://github.com/quarkusio/benchmarks/blob/main/images/spring-quarkus-perf-comparison/results-latest-boot-and-first-response-time-light.svg#gh-light-mode-only)
+![](https://github.com/quarkusio/benchmarks/blob/main/images/spring-quarkus-perf-comparison/results-latest-boot-and-first-response-time-dark.svg#gh-dark-mode-only)
+
+![](https://github.com/quarkusio/benchmarks/blob/main/images/spring-quarkus-perf-comparison/results-latest-memory-(rss)-light.svg#gh-light-mode-only)
+![](https://github.com/quarkusio/benchmarks/blob/main/images/spring-quarkus-perf-comparison/results-latest-memory-(rss)-dark.svg#gh-dark-mode-only)
 
 ## Further reading 
 
