@@ -15,6 +15,10 @@ import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 @Entity
 @Table(name = "store_fruit_prices")
@@ -24,8 +28,10 @@ public class StoreFruitPrice {
   private StoreFruitPriceId id;
 
   @MapsId("storeId")
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @ManyToOne(fetch = FetchType.EAGER, optional = false)
   @JoinColumn(name = "store_id", nullable = false)
+  @Fetch(FetchMode.SELECT)
+  @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
   private Store store;
 
   @MapsId("fruitId")

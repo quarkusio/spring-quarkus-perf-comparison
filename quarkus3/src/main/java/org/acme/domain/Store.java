@@ -2,6 +2,7 @@ package org.acme.domain;
 
 import java.util.StringJoiner;
 
+import jakarta.persistence.Cacheable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -16,6 +17,7 @@ import org.hibernate.annotations.NaturalId;
 
 @Entity
 @Table(name = "stores")
+@Cacheable
 public class Store {
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "stores_seq")
