@@ -12,7 +12,7 @@ function _date() {
 
 ts=$(_date)
 
-while ! (curl -sf ${TARGET_URL} > /dev/null)
+while [[ $(curl -s -o /dev/null -w ''%{http_code}'' ${TARGET_URL}) != 200 ]]
 do
   # Spin here and do nothing rather waiting some arbitrary unlucky timing
   :
