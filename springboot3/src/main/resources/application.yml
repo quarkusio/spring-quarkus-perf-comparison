@@ -6,3 +6,12 @@ spring:
     defer-datasource-initialization: true
   jackson:
     default-property-inclusion: non_empty
+  jpa:
+    properties:
+      hibernate:
+        cache:
+          # 1. Enable Hibernate's L2 Caching
+          use_second_level_cache: true
+          # 2. Configure the cache region factory (specifies the JCache/Ehcache 3 provider)
+          region:
+            factory_class: jcache
