@@ -11,13 +11,13 @@ scripts:
             - set-state: RUN.os linux
 
   capture-system-info-linux:
-    - sh: "hostnamectl | grep 'Operating System:' | cut -d: -f2 |  xargs"
+    - sh: "grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '\"'"
       then:
         - set-state: RUN.env.host.os
-    - sh: "hostnamectl | grep 'Hardware Model:' | cut -d: -f2 |  xargs"
+    - sh: cat /sys/class/dmi/id/sys_vendor /sys/class/dmi/id/product_name 2>/dev/null | paste -sd ' ' || echo 'Unknown'
       then:
         - set-state: RUN.env.host.type
-    - sh: "hostnamectl | grep 'Kernel:' | cut -d: -f2 |  xargs"
+    - sh: uname -r
       then:
         - set-state: RUN.env.host.kernel
     - sh: |
