@@ -10,15 +10,28 @@ scripts:
           then:
             - set-state: RUN.os linux
 
-  capture-system-info:
-    - sh: grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"'
+  capture-system-info-linux:
+    - sh: "hostnamectl | grep 'Operating System:' | cut -d: -f2 |  xargs"
       then:
-        - regex: ".*rhel.*"
-          then:
-            - script: check-and-install-package
-              with:
-                command: fastfetch
-                package: epel-release
+        - set-state: RUN.env.host.os
+    - sh: "hostnamectl | grep 'Hardware Model:' | cut -d: -f2 |  xargs"
+      then:
+        - set-state: RUN.env.host.type
+    - sh: "hostnamectl | grep 'Kernel:' | cut -d: -f2 |  xargs"
+      then:
+        - set-state: RUN.env.host.kernel
+    - sh: |
+        lscpu | awk -F: '/^Model name:/ {model=$2} /^CPU\(s):/ {cpus=$2} END {gsub(/^[ \t]+|[ \t]+$/, "", model); gsub(/^[ \t]+|[ \t]+$/, "", cpus); print model " (" cpus " cpus)"}'
+      then:
+        - set-state: RUN.env.host.cpu
+    - sh: "lspci | grep -iE 'vga|3d|display' | sed 's/.*: //; s/ (rev.*)$//' | head -n1"
+      then:
+        - set-state: RUN.env.host.gpu
+    - sh: free -h | grep '^Mem:' | awk '{print $2}'
+      then:
+        - set-state: RUN.env.host.memory
+
+  capture-system-info-macos:
     - script: check-and-install-package
       with:
         command: fastfetch
@@ -47,6 +60,9 @@ scripts:
         fastfetch --pipe | grep 'Memory:' | sed 's/.*Memory: \(.*\)/\1/' | awk '{print $4, $5}'
       then:
         - set-state: RUN.env.host.memory
+
+  capture-system-info:
+    - script: capture-system-info-${{os}}
 
   sudo-linux:
     - sh: sudo ${{command}}
