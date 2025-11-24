@@ -31,7 +31,7 @@ help() {
   echo "  -l <SCM_REPO_URL>                   The SCM repo url"
   echo "                                          Default: '${SCM_REPO_URL}'"
   echo "  -n <NATIVE_QUARKUS_BUILD_OPTIONS>   Native build options to be passed to Quarkus native build process"
-  echo "  -o <NATIVE_SPRING_BUILD_OPTIONS>    Native build options to be passed to Spring native build process"
+  echo "  -o <NATIVE_SPRING3_BUILD_OPTIONS>   Native build options to be passed to Spring 3.x native build process"
   echo "  -p <PROFILER>                       Enable profiling with async profiler"
   echo "                                          Accepted values: none, jfr, flamegraph"
   echo "                                          Default: ${PROFILER}"
@@ -41,8 +41,8 @@ help() {
   echo "  -r <RUNTIMES>                       The runtimes to test, separated by commas"
   echo "                                          Accepted values (1 or more of): quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native"
   echo "                                          Default: 'quarkus3-jvm,quarkus3-native,spring3-jvm,spring3-jvm-aot,spring3-native'"
-  echo "  -s <SPRING_BOOT_VERSION>            The Spring Boot version to use"
-  echo "                                          Default: Whatever version is set in pom.xml of the Spring Boot app"
+  echo "  -s <SPRING_BOOT3_VERSION>           The Spring Boot 3.c version to use"
+  echo "                                          Default: Whatever version is set in pom.xml of the Spring Boot 3 app"
   echo "                                          NOTE: Its a good practice to set this manually to ensure proper version"
   echo "  -t <TESTS_TO_RUN>                   The tests to run, separated by commas"
   echo "                                          Accepted values (1 or more of): test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test"
@@ -70,8 +70,8 @@ validate_values() {
     exit_abnormal
   fi
 
-  if [ -z "$SPRING_BOOT_VERSION" ]; then
-    echo "!! [ERROR] Please set the SPRING_BOOT_VERSION!!"
+  if [ -z "$SPRING_BOOT3_VERSION" ]; then
+    echo "!! [ERROR] Please set the SPRING_BOOT3_VERSION!!"
     exit_abnormal
   fi
 
@@ -100,11 +100,11 @@ print_values() {
   echo "  ITERATIONS: $ITERATIONS"
   echo "  JAVA_VERSION: $JAVA_VERSION"
   echo "  NATIVE_QUARKUS_BUILD_OPTIONS: $NATIVE_QUARKUS_BUILD_OPTIONS"
-  echo "  NATIVE_SPRING_BUILD_OPTIONS: $NATIVE_SPRING_BUILD_OPTIONS"
+  echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
   echo "  PROFILER: $PROFILER"
   echo "  QUARKUS_VERSION: $QUARKUS_VERSION"
   echo "  RUNTIMES: ${RUNTIMES[@]}"
-  echo "  SPRING_BOOT_VERSION: $SPRING_BOOT_VERSION"
+  echo "  SPRING_BOOT3_VERSION: $SPRING_BOOT3_VERSION"
   echo "  TESTS_TO_RUN: ${TESTS_TO_RUN[@]}"
   echo "  USER: $USER"
   echo "  JVM_MEMORY: $JVM_MEMORY"
@@ -190,10 +190,10 @@ ${JBANG_CMD} qDup@hyperfoil \
     -S config.resources.cpu.app="${app_cpus}" \
     -S config.resources.cpu.db="${db_cpus}" \
     -S config.resources.cpu.load_generator="${load_gen_cpus}" \
-    -S config.springboot.version=${SPRING_BOOT_VERSION} \
+    -S config.springboot3.version=${SPRING_BOOT3_VERSION} \
     -S config.jvm.memory="${JVM_MEMORY}" \
     -S config.quarkus.version=${QUARKUS_VERSION} \
-    -S config.springboot.native_build_options="${NATIVE_SPRING_BUILD_OPTIONS}" \
+    -S config.springboot3.native_build_options="${NATIVE_SPRING3_BUILD_OPTIONS}" \
     -S config.profiler.events=cpu \
     -S config.repo.branch=${SCM_REPO_BRANCH} \
     -S config.repo.url=${SCM_REPO_URL} \
@@ -217,12 +217,12 @@ HOST="LOCAL"
 ITERATIONS="3"
 JAVA_VERSION="25.0.1-tem"
 NATIVE_QUARKUS_BUILD_OPTIONS=""
-NATIVE_SPRING_BUILD_OPTIONS=""
+NATIVE_SPRING3_BUILD_OPTIONS=""
 PROFILER="none"
 QUARKUS_VERSION=""
 ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-native" "spring3-jvm" "spring3-jvm-aot" "spring3-native")
 RUNTIMES=${ALLOWED_RUNTIMES[@]}
-SPRING_BOOT_VERSION=""
+SPRING_BOOT3_VERSION=""
 ALLOWED_TESTS_TO_RUN=("test-build" "measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
 TESTS_TO_RUN=${ALLOWED_TESTS_TO_RUN[@]}
 USER=""
@@ -272,7 +272,7 @@ while getopts "a:b:c:de:f:g:h:i:j:l:n:o:p:q:r:s:t:u:v:w:" option; do
     n) NATIVE_QUARKUS_BUILD_OPTIONS=$OPTARG
       ;;
 
-    o) NATIVE_SPRING_BUILD_OPTIONS=$OPTARG
+    o) NATIVE_SPRING3_BUILD_OPTIONS=$OPTARG
       ;;
 
     p) if [[ "$OPTARG" =~ ^(none|jfr|flamegraph)$ ]]; then
@@ -298,7 +298,7 @@ while getopts "a:b:c:de:f:g:h:i:j:l:n:o:p:q:r:s:t:u:v:w:" option; do
        RUNTIMES=${rt[@]}
       ;;
 
-    s) SPRING_BOOT_VERSION=$OPTARG
+    s) SPRING_BOOT3_VERSION=$OPTARG
       ;;
 
     t) ttr=($(IFS=','; echo $OPTARG))

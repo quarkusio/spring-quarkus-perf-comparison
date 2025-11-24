@@ -8,13 +8,13 @@ states:
   config.jvm.graalvm.version: 25.0.1-graalce
 
   config.quarkus.version: #3.28.3
-  config.springboot.version: #3.5.6
+  config.springboot3.version: #3.5.6
 
   config.jvm.memory: #-Xmx128m
   config.jvm.args: #-XX:+UseNUMA
 
   config.quarkus.native_build_options: #-Dquarkus.native.native-image-xmx=<maximum_memory>
-  config.springboot.native_build_options:
+  config.springboot3.native_build_options:
 
   config.resources.cpu.app: 0-3
   config.resources.cpu.db: 4-6
@@ -64,22 +64,22 @@ states:
       type: jvm
       dir: ${{SPRING3_BOOT_DIR}}
       updateScript: update-spring-boot-version
-      updateVersion: ${{config.springboot.version}}
+      updateVersion: ${{config.springboot3.version}}
       buildCmd: "./mvnw clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
     - name: spring3-jvm-aot
       type: jvm
       dir: ${{SPRING3_BOOT_DIR}}
       updateScript: update-spring-boot-version
-      updateVersion: ${{config.springboot.version}}
+      updateVersion: ${{config.springboot3.version}}
       buildCmd: "./mvnw clean compile spring-boot:process-aot package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
     - name: spring3-native
       type: native
       dir: ${{SPRING3_BOOT_DIR}}
       updateScript: update-spring-boot-version
-      updateVersion: ${{config.springboot.version}}
-      buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot.native_build_options}}"
+      updateVersion: ${{config.springboot3.version}}
+      buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot3.native_build_options}}"
       runCmd: "${{APP_CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.jvm.memory}}"
 
 scripts:
