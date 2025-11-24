@@ -11,6 +11,14 @@ scripts:
             - set-state: RUN.os linux
 
   capture-system-info:
+    - sh: grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"'
+      then:
+        - regex: ".*rhel.*"
+          then:
+            - script: check-and-install-package
+              with:
+                command: fastfetch
+                package: epel-release
     - script: check-and-install-package
       with:
         command: fastfetch

@@ -452,16 +452,16 @@ roles:
 #      - output-vars
       - detect-os
       - capture-system-info
-      - start-timestamp
       - cleanup-env
       - config-env
       - ensure-requirements
       - clone-repo
       - stop-test-services
+      - start-timestamp
     run-scripts:
       - run-tests
-      - download-metrics
     cleanup-scripts:
       - stop-timestamp
+      - download-metrics
       - stop-test-services
-#      - cleanup-env
+      - cleanup-env
