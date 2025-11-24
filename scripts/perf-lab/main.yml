@@ -1,8 +1,8 @@
 name: spring-quarkus-perf-comparison
 states:
-  env.USER: someuser
-  env.HOST: 127.0.0.1
-  env.TARGET: ${{env.USER}}@${{env.HOST}}
+  env.run.host.user: someuser
+  env.run.host.name: 127.0.0.1
+  env.run.host.target: ${{env.run.host.user}}@${{env.run.host.name}}
 
   config.jvm.version: 25.0.1-tem
   config.jvm.graalvm.version: 25.0.1-graalce
@@ -170,7 +170,6 @@ scripts:
           - script: ${{TEST}}
             with:
               RUNTIME: ${{RUNTIMECMD}}
-    - script: download-metrics
 
   abort-script-not-found:
     - abort: script not found
@@ -442,7 +441,7 @@ scripts:
     - queue-download: ${{REPO_DIR}}/logs/*
 
 hosts:
-  target-host: ${{env.TARGET}}
+  target-host: ${{env.run.host.target}}
 
 roles:
   test-runner:
@@ -452,7 +451,7 @@ roles:
       - update-state
 #      - output-vars
       - detect-os
-      - capture-os-info
+      - capture-system-info
       - start-timestamp
       - cleanup-env
       - config-env

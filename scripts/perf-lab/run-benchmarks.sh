@@ -186,6 +186,7 @@ ${JBANG_CMD} qDup@hyperfoil \
     -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
     -S config.jvm.args="${JVM_ARGS}" \
     -S config.profiler.name=${PROFILER} \
+    -S config.resources.app_cpus=${CPUS} \
     -S config.resources.cpu.app="${app_cpus}" \
     -S config.resources.cpu.db="${db_cpus}" \
     -S config.resources.cpu.load_generator="${load_gen_cpus}" \
@@ -196,9 +197,9 @@ ${JBANG_CMD} qDup@hyperfoil \
     -S config.profiler.events=cpu \
     -S config.repo.branch=${SCM_REPO_BRANCH} \
     -S config.repo.url=${SCM_REPO_URL} \
-    -S env.USER=${USER} \
-    -S env.TARGET=${target} \
-    -S env.HOST=${HOST} \
+    -S env.run.host.user=${USER} \
+    -S env.run.host.target=${target} \
+    -S env.run.host.name=${HOST} \
     -S config.num_iterations=${ITERATIONS} \
     -S PROJ_REPO_NAME="$(basename ${SCM_REPO_URL} .git)" \
     -S RUNTIMES="$(make_json_array $RUNTIMES)" \

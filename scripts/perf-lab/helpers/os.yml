@@ -10,15 +10,35 @@ scripts:
           then:
             - set-state: RUN.os linux
 
-  capture-os-info:
-    - sh: uname -m
-    - set-state: RUN.env.host.ARCH
-    - sh: uname -r
-    - set-state: RUN.env.host.RELEASE_LEVEL
-    - sh: uname -s
-    - set-state: RUN.env.host.OS
-    - sh: uname -v
-    - set-state: RUN.env.host.VERSION_LEVEL
+  capture-system-info:
+    - script: check-and-install-package
+      with:
+        command: fastfetch
+        package: fastfetch
+    - sh: |
+        fastfetch --pipe | grep 'OS:' | sed 's/.*OS: \(.*\)/\1/'
+      then:
+        - set-state: RUN.env.host.os
+    - sh: |
+        fastfetch --pipe | grep 'Host:' | sed 's/.*Host: \(.*\)/\1/'
+      then:
+        - set-state: RUN.env.host.type
+    - sh: |
+        fastfetch --pipe | grep 'Kernel:' | sed 's/.*Kernel: \(.*\)/\1/'
+      then:
+        - set-state: RUN.env.host.kernel
+    - sh: |
+        fastfetch --pipe | grep 'CPU:' | sed 's/.*CPU: \(.*\)/\1/'
+      then:
+        - set-state: RUN.env.host.cpu
+    - sh: |
+        fastfetch --pipe | grep 'GPU:' | sed 's/.*GPU: \(.*\)/\1/'
+      then:
+        - set-state: RUN.env.host.gpu
+    - sh: |
+        fastfetch --pipe | grep 'Memory:' | sed 's/.*Memory: \(.*\)/\1/' | awk '{print $4, $5}'
+      then:
+        - set-state: RUN.env.host.memory
 
   sudo-linux:
     - sh: sudo ${{command}}

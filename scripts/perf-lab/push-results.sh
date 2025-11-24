@@ -60,7 +60,7 @@ push_results() {
   cp -R ${RUN_RESULTS_DIR}/* ${resultsDir}/
 
   # Strip out the .env section of the json
-  jq 'del(.env)' ${resultsDir}/metrics.json > ${resultsDir}/metrics.json.tmp && \
+  jq 'del(.env.run)' ${resultsDir}/metrics.json > ${resultsDir}/metrics.json.tmp && \
     mv ${resultsDir}/metrics.json.tmp ${resultsDir}/metrics.json
 
   # Copy the metrics.json to latest
