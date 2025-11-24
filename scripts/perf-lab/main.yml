@@ -268,7 +268,7 @@ scripts:
         - script: sync-drop-fs-cache
         - sh: ${{RUNTIME.runCmd}} &>${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log &
         - sh: APP_PID=$!
-        - sh: taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh ${{TARGET_URL}} | awk '{print $1}'
+        - sh: timeout 60s taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh ${{TARGET_URL}} | awk '{print $1}'
           then:
             - set-state: START_TIME
         - sh: kill -15 $APP_PID
