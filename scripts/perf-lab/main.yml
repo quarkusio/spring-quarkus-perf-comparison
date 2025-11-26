@@ -194,6 +194,7 @@ scripts:
     - set-state: TYPE ${{RUNTIME.type}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - queue-download: ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: sync-drop-fs-cache
         - sh: /usr/bin/time -p ${{RUNTIME.buildCmd}} 2>&1 >${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log | grep real | awk '{print $2}'
         - set-state: BUILD_TIME
@@ -201,8 +202,6 @@ scripts:
           with:
             array: RUN.output.results.${{RUNTIME.name}}.build.timings
             value: ${{BUILD_TIME}}
-
-        - queue-download: ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log
 
         # If its a native build, gather the native build rss as well
         - read-state: ${{TYPE}}
@@ -266,20 +265,25 @@ scripts:
     - sh: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - queue-download: ${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: start-test-services
         - script: sync-drop-fs-cache
         - sh: ${{RUNTIME.runCmd}} &>${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log &
         - sh: APP_PID=$!
         - sh: timeout 60s bash -c "taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh ${{TARGET_URL}} | awk '{print $1}'"
           then:
-            - set-state: START_TIME
+            - regex: Terminated
+              then:
+                - sh: kill -15 $APP_PID
+                - abort: Run ${{RUNTIME.runCmd}} didn't start within allotted timeout
+              else:
+                - set-state: START_TIME
         - sh: kill -15 $APP_PID
         - script: state-array-push
           with:
             array: RUN.output.results.${{RUNTIME.name}}.startup.timings
             value: ${{START_TIME}}
         - sh: sleep ${{PAUSE_TIME}}
-        - queue-download: ${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
@@ -293,6 +297,7 @@ scripts:
     - sh: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - queue-download: ${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: start-test-services
         - script: sync-drop-fs-cache
         - sh: ${{RUNTIME.runCmd}} 2>&1 >${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log &
@@ -315,7 +320,6 @@ scripts:
             value: ${{= ${{FIRST_REQUEST}}/1024 }}
         - sh: kill -15 $APP_PID
         - sh: sleep ${{PAUSE_TIME}}
-        - queue-download: ${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
@@ -332,6 +336,9 @@ scripts:
     - sh: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - queue-download: ${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
+        - queue-download: ${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log
+        - queue-download: ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
@@ -362,7 +369,6 @@ scripts:
           then:
             - abort: unable to connect to target application
         - signal: LOAD_STEADY_STATE_START
-        - queue-download: ${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
         - sh: ${{RUN.WRK_BIN}} -t2 -c100 -d30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log | grep "Requests/sec" | awk '{print $2}'
           then:
@@ -408,8 +414,6 @@ scripts:
             value: ${{= ${{THROUGHPUT}}/${{RSS}}*1024 }}
         - sh: kill -15 $PID
         - sh: sleep ${{PAUSE_TIME}}
-        - queue-download: ${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log
-        - queue-download: ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
