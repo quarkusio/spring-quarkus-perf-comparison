@@ -202,6 +202,8 @@ scripts:
             array: RUN.output.results.${{RUNTIME.name}}.build.timings
             value: ${{BUILD_TIME}}
 
+        - queue-download: ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log
+
         # If its a native build, gather the native build rss as well
         - read-state: ${{TYPE}}
           then:
@@ -277,6 +279,7 @@ scripts:
             array: RUN.output.results.${{RUNTIME.name}}.startup.timings
             value: ${{START_TIME}}
         - sh: sleep ${{PAUSE_TIME}}
+        - queue-download: ${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
@@ -312,6 +315,7 @@ scripts:
             value: ${{= ${{FIRST_REQUEST}}/1024 }}
         - sh: kill -15 $APP_PID
         - sh: sleep ${{PAUSE_TIME}}
+        - queue-download: ${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
@@ -358,6 +362,7 @@ scripts:
           then:
             - abort: unable to connect to target application
         - signal: LOAD_STEADY_STATE_START
+        - queue-download: ${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
         - sh: ${{RUN.WRK_BIN}} -t2 -c100 -d30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log | grep "Requests/sec" | awk '{print $2}'
           then:
@@ -403,6 +408,8 @@ scripts:
             value: ${{= ${{THROUGHPUT}}/${{RSS}}*1024 }}
         - sh: kill -15 $PID
         - sh: sleep ${{PAUSE_TIME}}
+        - queue-download: ${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log
+        - queue-download: ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
@@ -438,7 +445,7 @@ scripts:
         then:
         - abort: Could not output metrics. Permission denied!
     - queue-download: ${{METRICS_DIR}}/metrics.json
-    - queue-download: ${{REPO_DIR}}/logs/*
+#    - queue-download: ${{REPO_DIR}}/logs/*
 
 hosts:
   target-host: ${{env.run.host.target}}
