@@ -19,4 +19,4 @@ do
 done
 
 TTFR=$((($(_date) - ts)/1000000))
-echo "${TTFR} ms"
+echo "${TTFR}"
