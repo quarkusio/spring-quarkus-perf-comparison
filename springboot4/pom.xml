@@ -5,16 +5,18 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.8</version>
+		<version>4.0.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>org.acme</groupId>
-	<artifactId>springboot3</artifactId>
+	<artifactId>springboot4</artifactId>
 	<version>1.0</version>
-	<name>springboot3</name>
-	<description>Spring Boot 3 example</description>
+	<name>springboot4</name>
+	<description>Spring Boot 4 example</description>
 	<properties>
 		<java.version>21</java.version>
+		<spring-boot.version>4.0.0</spring-boot.version>
+		<hibernate.version>7.1.9.Final</hibernate.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -23,7 +25,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -52,12 +54,32 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
+			<artifactId>spring-boot-starter-validation-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>testcontainers-junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -67,16 +89,16 @@
 		</dependency>
 		<dependency>
 			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
+			<artifactId>testcontainers-postgresql</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
 	<build>
-		<finalName>springboot3</finalName>
+		<finalName>springboot4</finalName>
 		<plugins>
 			<plugin>
-				<groupId>org.hibernate.orm.tooling</groupId>
-				<artifactId>hibernate-enhance-maven-plugin</artifactId>
+				<groupId>org.hibernate.orm</groupId>
+				<artifactId>hibernate-maven-plugin</artifactId>
 				<version>${hibernate.version}</version>
 				<executions>
 					<execution>
@@ -84,12 +106,15 @@
 						<goals>
 							<goal>enhance</goal>
 						</goals>
-						<configuration>
-							<enableLazyInitialization>false</enableLazyInitialization>
-							<enableDirtyTracking>false</enableDirtyTracking>
-						</configuration>
 					</execution>
 				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>org.springframework.boot</groupId>
+						<artifactId>spring-boot-starter-data-jpa</artifactId>
+						<version>${spring-boot.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>org.graalvm.buildtools</groupId>
@@ -98,27 +123,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-			</plugin>
-			<!--		properties-maven-plugin needed for Java 25 	-->
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>properties-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>set-system-properties</goal>
-						</goals>
-						<configuration>
-							<properties>
-								<property>
-									<name>net.bytebuddy.experimental</name>
-									<value>true</value>
-								</property>
-							</properties>
-						</configuration>
-					</execution>
-				</executions>
 			</plugin>
 		</plugins>
 	</build>
