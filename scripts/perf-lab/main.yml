@@ -87,10 +87,11 @@ scripts:
     - sh: echo $(realpath ~)
     - set-state: RUN.BASE_DIR
     - set-state: RUN.REPO_DIR ${{BASE_DIR}}/spring-quarkus-perf-comparison
-    - set-state: RUN.SCRIPTS_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/perf-lab
+    - set-state: RUN.PROJ_REPO_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}
+    - set-state: RUN.SCRIPTS_DIR ${{PROJ_REPO_DIR}}/scripts/perf-lab
     - set-state: RUN.HELPER_SCRIPTS_DIR ${{SCRIPTS_DIR}}/scripts
-    - set-state: RUN.SPRING3_BOOT_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/springboot3
-    - set-state: RUN.QUARKUS3_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/quarkus3
+    - set-state: RUN.SPRING3_BOOT_DIR ${{PROJ_REPO_DIR}}/springboot3
+    - set-state: RUN.QUARKUS3_DIR ${{PROJ_REPO_DIR}}/quarkus3
     - set-state: RUN.ASYNC_PROFILER_DIR ${{BASE_DIR}}/${{ASYNC_PROFILER}}
 
   output-vars:
@@ -104,10 +105,15 @@ scripts:
         "QUARKUS3_DIR : ${{QUARKUS3_DIR}}"
         "RUNTIMECMDS: ${{RUNTIMECMDS}}"
 
+  capture-repo-info:
+    - sh: cd ${{PROJ_REPO_DIR}}
+    - sh: git rev-parse HEAD
+    - set-state: RUN.config.repo.commit
+
   cleanup-env:
     - script: sudo
       with:
-        command: rm -Rf ${{REPO_DIR}}/${{PROJ_REPO_NAME}}
+        command: rm -Rf ${{PROJ_REPO_DIR}}
 
   config-env:
     - script: sudo
@@ -127,8 +133,6 @@ scripts:
     - log: Checked out repo
     - sh: git remote get-url origin
     - sh: git branch --show-current
-    - sh: cd ${{HELPER_SCRIPTS_DIR}}
-    - sh: npm install axios@0.27.2
 
   update-spring-boot-version:
     - script: check-dependency-exists
@@ -147,10 +151,10 @@ scripts:
     - sh: ./mvnw versions:set-property -Dproperty=quarkus.platform.version -DnewVersion=${{VERSION}}
 
   start-test-services:
-    - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -c 3 -p '${{config.resources.cpu.db}}' -s
+    - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -c 3 -p '${{config.resources.cpu.db}}' -s
 
   stop-test-services:
-    - sh: ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/scripts/infra.sh -d
+    - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -d
 
   run-tests:
     - sh: java -version
@@ -471,6 +475,7 @@ roles:
       - config-env
       - ensure-requirements
       - clone-repo
+      - capture-repo-info
       - stop-test-services
       - start-timestamp
     run-scripts:
