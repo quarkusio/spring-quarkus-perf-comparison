@@ -41,6 +41,7 @@ jobs:
           - '25'
         app:
           - springboot3
+          - springboot4
           - quarkus3
           - quarkus3-spring-compatibility
     name: "[jvm-build-test-java${{ matrix.java }}]: ${{ matrix.app }}"
@@ -69,6 +70,9 @@ jobs:
           case "${{ matrix.app }}" in
             springboot3)
             TARGET_DIR="${{ matrix.app }}/target/springboot3.jar"
+            ;;
+            springboot4)
+            TARGET_DIR="${{ matrix.app }}/target/springboot4.jar"
             ;;
             quarkus3)
             TARGET_DIR="${{ matrix.app }}/target/quarkus-app/quarkus-run.jar"
