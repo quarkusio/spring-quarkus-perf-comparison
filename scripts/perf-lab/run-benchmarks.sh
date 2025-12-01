@@ -9,52 +9,52 @@ help() {
   echo
   echo "Syntax: run-benchmarks.sh [options]"
   echo "options:"
-  echo "  -a <JVM_ARGS>                       Any JVM args to be passed to the apps"
-  echo "  -b <SCM_REPO_BRANCH>                The branch in the SCM repo"
-  echo "                                          Default: '${SCM_REPO_BRANCH}'"
-  echo "  -c <CPUS>                           How many CPUs to allocate to the application"
-  echo "                                          Default: ${CPUS}"
-  echo "  -d                                  Purge/drop OS filesystem caches between iterations"
-  echo "  -e <EXTRA_QDUP_ARGS>                Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
-  echo "                                          NOTE: This is an advanced option. Make sure you know what you are doing when using it."
-  echo "  -f <OUTPUT_DIR>                     The directory containing the run output"
-  echo "                                          Default: ${OUTPUT_DIR}"
-  echo "  -g <GRAALVM_VERSION>                The GraalVM version to use if running any native tests (from SDKMAN)"
-  echo "                                          Default: ${GRAALVM_VERSION}"
-  echo "  -h <HOST>                           The HOST to run the benchmarks on"
-  echo "                                          LOCAL is a keyword that can be used to run everything on the local machine"
-  echo "                                          Default: ${HOST}"
-  echo "  -i <ITERATIONS>                     The number of iterations to run each test"
-  echo "                                          Default: ${ITERATIONS}"
-  echo "  -j <JAVA_VERSION>                   The Java version to use (from SDKMAN)"
-  echo "                                          Default: ${JAVA_VERSION}"
-  echo "  -l <SCM_REPO_URL>                   The SCM repo url"
-  echo "                                          Default: '${SCM_REPO_URL}'"
-  echo "  -n <NATIVE_QUARKUS_BUILD_OPTIONS>   Native build options to be passed to Quarkus native build process"
-  echo "  -o <NATIVE_SPRING3_BUILD_OPTIONS>   Native build options to be passed to Spring 3.x native build process"
-  echo "  -O <NATIVE_SPRING4_BUILD_OPTIONS>   Native build options to be passed to Spring 4.x native build process"
-  echo "  -p <PROFILER>                       Enable profiling with async profiler"
-  echo "                                          Accepted values: none, jfr, flamegraph"
-  echo "                                          Default: ${PROFILER}"
-  echo "  -q <QUARKUS_VERSION>                The Quarkus version to use"
-  echo "                                          Default: Whatever version is set in pom.xml of the Quarkus app"
-  echo "                                          NOTE: Its a good practice to set this manually to ensure proper version"
-  echo "  -r <RUNTIMES>                       The runtimes to test, separated by commas"
-  echo "                                          Accepted values (1 or more of): quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native"
-  echo "                                          Default: 'quarkus3-jvm,quarkus3-native,spring3-jvm,spring3-jvm-aot,spring3-native,spring4-jvm,spring4-jvm-aot,spring4-native'"
-  echo "  -s <SPRING_BOOT3_VERSION>           The Spring Boot 3.x version to use"
-  echo "                                          Default: Whatever version is set in pom.xml of the Spring Boot 3 app"
-  echo "                                          NOTE: Its a good practice to set this manually to ensure proper version"
-  echo "  -S <SPRING_BOOT4_VERSION>           The Spring Boot 4.x version to use"
-  echo "                                          Default: Whatever version is set in pom.xml of the Spring Boot 4 app"
-  echo "                                          NOTE: Its a good practice to set this manually to ensure proper version"
-  echo "  -t <TESTS_TO_RUN>                   The tests to run, separated by commas"
-  echo "                                          Accepted values (1 or more of): test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test"
-  echo "                                          Default: 'test-build,measure-build-times,measure-time-to-first-request,measure-rss,run-load-test'"
-  echo "  -u <USER>                           The user on <HOST> to run the benchmark"
-  echo "  -v <JVM_MEMORY>                     JVM Memory setting (i.e. -Xmx -Xmn -Xms)"
-  echo "  -w <WAIT_TIME>                      Wait time (in seconds) to wait for things like application startup"
-  echo "                                          Default: ${WAIT_TIME}"
+  echo "  --cpus <CPUS>                                          How many CPUs to allocate to the application"
+  echo "                                                             Default: ${CPUS}"
+  echo "  --drop-fs-caches                                       Purge/drop OS filesystem caches between iterations"
+  echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                    Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
+  echo "                                                             NOTE: This is an advanced option. Make sure you know what you are doing when using it."
+  echo "  --graalvm-version <GRAALVM_VERSION>                    The GraalVM version to use if running any native tests (from SDKMAN)"
+  echo "                                                             Default: ${GRAALVM_VERSION}"
+  echo "  --host <HOST>                                          The HOST to run the benchmarks on"
+  echo "                                                             LOCAL is a keyword that can be used to run everything on the local machine"
+  echo "                                                             Default: ${HOST}"
+  echo "  --iterations <ITERATIONS>                              The number of iterations to run each test"
+  echo "                                                             Default: ${ITERATIONS}"
+  echo "  --java-version <JAVA_VERSION>                          The Java version to use (from SDKMAN)"
+  echo "                                                             Default: ${JAVA_VERSION}"
+  echo "  --jvm-args <JVM_ARGS>                                  Any JVM args to be passed to the apps"
+  echo "  --jvm-memory <JVM_MEMORY>                              JVM Memory setting (i.e. -Xmx -Xmn -Xms)"
+  echo "  --native-quarkus-build-options <NATIVE_QUARKUS_OPTS>   Native build options to be passed to Quarkus native build process"
+  echo "  --native-spring3-build-options <NATIVE_SPRING3_OPTS>   Native build options to be passed to Spring 3.x native build process"
+  echo "  --native-spring4-build-options <NATIVE_SPRING4_OPTS>   Native build options to be passed to Spring 4.x native build process"
+  echo "  --output-dir <OUTPUT_DIR>                              The directory containing the run output"
+  echo "                                                             Default: ${OUTPUT_DIR}"
+  echo "  --profiler <PROFILER>                                  Enable profiling with async profiler"
+  echo "                                                             Accepted values: none, jfr, flamegraph"
+  echo "                                                             Default: ${PROFILER}"
+  echo "  --quarkus-version <QUARKUS_VERSION>                    The Quarkus version to use"
+  echo "                                                             Default: Whatever version is set in pom.xml of the Quarkus app"
+  echo "                                                             NOTE: Its a good practice to set this manually to ensure proper version"
+  echo "  --repo-branch <SCM_REPO_BRANCH>                        The branch in the SCM repo"
+  echo "                                                             Default: '${SCM_REPO_BRANCH}'"
+  echo "  --repo-url <SCM_REPO_URL>                              The SCM repo url"
+  echo "                                                             Default: '${SCM_REPO_URL}'"
+  echo "  --runtimes <RUNTIMES>                                  The runtimes to test, separated by commas"
+  echo "                                                             Accepted values (1 or more of): quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native"
+  echo "                                                             Default: 'quarkus3-jvm,quarkus3-native,spring3-jvm,spring3-jvm-aot,spring3-native,spring4-jvm,spring4-jvm-aot,spring4-native'"
+  echo "  --springboot3-version <SPRING_BOOT3_VERSION>           The Spring Boot 3.x version to use"
+  echo "                                                             Default: Whatever version is set in pom.xml of the Spring Boot 3 app"
+  echo "                                                             NOTE: Its a good practice to set this manually to ensure proper version"
+  echo "  --springboot4-version <SPRING_BOOT4_VERSION>           The Spring Boot 4.x version to use"
+  echo "                                                             Default: Whatever version is set in pom.xml of the Spring Boot 4 app"
+  echo "                                                             NOTE: Its a good practice to set this manually to ensure proper version"
+  echo "  --tests <TESTS_TO_RUN>                                 The tests to run, separated by commas"
+  echo "                                                             Accepted values (1 or more of): test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test"
+  echo "                                                             Default: 'test-build,measure-build-times,measure-time-to-first-request,measure-rss,run-load-test'"
+  echo "  --user <USER>                                          The user on <HOST> to run the benchmark"
+  echo "  --wait-time <WAIT_TIME>                                Wait time (in seconds) to wait for things like application startup"
+  echo "                                                             Default: ${WAIT_TIME}"
 }
 
 exit_abnormal() {
@@ -233,102 +233,155 @@ JVM_ARGS=""
 EXTRA_QDUP_ARGS=""
 OUTPUT_DIR="/tmp"
 
-# Process the inputs
-while getopts "a:b:c:de:f:g:h:i:j:l:n:o:O:p:q:r:s:S:t:u:v:w:" option; do
-  case $option in
-    a) JVM_ARGS=$OPTARG
+# Process the inputs - Manual parsing for portability
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --jvm-args)
+      JVM_ARGS="$2"
+      shift 2
       ;;
 
-    b) SCM_REPO_BRANCH=$OPTARG
+    --repo-branch)
+      SCM_REPO_BRANCH="$2"
+      shift 2
       ;;
 
-    c) CPUS=$OPTARG
+    --cpus)
+      CPUS="$2"
+      shift 2
       ;;
 
-    d) DROP_OS_FILESYSTEM_CACHES=true
+    --drop-fs-caches)
+      DROP_OS_FILESYSTEM_CACHES=true
+      shift
       ;;
 
-    e) EXTRA_QDUP_ARGS=$OPTARG
+    --extra-qdup-args)
+      EXTRA_QDUP_ARGS="$2"
+      shift 2
       ;;
 
-    f) OUTPUT_DIR=$OPTARG
+    --output-dir)
+      OUTPUT_DIR="$2"
+      shift 2
       ;;
 
-    g) GRAALVM_VERSION=$OPTARG
+    --graalvm-version)
+      GRAALVM_VERSION="$2"
+      shift 2
       ;;
 
-    h) HOST=$OPTARG
+    --host)
+      HOST="$2"
+      shift 2
       ;;
 
-    i) ITERATIONS=$OPTARG
+    --iterations)
+      ITERATIONS="$2"
+      shift 2
       ;;
 
-    j) JAVA_VERSION=$OPTARG
+    --java-version)
+      JAVA_VERSION="$2"
+      shift 2
       ;;
 
-    l) SCM_REPO_URL=$OPTARG
+    --repo-url)
+      SCM_REPO_URL="$2"
+      shift 2
       ;;
 
-    n) NATIVE_QUARKUS_BUILD_OPTIONS=$OPTARG
+    --native-quarkus-build-options)
+      NATIVE_QUARKUS_BUILD_OPTIONS="$2"
+      shift 2
       ;;
 
-    o) NATIVE_SPRING3_BUILD_OPTIONS=$OPTARG
+    --native-spring3-build-options)
+      NATIVE_SPRING3_BUILD_OPTIONS="$2"
+      shift 2
       ;;
 
-    O) NATIVE_SPRING4_BUILD_OPTIONS=$OPTARG
+    --native-spring4-build-options)
+      NATIVE_SPRING4_BUILD_OPTIONS="$2"
+      shift 2
       ;;
 
-    p) if [[ "$OPTARG" =~ ^(none|jfr|flamegraph)$ ]]; then
-         PROFILER=$OPTARG
-       else
-         echo "!! [ERROR] -p option must be one of (none, jfr, flamegraph)!!"
-         exit_abnormal
-       fi
+    --profiler)
+      if [[ "$2" =~ ^(none|jfr|flamegraph)$ ]]; then
+        PROFILER="$2"
+      else
+        echo "!! [ERROR] --profiler option must be one of (none, jfr, flamegraph)!!"
+        exit_abnormal
+      fi
+      shift 2
       ;;
 
-    q) QUARKUS_VERSION=$OPTARG
+    --quarkus-version)
+      QUARKUS_VERSION="$2"
+      shift 2
       ;;
 
-    r) rt=($(IFS=','; echo $OPTARG))
+    --runtimes)
+      rt=($(IFS=','; echo $2))
 
-       for item in "${rt[@]}"; do
-         if [[ ! "${ALLOWED_RUNTIMES[@]}" =~ "${item}" ]]; then
-           echo "!! [ERROR] -r option must contain 1 or more of [${ALLOWED_RUNTIMES[@]}]!!"
-           exit_abnormal
-         fi
-       done
+      for item in "${rt[@]}"; do
+        if [[ ! "${ALLOWED_RUNTIMES[@]}" =~ "${item}" ]]; then
+          echo "!! [ERROR] --runtimes option must contain 1 or more of [${ALLOWED_RUNTIMES[@]}]!!"
+          exit_abnormal
+        fi
+      done
 
-       RUNTIMES=${rt[@]}
+      RUNTIMES=${rt[@]}
+      shift 2
       ;;
 
-    s) SPRING_BOOT3_VERSION=$OPTARG
+    --springboot3-version)
+      SPRING_BOOT3_VERSION="$2"
+      shift 2
       ;;
 
-    S) SPRING_BOOT4_VERSION=$OPTARG
+    --springboot4-version)
+      SPRING_BOOT4_VERSION="$2"
+      shift 2
       ;;
 
-    t) ttr=($(IFS=','; echo $OPTARG))
+    --tests)
+      ttr=($(IFS=','; echo $2))
 
-       for item in "${ttr[@]}"; do
-         if [[ ! "${ALLOWED_TESTS_TO_RUN[@]}" =~ "${item}" ]]; then
-           echo "!! [ERROR] -t option must contain 1 or more of [${ALLOWED_TESTS_TO_RUN[@]}]!!"
-           exit_abnormal
-         fi
-       done
+      for item in "${ttr[@]}"; do
+        if [[ ! "${ALLOWED_TESTS_TO_RUN[@]}" =~ "${item}" ]]; then
+          echo "!! [ERROR] --tests option must contain 1 or more of [${ALLOWED_TESTS_TO_RUN[@]}]!!"
+          exit_abnormal
+        fi
+      done
 
-       TESTS_TO_RUN=${ttr[@]}
+      TESTS_TO_RUN=${ttr[@]}
+      shift 2
       ;;
 
-    u) USER=$OPTARG
+    --user)
+      USER="$2"
+      shift 2
       ;;
 
-    v) JVM_MEMORY=$OPTARG
+    --jvm-memory)
+      JVM_MEMORY="$2"
+      shift 2
       ;;
 
-    w) WAIT_TIME=$OPTARG
+    --wait-time)
+      WAIT_TIME="$2"
+      shift 2
       ;;
 
-    *) exit_abnormal
+    -*)
+      echo "!! [ERROR] Unknown option: $1"
+      exit_abnormal
+      ;;
+
+    *)
+      echo "!! [ERROR] Unexpected argument: $1"
+      exit_abnormal
       ;;
   esac
 done
