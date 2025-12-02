@@ -2,7 +2,14 @@
 
 thisdir=`dirname "$0"`
 
-# make sure the port is clear before enabling halting-on-error
+# Check if jbang is installed
+if ! command -v jbang >/dev/null 2>&1; then
+  echo "Error: jbang is not installed."
+  echo "Please install jbang from https://www.jbang.dev/ before running this script."
+  exit 1
+fi
+
+# Make sure the port is clear before enabling halting-on-error
 kill $(lsof -t -i:8080) &>/dev/null
 
 set -euo pipefail
