@@ -177,6 +177,10 @@ scripts:
 
   start-test-services:
     - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -c 3 -p '${{config.resources.cpu.db}}' -s
+      watch:
+        - regex: "Error: PostgreSQL failed to become ready"
+          then:
+            abort: PostgreSQL failed to become ready
 
   stop-test-services:
     - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -d

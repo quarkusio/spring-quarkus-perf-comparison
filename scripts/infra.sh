@@ -78,7 +78,10 @@ start_postgres() {
   echo "PostgreSQL DB process: $pid"
 
   echo "Waiting for PostgreSQL to be ready..."
-  timeout 90s bash -c "until ${engine} exec $DB_CONTAINER_NAME pg_isready ; do sleep 5 ; done"
+  timeout 90s bash -c "until ${engine} exec $DB_CONTAINER_NAME pg_isready ; do sleep 5 ; done" || {
+    echo "Error: PostgreSQL failed to become ready"
+    exit 1
+  }
 }
 
 stop_postgres() {
