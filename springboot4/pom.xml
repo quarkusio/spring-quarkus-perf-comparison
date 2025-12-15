@@ -16,7 +16,7 @@
 	<properties>
 		<java.version>21</java.version>
 		<spring-boot.version>4.0.0</spring-boot.version>
-		<hibernate.version>7.1.11.Final</hibernate.version>
+		<hibernate.version>7.2.0.Final</hibernate.version>
 	</properties>
 	<dependencies>
 		<dependency>
