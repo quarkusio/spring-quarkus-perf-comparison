@@ -1,6 +1,7 @@
 #!/bin/bash
 
-thisdir=`dirname "$0"`
+callingdir="$(pwd)"
+thisdir="$(realpath $(dirname "$0"))"
 
 # Check if jbang is installed
 if ! command -v jbang >/dev/null 2>&1; then
@@ -12,10 +13,13 @@ fi
 # Make sure the port is clear before enabling halting-on-error
 kill $(lsof -t -i:8080) &>/dev/null
 
+# Make sure DB is down (sanity check)
+${thisdir}/infra.sh -d
+
 set -euo pipefail
 
 ${thisdir}/infra.sh -s
-java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m -jar ${thisdir}/../$1 &
+java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m -jar ${callingdir}/$1 &
 jbang wrk@hyperfoil -t2 -c100 -d20s --timeout 1s http://localhost:8080/fruits
 ${thisdir}/infra.sh -d
 kill $(lsof -t -i:8080) &>/dev/null
