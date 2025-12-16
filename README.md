@@ -89,6 +89,12 @@ scripts/stress.sh quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.j
 scripts/stress.sh springboot3/target/springboot3.jar
 ```
 
+Alternatively, you can run the whole set by running:
+
+```shell
+./scripts/stress-all.sh
+```
+
 For each test, you should see output like 
 
 ```shell
