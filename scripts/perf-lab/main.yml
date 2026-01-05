@@ -13,6 +13,7 @@ states:
 
   config.jvm.memory: #-Xmx128m
   config.jvm.args: #-XX:+UseNUMA
+  config.quarkus.build_config_args: 
 
   config.quarkus.native_build_options: #-Dquarkus.native.native-image-xmx=<maximum_memory>
   config.springboot3.native_build_options:
@@ -36,7 +37,6 @@ states:
   RUN.WRK_BIN: ${{LOAD_GEN_CMD_PREFIX}} jbang -R -XX:+UseNUMA wrk@hyperfoil
 
   DROP_OS_FILESYSTEM_CACHES:
-  QUARKUS_MAVEN_OPTIONS:
   PAUSE_TIME: 5
   PROFILER_JVM_ARGS:
   BASE_JAVA_CMD: ${{APP_CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
@@ -53,14 +53,14 @@ states:
       dir: ${{QUARKUS3_DIR}}
       updateScript: update-quarkus-version
       updateVersion: ${{config.quarkus.version}}
-      buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests"
+      buildCmd: "./mvnw ${{config.quarkus.build_config_args}} clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar"
     - name: quarkus3-native
       type: native
       dir: ${{QUARKUS3_DIR}}
       updateScript: update-quarkus-version
       updateVersion: ${{config.quarkus.version}}
-      buildCmd: "./mvnw ${{QUARKUS_MAVEN_OPTIONS}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
+      buildCmd: "./mvnw ${{config.quarkus.build_config_args}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
       runCmd: "${{APP_CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
     - name: spring3-jvm
       type: jvm
