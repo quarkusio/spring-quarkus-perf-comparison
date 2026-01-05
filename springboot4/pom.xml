@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.0</version>
+		<version>4.0.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>org.acme</groupId>
@@ -16,7 +16,6 @@
 	<properties>
 		<java.version>21</java.version>
 		<spring-boot.version>4.0.1</spring-boot.version>
-		<hibernate.version>7.2.0.Final</hibernate.version>
 	</properties>
 	<dependencies>
 		<dependency>
