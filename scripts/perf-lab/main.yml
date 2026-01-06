@@ -55,6 +55,7 @@ states:
       updateVersion: ${{config.quarkus.version}}
       buildCmd: "./mvnw ${{config.quarkus.build_config_args}} clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar"
+      logFileStartedRegex: ".*quarkus3.+started in.*"
     - name: quarkus3-native
       type: native
       dir: ${{QUARKUS3_DIR}}
@@ -62,6 +63,7 @@ states:
       updateVersion: ${{config.quarkus.version}}
       buildCmd: "./mvnw ${{config.quarkus.build_config_args}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
       runCmd: "${{APP_CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
+      logFileStartedRegex: ".*quarkus3.+started in.*"
     - name: spring3-jvm
       type: jvm
       dir: ${{SPRING3_BOOT_DIR}}
@@ -69,6 +71,7 @@ states:
       updateVersion: ${{config.springboot3.version}}
       buildCmd: "./mvnw clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
     - name: spring3-jvm-aot
       type: jvm
       dir: ${{SPRING3_BOOT_DIR}}
@@ -76,6 +79,7 @@ states:
       updateVersion: ${{config.springboot3.version}}
       buildCmd: "./mvnw clean compile spring-boot:process-aot package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
     - name: spring3-native
       type: native
       dir: ${{SPRING3_BOOT_DIR}}
@@ -83,6 +87,7 @@ states:
       updateVersion: ${{config.springboot3.version}}
       buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot3.native_build_options}}"
       runCmd: "${{APP_CMD_PREFIX}} ${{SPRING3_BOOT_DIR}}/target/springboot3 ${{config.jvm.memory}}"
+      logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
     - name: spring4-jvm
       type: jvm
       dir: ${{SPRING4_BOOT_DIR}}
@@ -90,6 +95,7 @@ states:
       updateVersion: ${{config.springboot4.version}}
       buildCmd: "./mvnw clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
+      logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
     - name: spring4-jvm-aot
       type: jvm
       dir: ${{SPRING4_BOOT_DIR}}
@@ -97,6 +103,7 @@ states:
       updateVersion: ${{config.springboot4.version}}
       buildCmd: "./mvnw clean compile spring-boot:process-aot package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -Dspring.aot.enabled=true -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
+      logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
     - name: spring4-native
       type: native
       dir: ${{SPRING4_BOOT_DIR}}
@@ -104,6 +111,7 @@ states:
       updateVersion: ${{config.springboot4.version}}
       buildCmd: "./mvnw clean -Pnative -DskipTests native:compile package ${{config.springboot4.native_build_options}}"
       runCmd: "${{APP_CMD_PREFIX}} ${{SPRING4_BOOT_DIR}}/target/springboot4 ${{config.jvm.memory}}"
+      logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
 
 scripts:
   update-state:
@@ -371,15 +379,23 @@ scripts:
     - log: Running workload
     - sh: cd ${{RUNTIME.dir}}
     - sh: ${{RUNTIME.buildCmd}}
+    - set-state:
+        key: APP_LOG_REGEX
+        value: ${{RUNTIME.logFileStartedRegex}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
+        - set-state:
+            key: LOG_FILE
+            value: ${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log
+        - sh: touch ${{LOG_FILE}}
         - queue-download: ${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
-        - queue-download: ${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log
+        - queue-download: ${{LOG_FILE}}
         - queue-download: ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
-        - sh: ${{RUNTIME.runCmd}} &>${{REPO_DIR}}/logs/load-test-${{RUNTIME.name}}-${{ITERATION}}.log &
+        - set-signal: LOG_REGEX_REACHED 1
+        - sh: ${{RUNTIME.runCmd}} &>${{LOG_FILE}} &
         - sh: PID=$!
         - sh: echo $PID
         - set-state: JVM_PID
@@ -400,13 +416,20 @@ scripts:
                     format: ${{config.profiler.name}}
                     events: ${{config.profiler.events}}
                     delay: 10s
-        - sh: sleep ${{PAUSE_TIME}}
-        - sh: ${{RUN.WRK_BIN}} -t2 -c100 -d2m ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
+        - script:
+            name: watch-log
+            async: true
+          with:
+            log_file: ${{LOG_FILE}}
+            log_regex: ${{APP_LOG_REGEX}}
+        - wait-for: LOG_REGEX_REACHED
+        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 2m --timeout 2m ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIME.name}}-${{ITERATION}}.log
         - regex: unable to connect
           then:
             - abort: unable to connect to target application
+        - sleep: 30s # Wait for the app to complete warmup
         - signal: LOAD_STEADY_STATE_START
-        - sh: ${{RUN.WRK_BIN}} -t2 -c100 -d30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
+        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s --timeout 30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
         - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log | grep "Requests/sec" | awk '{print $2}'
           then:
             - set-state: THROUGHPUT
@@ -472,6 +495,18 @@ scripts:
       with:
         var-name: RUN.output.results.${{RUNTIME.name}}.load.avRequestTimeouts
         array: RUN.output.results.${{RUNTIME.name}}.load.requestTimeouts
+
+  watch-log:
+    - sh: tail -f ${{log_file}}
+      watch:
+        - regex: "${{log_regex}}"
+          then:
+            - ctrlC
+            - signal: LOG_REGEX_REACHED
+      timer:
+        1m:
+          - ctrlC
+          - abort: Log file ${{log_file}} didn't match regex ${{log_regex}} after 10 minutes
 
   download-metrics:
     - sh: mkdir -p ${{METRICS_DIR}}
