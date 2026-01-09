@@ -46,10 +46,10 @@ scripts:
     - sh: >
         bin/asprof 
         -d ${{duration:10}} 
-        -f ${{REPO_DIR}}/logs/flamegraph.${{suffix:html}} 
+        -f ${{REPO_DIR}}/logs/${{format:flamegraph}}.${{suffix:html}} 
         -o ${{format:flamegraph}} 
         -e ${{events:cpu}} 
         ${{="${{enableTotal : }}".toLowerCase() == "true" ? "--total" : ""}} 
         --title ${{title:async-profiler}} 
         ${{pid}}
-    - download: ${{REPO_DIR}}/logs/flamegraph.${{suffix:html}}
+    - download: ${{REPO_DIR}}/logs/${{format:flamegraph}}.${{suffix:html}}
