@@ -12,8 +12,6 @@ Here are the principles we used when making implementation choices:
   - **High quality**. Applications should model best practices. Although we want the application to be represent a typical usage, someone who copies it shouldn't ever be copying 'wrong' or bad code. 
   - **Easy to try at home**. Running measurements should be easy for a non-expert to do with a minimum of infrastructure setup, and it should also be rigorous in terms of performance best practices. These two goals are contradictory, unfortunately! To try and achieve both, we have two versions of the scripts, one optimised for simplicity, and one for methodological soundness.
 
-
-
 ## What's in the repo
 This project contains the following modules:
 - [springboot3](springboot3)
@@ -22,6 +20,8 @@ This project contains the following modules:
     - A Spring Boot 4.x version of the application 
 - [quarkus3](quarkus3)
     - A Quarkus 3.x version of the application
+- [quarkus3-virtual](quarkus3-virtual)
+    - A Quarkus 3.x version of the application using Virtual Threads
 - [quarkus3-spring-compatibility](quarkus3-spring-compatibility)
     - A Quarkus 3.x version of the application using the Spring compatibility layer. You can also recreate this application from the spring application using [a few manual steps](spring-conversion.md).
  

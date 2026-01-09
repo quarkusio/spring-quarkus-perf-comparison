@@ -42,8 +42,8 @@ help() {
   echo "  --repo-url <SCM_REPO_URL>                               The SCM repo url"
   echo "                                                              Default: '${SCM_REPO_URL}'"
   echo "  --runtimes <RUNTIMES>                                   The runtimes to test, separated by commas"
-  echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native"
-  echo "                                                              Default: 'quarkus3-jvm,quarkus3-native,spring3-jvm,spring3-jvm-aot,spring3-native,spring4-jvm,spring4-jvm-aot,spring4-native'"
+  echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-virtual, quarkus3-native, spring3-jvm, spring3-virtual, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-virtual, spring4-jvm-aot, spring4-native"
+  echo "                                                              Default: 'quarkus3-jvm,quarkus-jvm-virtual,quarkus3-native,spring3-jvm,spring3-jvm-aot,spring3-virtual,spring3-native,spring4-jvm,spring4-virtual,spring4-jvm-aot,spring4-native'"
   echo "  --springboot3-version <SPRING_BOOT3_VERSION>            The Spring Boot 3.x version to use"
   echo "                                                              Default: Whatever version is set in pom.xml of the Spring Boot 3 app"
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
@@ -229,7 +229,7 @@ NATIVE_SPRING4_BUILD_OPTIONS=""
 PROFILER="none"
 QUARKUS_BUILD_CONFIG_ARGS=""
 QUARKUS_VERSION=""
-ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-native" "spring3-jvm" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-jvm-aot" "spring4-native")
+ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-virtual" "quarkus3-native" "spring3-jvm" "spring3-virtual" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-virtual" "spring4-jvm-aot" "spring4-native")
 RUNTIMES=${ALLOWED_RUNTIMES[@]}
 SPRING_BOOT3_VERSION=""
 SPRING_BOOT4_VERSION=""

@@ -1,0 +1,15 @@
+quarkus:
+  jackson:
+    serialization-inclusion: non-empty
+  rest:
+    jackson:
+      optimization:
+        enable-reflection-free-serializers: true
+
+"%prod":
+  quarkus:
+    datasource:
+      username: fruits
+      password: fruits
+      jdbc:
+        url: jdbc:postgresql://localhost:5432/fruits

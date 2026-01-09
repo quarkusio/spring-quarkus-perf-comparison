@@ -40,11 +40,14 @@ jobs:
           - '21'
           - '25'
         app:
-          - springboot3
-          - springboot4
-          - quarkus3
-          - quarkus3-spring-compatibility
-    name: "[jvm-build-test-java${{ matrix.java }}]: ${{ matrix.app }}"
+          - { "name": "springboot3", "dir": "springboot3", "args": "" }
+          - { "name": "springboot3-virtual", "dir": "springboot3", "args": "-Dspring.threads.virtual.enabled=true" }
+          - { "name": "springboot4", "dir": "springboot4", "args": "" }
+          - { "name": "springboot4-virtual", "dir": "springboot4", "args": "-Dspring.threads.virtual.enabled=true" }
+          - { "name": "quarkus3", "dir": "quarkus3", "args": "" }
+          - { "name": "quarkus3-virtual", "dir": "quarkus3-virtual", "args": "" }
+          - { "name": "quarkus3-spring-compatibility", "dir": "quarkus3-spring-compatibility", "args": "" }
+    name: "[jvm-build-test-java${{ matrix.java }}]: ${{ matrix.app.name }}"
     steps:
       - uses: actions/checkout@v6
 
@@ -56,9 +59,9 @@ jobs:
           cache: maven
 
       - name: Build and test
-        working-directory: ${{ matrix.app }}
+        working-directory: ${{ matrix.app.dir }}
         run: |
-          ./mvnw -B clean verify \
+          ./mvnw -B clean verify ${{ matrix.app.args }} \
             -Dmaven.compiler.release=${{ matrix.java }} \
             -Djava.version=${{ matrix.java }}
 
@@ -67,21 +70,30 @@ jobs:
 
       - name: Validate simple scripts
         run: |
-          case "${{ matrix.app }}" in
+          case "${{ matrix.app.name }}" in
             springboot3)
-            TARGET_DIR="${{ matrix.app }}/target/springboot3.jar"
+            TARGET_DIR="${{ matrix.app.dir }}/target/springboot3.jar"
+            ;;
+            springboot3-virtual)
+            TARGET_DIR="${{ matrix.app.dir }}/target/springboot3.jar"
             ;;
             springboot4)
-            TARGET_DIR="${{ matrix.app }}/target/springboot4.jar"
+            TARGET_DIR="${{ matrix.app.dir }}/target/springboot4.jar"
+            ;;
+            springboot4-virtual)
+            TARGET_DIR="${{ matrix.app.dir }}/target/springboot4.jar"
             ;;
             quarkus3)
-            TARGET_DIR="${{ matrix.app }}/target/quarkus-app/quarkus-run.jar"
+            TARGET_DIR="${{ matrix.app.dir }}/target/quarkus-app/quarkus-run.jar"
+            ;;
+            quarkus3-virtual)
+            TARGET_DIR="${{ matrix.app.dir }}/target/quarkus-app/quarkus-run.jar"
             ;;
             quarkus3-spring-compatibility)
-            TARGET_DIR="${{ matrix.app }}/target/quarkus-app/quarkus-run.jar"
+            TARGET_DIR="${{ matrix.app.dir }}/target/quarkus-app/quarkus-run.jar"
             ;;
             *)
-            echo "Unknown app: ${{ matrix.app }}"
+            echo "Unknown app: ${{ matrix.app.name }}"
             exit 1
             ;;
           esac

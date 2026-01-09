@@ -43,7 +43,7 @@ states:
   PROFILER_JVM_ARGS:
   BASE_JAVA_CMD: ${{APP_CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
   TESTS : [test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test]
-  RUNTIMES: [quarkus3-jvm, quarkus3-native, spring3-jvm, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-jvm-aot, spring4-native]
+  RUNTIMES: [quarkus3-jvm, quarkus3-virtual, quarkus3-native, spring3-jvm, spring3-virtual, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-virtual, spring4-jvm-aot, spring4-native]
   TARGET_URL: http://localhost:8080/fruits
   QUARKUS-PLATFORM-ARTIFACT-ID: quarkus-bom
   PROJ_REPO_NAME: spring-quarkus-perf-comparison
@@ -57,6 +57,14 @@ states:
       updateVersion: ${{config.quarkus.version}}
       buildCmd: "./mvnw ${{config.quarkus.build_config_args}} clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{QUARKUS3_DIR}}/target/quarkus-app/quarkus-run.jar"
+      logFileStartedRegex: ".*quarkus3.+started in.*"
+    - name: quarkus3-virtual
+      type: jvm
+      dir: ${{QUARKUS3_VIRTUAL_DIR}}
+      updateScript: update-quarkus-version
+      updateVersion: ${{config.quarkus.version}}
+      buildCmd: "./mvnw ${{config.quarkus.build_config_args}} clean package -DskipTests"
+      runCmd: "${{BASE_JAVA_CMD}} -jar ${{QUARKUS3_VIRTUAL_DIR}}/target/quarkus-app/quarkus-run.jar"
       logFileStartedRegex: ".*quarkus3.+started in.*"
     - name: quarkus3-native
       type: native
@@ -73,6 +81,14 @@ states:
       updateVersion: ${{config.springboot3.version}}
       buildCmd: "./mvnw clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
+    - name: spring3-virtual
+      type: jvm
+      dir: ${{SPRING3_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot3.version}}
+      buildCmd: "./mvnw clean package -DskipTests -Dspring.threads.virtual.enabled=true"
+      runCmd: "${{BASE_JAVA_CMD}} -Dspring.threads.virtual.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
       logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
     - name: spring3-jvm-aot
       type: jvm
@@ -97,6 +113,14 @@ states:
       updateVersion: ${{config.springboot4.version}}
       buildCmd: "./mvnw clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
+      logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
+    - name: spring4-virtual
+      type: jvm
+      dir: ${{SPRING4_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot4.version}}
+      buildCmd: "./mvnw clean package -DskipTests -Dspring.threads.virtual.enabled=true"
+      runCmd: "${{BASE_JAVA_CMD}} -Dspring.threads.virtual.enabled=true -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
       logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
     - name: spring4-jvm-aot
       type: jvm
@@ -126,6 +150,7 @@ scripts:
     - set-state: RUN.SPRING3_BOOT_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/springboot3
     - set-state: RUN.SPRING4_BOOT_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/springboot4
     - set-state: RUN.QUARKUS3_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/quarkus3
+    - set-state: RUN.QUARKUS3_VIRTUAL_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}/quarkus3-virtual
     - set-state: RUN.ASYNC_PROFILER_DIR ${{BASE_DIR}}/${{ASYNC_PROFILER}}
 
   output-vars:
@@ -138,6 +163,7 @@ scripts:
         "SPRING3_BOOT_DIR: ${{SPRING3_BOOT_DIR}}"
         "SPRING4_BOOT_DIR: ${{SPRING4_BOOT_DIR}}"
         "QUARKUS3_DIR : ${{QUARKUS3_DIR}}"
+        "QUARKUS3_VIRTUAL_DIR : ${{QUARKUS3_VIRTUAL_DIR}}"
         "RUNTIMECMDS: ${{RUNTIMECMDS}}"
 
   capture-repo-info:
