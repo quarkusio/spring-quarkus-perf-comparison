@@ -23,6 +23,7 @@ states:
   config.resources.cpu.db: 4-6
   config.resources.cpu.load_generator: 7-9
   config.resources.cpu.1st_request: 10
+  config.resources.cpu.monitor: 11
 
   config.profiler.name: none #jfr flamegraph
   config.profiler.events: cpu
@@ -34,6 +35,7 @@ states:
 
   APP_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.app}}
   LOAD_GEN_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.load_generator}}
+  MONITOR_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.monitor}}
   RUN.WRK_BIN: ${{LOAD_GEN_CMD_PREFIX}} jbang -R -XX:+UseNUMA wrk@hyperfoil
 
   DROP_OS_FILESYSTEM_CACHES:
@@ -399,6 +401,12 @@ scripts:
         - sh: PID=$!
         - sh: echo $PID
         - set-state: JVM_PID
+        - script: monitor-processes
+          with:
+            pid: ${{JVM_PID}}
+            log_dir: ${{REPO_DIR}}/logs
+            runtime_name: ${{RUNTIME.name}}
+            iteration: ${{ITERATION}}
         - log: JVM_PID = ${{JVM_PID}}
         - read-state: ${{config.profiler.name}}
           then:
@@ -472,6 +480,7 @@ scripts:
           with:
             array: RUN.output.results.${{RUNTIME.name}}.load.throughputDensity
             value: ${{= ${{THROUGHPUT}}/${{RSS}}*1024 }}
+        - signal: LOAD_TEST_COMPLETE
         - sh: kill -15 $PID
         - sh: sleep ${{PAUSE_TIME}}
         - script: stop-test-services
@@ -507,6 +516,52 @@ scripts:
         1m:
           - ctrlC
           - abort: Log file ${{log_file}} didn't match regex ${{log_regex}} after 10 minutes
+
+  monitor-processes:
+    - set-signal: LOAD_TEST_COMPLETE 1
+    - script:
+        name: monitor-process
+        async: true
+      with:
+        name: pidstat
+        command: pidstat -u -p ${{pid}} 1
+        log_file: ${{log_dir}}/pidstat-${{runtime_name}}-${{iteration}}.log
+    - script:
+        name: monitor-process
+        async: true
+      with:
+        name: mpstat
+        command: mpstat -P ALL 1
+        log_file: ${{log_dir}}/mpstat-${{runtime_name}}-${{iteration}}.log
+    - script:
+        name: monitor-process
+        async: true
+      with:
+        name: vmstat
+        command: vmstat 1
+        log_file: ${{log_dir}}/vmstat-${{runtime_name}}-${{iteration}}.log
+    - script: monitor-postgres
+
+  monitor-postgres:
+    - sh: POSTGRES_PID=$(${{PROJ_REPO_DIR}}/scripts/infra.sh -r)
+    - sh: echo $POSTGRES_PID
+    - set-state: POSTGRES_PID
+    - script:
+        name: monitor-process
+        async: true
+      with:
+        name: postgres-pidstat
+        command: pidstat -u -p $(pgrep -d , -P ${{POSTGRES_PID}}) 1
+        log_file: ${{log_dir}}/postgres-pidstat-${{runtime_name}}-${{iteration}}.log
+
+  monitor-process:
+    - queue-download: ${{log_file}}
+    - sh: ${{MONITOR_CMD_PREFIX}} ${{command}} &>${{log_file}} &
+    - sh: PROCESS_PID=$!
+    - sh: echo $PROCESS_PID
+    - set-state: PROCESS_PID
+    - wait-for: ${{monitor_complete_signal:LOAD_TEST_COMPLETE}}
+    - sh: kill -15 $PROCESS_PID
 
   download-metrics:
     - sh: mkdir -p ${{METRICS_DIR}}

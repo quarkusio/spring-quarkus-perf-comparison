@@ -172,6 +172,10 @@ local current_cpu=$((current_cpu + 1))
 local db_cpus="${current_cpu}-$((current_cpu + 2))"
 local current_cpu=$((current_cpu + 3))
 local load_gen_cpus="${current_cpu}-$((current_cpu + 2))"
+local current_cpu=$((current_cpu + 3))
+local first_request_cpu="${current_cpu}"
+local current_cpu=$((current_cpu + 1))
+local monitor_cpu="${current_cpu}"
 
 ${JBANG_CMD} qDup@hyperfoil \
     -B ${OUTPUT_DIR} \
@@ -188,6 +192,8 @@ ${JBANG_CMD} qDup@hyperfoil \
     -S config.resources.cpu.app="${app_cpus}" \
     -S config.resources.cpu.db="${db_cpus}" \
     -S config.resources.cpu.load_generator="${load_gen_cpus}" \
+    -S config.resources.cpu.1st_request="${first_request_cpu}" \
+    -S config.resources.cpu.monitor="${monitor_cpu}" \
     -S config.springboot3.version=${SPRING_BOOT3_VERSION} \
     -S config.springboot4.version=${SPRING_BOOT4_VERSION} \
     -S config.jvm.memory="${JVM_MEMORY}" \

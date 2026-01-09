@@ -13,6 +13,7 @@ help() {
   echo " -m <MEMORY>           Memory to allocate"
   echo "                         Default: ${MEMORY}"
   echo " -p <CPUSET_CPUS>      CPUs in which to allow execution (0-3, 0,1)"
+  echo " -r                    Output the PostgreSQL process host PID"
   echo " -s                    Start the services"
 }
 
@@ -20,6 +21,10 @@ exit_abnormal() {
   echo
   help
   exit 1
+}
+
+get_postgres_host_pid() {
+  echo $(${engine} inspect -f '{{.State.Pid}}' ${DB_CONTAINER_NAME})
 }
 
 # Wrapper to handle rootless podman cgroup issues on Linux
@@ -90,6 +95,7 @@ stop_postgres() {
 }
 
 start_services() {
+  echo "Using $engine to start containers"
   echo "-----------------------------------------"
   echo "[$(date +"%m/%d/%Y %T")]: Starting services"
   echo "-----------------------------------------"
@@ -97,6 +103,7 @@ start_services() {
 }
 
 stop_services() {
+  echo "Using $engine to stop containers"
   echo "-----------------------------------------"
   echo "[$(date +"%m/%d/%Y %T")]: Stopping services"
   echo "-----------------------------------------"
@@ -119,10 +126,8 @@ else
   exit_abnormal
 fi
 
-echo "Using $engine to start/stop containers"
-
 # Process the input options
-while getopts "c:dhm:p:s" option; do
+while getopts "c:dhm:p:rs" option; do
   case $option in
     c) CPUS=$OPTARG
        ;;
@@ -138,6 +143,10 @@ while getopts "c:dhm:p:s" option; do
        ;;
 
     p) CPUSET_CPUS=$OPTARG
+       ;;
+
+    r) get_postgres_host_pid
+       exit
        ;;
 
     s) IS_STARTING=true
