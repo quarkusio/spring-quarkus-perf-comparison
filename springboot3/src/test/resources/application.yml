@@ -15,6 +15,7 @@ spring:
           # 2. Configure the cache region factory (specifies the JCache/Caffeine provider)
           region:
             factory_class: jcache
+    open-in-view: false
   jackson:
     default-property-inclusion: non_empty
   sql:

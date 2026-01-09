@@ -6,6 +6,7 @@ spring:
   jackson:
     default-property-inclusion: non_empty
   jpa:
+    open-in-view: false
     defer-datasource-initialization: true
     properties:
       hibernate:
