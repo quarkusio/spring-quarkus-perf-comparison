@@ -19,3 +19,9 @@ spring:
           region:
             factory_class: jcache
         default_batch_fetch_size: 16
+
+# See https://github.com/quarkusio/spring-quarkus-perf-comparison/issues/60#issuecomment-3724614394
+# For a conversation about why this setting is set this way
+server:
+  tomcat:
+    max-keep-alive-requests: -1
