@@ -44,6 +44,14 @@ help() {
   echo "  --runtimes <RUNTIMES>                                   The runtimes to test, separated by commas"
   echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-virtual, quarkus3-native, spring3-jvm, spring3-virtual, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-virtual, spring4-jvm-aot, spring4-native"
   echo "                                                              Default: 'quarkus3-jvm,quarkus-jvm-virtual,quarkus3-native,spring3-jvm,spring3-jvm-aot,spring3-virtual,spring3-native,spring4-jvm,spring4-virtual,spring4-jvm-aot,spring4-native'"
+  echo "  --scenario <SCENARIO>                                   The scenario to run"
+  echo "                                                              Accepted values: tuned, ootb"
+  echo "                                                              Default: Depends on the value of --repo-branch"
+  echo "                                                                If --repo-branch == 'main', then default == 'tuned"
+  echo "                                                                If --repo-branch == 'ootb', then default == 'ootb"
+  echo "                                                                If --repo-branch == anything else, then default == 'tuned"
+  echo "                                                              'tuned' applies various performance tuning settings to the JVM and OS (generally from the 'main' branch)"
+  echo "                                                              'ootb' runs with out-of-the-box/default settings (generally from the 'ootb' branch)"
   echo "  --springboot3-version <SPRING_BOOT3_VERSION>            The Spring Boot 3.x version to use"
   echo "                                                              Default: Whatever version is set in pom.xml of the Spring Boot 3 app"
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
@@ -101,6 +109,7 @@ print_values() {
   echo "  QUARKUS_BUILD_CONFIG_ARGS: $QUARKUS_BUILD_CONFIG_ARGS"
   echo "  QUARKUS_VERSION: $QUARKUS_VERSION"
   echo "  RUNTIMES: ${RUNTIMES[@]}"
+  echo "  SCENARIO: ${SCENARIO}"
   echo "  SPRING_BOOT3_VERSION: $SPRING_BOOT3_VERSION"
   echo "  SPRING_BOOT4_VERSION: $SPRING_BOOT4_VERSION"
   echo "  TESTS_TO_RUN: ${TESTS_TO_RUN[@]}"
@@ -149,6 +158,14 @@ setup_jbang() {
     fi
     
     JBANG_CMD="./.jbang-wrapper"
+  fi
+}
+
+calculate_scenario() {
+  if [[ "$SCM_REPO_BRANCH" == "main" ]]; then
+    SCENARIO="tuned"
+  elif [[ "$SCM_REPO_BRANCH" == "ootb" ]]; then
+    SCENARIO="ootb"
   fi
 }
 
@@ -204,6 +221,7 @@ ${JBANG_CMD} qDup@hyperfoil \
     -S config.profiler.events=cpu \
     -S config.repo.branch=${SCM_REPO_BRANCH} \
     -S config.repo.url=${SCM_REPO_URL} \
+    -S config.repo.scenario=${SCENARIO} \
     -S env.run.host.user=${USER} \
     -S env.run.host.target=${target} \
     -S env.run.host.name=${HOST} \
@@ -219,6 +237,7 @@ ${JBANG_CMD} qDup@hyperfoil \
 CPUS="4"
 SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
 SCM_REPO_BRANCH="main"
+SCENARIO="tuned"
 GRAALVM_VERSION="25.0.1-graalce"
 HOST="LOCAL"
 ITERATIONS="3"
@@ -350,6 +369,16 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
 
+    --scenario)
+      if [[ "$2" =~ ^(tuned|ootb)$ ]]; then
+        SCENARIO="$2"
+      else
+        echo "!! [ERROR] --scenario option must be one of (tuned, ootb)!!"
+        exit_abnormal
+      fi
+      shift 2
+      ;;
+
     --springboot3-version)
       SPRING_BOOT3_VERSION="$2"
       shift 2
@@ -402,6 +431,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 validate_values
+calculate_scenario
 print_values
 setup_jbang
 run_benchmarks
