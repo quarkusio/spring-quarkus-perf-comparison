@@ -8,6 +8,7 @@ on:
       - '.github/dependabot.yml'
     branches:
       - main
+      - ootb
   pull_request:
     types:
       - opened
@@ -16,6 +17,7 @@ on:
       - ready_for_review
     branches:
       - main
+      - ootb
     paths-ignore:
       - '**/*.md'
       - '**/images/**'
