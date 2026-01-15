@@ -4,6 +4,7 @@ quarkus:
   rest:
     jackson:
       optimization:
+        # See https://quarkus.io/blog/quarkus-metaprogramming/
         enable-reflection-free-serializers: true
 
 "%prod":

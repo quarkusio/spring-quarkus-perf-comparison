@@ -4,11 +4,16 @@ spring:
     password: fruits
     url: jdbc:postgresql://localhost:5432/fruits
     hikari:
+      # @simasch: Sets the jdbc pool size to be the same that Quarkus uses
+      # see https://github.com/quarkusio/spring-quarkus-perf-comparison/pull/114
       maximum-pool-size: 20
   jackson:
     default-property-inclusion: non_empty
   jpa:
     defer-datasource-initialization: true
+    # @simasch: Remove the open-session-in-view setting
+    # see https://github.com/quarkusio/spring-quarkus-perf-comparison/issues/108
+    # and https://github.com/quarkusio/spring-quarkus-perf-comparison/pull/124
     open-in-view: false
     properties:
       hibernate:
@@ -18,10 +23,13 @@ spring:
           # 2. Configure the cache region factory (specifies the JCache/Caffeine provider)
           region:
             factory_class: jcache
+        # @simasch: Sets the hibernate batch size to be the same that Quarkus uses
+        # see https://github.com/quarkusio/spring-quarkus-perf-comparison/pull/114
         default_batch_fetch_size: 16
 
+# In order to remove errors and allow the Spring application to handle the load without errors
 # See https://github.com/quarkusio/spring-quarkus-perf-comparison/issues/60#issuecomment-3724614394
-# For a conversation about why this setting is set this way
+# for a conversation about why this setting is set this way
 server:
   tomcat:
     max-keep-alive-requests: -1
