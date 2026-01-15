@@ -25,7 +25,7 @@ Here are the principles we used when making implementation choices:
 
 Initially, we wanted to measure the "out of the box" performance experience, meaning the use of tuning knobs are kept to a minimum. This is different from the goals for a benchmark like [TechEmpower](https://www.techempower.com/benchmarks/#section=data-r23), where the aim is to tune things to get the highest absolute performance numbers. While having an out-of-the-box baseline is important, as these experiments have evolved we've realized it's also important to be able to compare the performance of different configurations.
 
-To that end, we are going to utilize different branches within this repository for managing the strategies. We will also [differentiate the results of each](https://github.com/quarkusio/benchmarks/issues/158) so an out-of-the-box strategy run can be recorded independently of a tuned strategy run.
+To that end, we use different branches within this repository for separating the strategies. The scenario is recorded in the raw output data and visualisations, so an out-of-the-box strategy run can be recorded independently of a tuned strategy run. 
 
 > [!IMPORTANT]
 > While the strategies and outcomes may be different, each strategy should still represent the same set of [guiding principles](#guiding-principles-) when comparing applications within the strategy.
