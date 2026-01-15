@@ -23,7 +23,7 @@ Here are the principles we used when making implementation choices:
 
 ## Goals
 
-Initially, we wanted to measure the "out of the box" performance experience, meaning the use of tuning knobs are kept to a minimum. This is different from the goals for a benchmark like [TechEmpower](https://www.techempower.com/benchmarks/#section=data-r23), where the aim is to tune things to get the highest absolute performance numbers. While having an out-of-the-box baseline is important, as these experiments have evolved we've realized it's also important to be able to compare the performance of different configurations.
+Initially, we wanted to measure the "out of the box" performance experience, meaning the use of tuning knobs are kept to a minimum. This is different from the goals for a benchmark like [TechEmpower](https://www.techempower.com/benchmarks/#section=data-r23), where the aim is to tune things to get the highest absolute performance numbers. While having an out-of-the-box baseline is important, not all frameworks perform equally well out of the box. A more typical production scenario would involve tuning, so we wanted to be as fair as possible and capture that too.
 
 To that end, we use different branches within this repository for separating the strategies. The scenario is recorded in the raw output data and visualisations, so an out-of-the-box strategy run can be recorded independently of a tuned strategy run. 
 
