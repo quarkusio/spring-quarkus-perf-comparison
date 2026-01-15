@@ -3,12 +3,9 @@ spring:
     username: fruits
     password: fruits
     url: jdbc:postgresql://localhost:5432/fruits
-    hikari:
-      maximum-pool-size: 20
   jackson:
     default-property-inclusion: non_empty
   jpa:
-    open-in-view: false
     defer-datasource-initialization: true
     properties:
       hibernate:
@@ -18,4 +15,3 @@ spring:
           # 2. Configure the cache region factory (specifies the JCache/Caffeine provider)
           region:
             factory_class: jcache
-        default_batch_fetch_size: 16

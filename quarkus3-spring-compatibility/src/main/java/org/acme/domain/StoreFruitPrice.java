@@ -19,10 +19,13 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Table(name = "store_fruit_prices")
 public class StoreFruitPrice {
   @EmbeddedId
+  @JsonIgnore
   private StoreFruitPriceId id;
 
   @MapsId("storeId")
@@ -35,6 +38,7 @@ public class StoreFruitPrice {
   @MapsId("fruitId")
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "fruit_id", nullable = false)
+  @JsonIgnore
   private Fruit fruit;
 
   @NotNull

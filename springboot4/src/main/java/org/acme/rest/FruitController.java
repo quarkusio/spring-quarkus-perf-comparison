@@ -2,10 +2,11 @@ package org.acme.rest;
 
 import java.util.List;
 
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
-import org.acme.dto.FruitDTO;
-import org.acme.service.FruitService;
+import org.acme.domain.Fruit;
+import org.acme.repository.FruitRepository;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -19,26 +20,27 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/fruits")
 public class FruitController {
-	private final FruitService fruitService;
+	private final FruitRepository fruitRepository;
 
-	public FruitController(FruitService fruitService) {
-		this.fruitService = fruitService;
+	public FruitController(FruitRepository fruitRepository) {
+		this.fruitRepository = fruitRepository;
 	}
 
 	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-	public List<FruitDTO> getAll() {
-		return this.fruitService.getAllFruits();
+	public List<Fruit> getAll() {
+		return this.fruitRepository.findAll();
 	}
 
 	@GetMapping(path = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<FruitDTO> getFruit(@PathVariable String name) {
-		return this.fruitService.getFruitByName(name)
+	public ResponseEntity<Fruit> getFruit(@PathVariable String name) {
+		return this.fruitRepository.findByName(name)
 			.map(ResponseEntity::ok)
 			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
 	@PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-	public FruitDTO addFruit(@Valid @RequestBody FruitDTO fruit) {
-    return this.fruitService.createFruit(fruit);
+	@Transactional
+	public Fruit addFruit(@Valid @RequestBody Fruit fruit) {
+		return this.fruitRepository.save(fruit);
 	}
 }

@@ -1,10 +1,6 @@
 quarkus:
   jackson:
     serialization-inclusion: non-empty
-  rest:
-    jackson:
-      optimization:
-        enable-reflection-free-serializers: true
 
 "%prod":
   quarkus:
