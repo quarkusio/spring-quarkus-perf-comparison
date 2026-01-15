@@ -5,19 +5,42 @@ This application is designed to allow like-for-like performance comparisons betw
 ## Guiding principles 
 
 Designing good benchmarks is hard! There are lots of trade-offs, and lots of "right" answers. 
+
 Here are the principles we used when making implementation choices:
 
-  - **Parity**. The application code in the Spring and Quarkus versions of the application should be strictly equivalent, and the domain models should be identical. Performance differences should come from architecture differences and library-integration optimisations in the frameworks themselves.
-  - **Normal-ness**. Realism is more important than squeezing out every last bit of performance. We wanted to measure the "out of the box" performance experience. That means the use of tuning knobs are kept to a minimum. This is different from the goals for a benchmark like [TechEmpower](https://www.techempower.com/benchmarks/#section=data-r23), where the tuning aim is to get the highest absolute performance numbers.
-  - **High quality**. Applications should model best practices. Although we want the application to be represent a typical usage, someone who copies it shouldn't ever be copying 'wrong' or bad code. 
-  - **Easy to try at home**. Running measurements should be easy for a non-expert to do with a minimum of infrastructure setup, and it should also be rigorous in terms of performance best practices. These two goals are contradictory, unfortunately! To try and achieve both, we have two versions of the scripts, one optimised for simplicity, and one for methodological soundness.
+- **Parity**
+    - The application code in the Spring and Quarkus versions of the application should be as equivalent as possible to perform the same function. This mean that the domain models should be identical, the underlying persistence mechanisms should be identical (i.e. JPA with Hibernate).
+    - Performance differences should come from architecture differences and library-integration optimisations in the frameworks themselves.
+    - If a change is made that changes the architecture of an application (i.e. moving blocking to reactive, using virtual threads, etc), then these changes should be applied to all the versions of the applications.
+- **Normal-ness**
+    - Realism is more important than squeezing out every last bit of performance.
+- **High quality**
+    - Applications should model best practices.
+    - Although we want the application to represent a typical usage, someone who copies it shouldn't ever be copying 'wrong' or bad code. 
+- **Easy to try at home**
+    - Running measurements should be easy for a non-expert to do with a minimum of infrastructure setup, and it should also be rigorous in terms of performance best practices.
+    - These two goals are contradictory, unfortunately! To try and achieve both, we have two versions of the scripts, one optimised for simplicity, and one for methodological soundness.
+
+## Goals
+
+Initially, we wanted to measure the "out of the box" performance experience, meaning the use of tuning knobs are kept to a minimum. This is different from the goals for a benchmark like [TechEmpower](https://www.techempower.com/benchmarks/#section=data-r23), where the aim is to tune things to get the highest absolute performance numbers. While having an out-of-the-box baseline is important, as these experiments have evolved we've realized it's also important to be able to compare the performance of different configurations.
+
+To that end, we are going to utilize different branches within this repository for managing the strategies. We will also [differentiate the results of each](https://github.com/quarkusio/benchmarks/issues/158) so an out-of-the-box strategy run can be recorded independently of a tuned strategy run.
+
+> [!IMPORTANT]
+> While the strategies and outcomes may be different, each strategy should still represent the same set of [guiding principles](#guiding-principles-) when comparing applications within the strategy.
+
+| Strategy              | Goals                                                                                                                                                                                        | Constraints                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Branch                                                                                                  |
+|-----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| OOTB (Out of the box) | - Simplicity<br/>- Measure performance characteristics each framework provides out of the box<br/>&nbsp;&nbsp;&nbsp;&nbsp;- Does one framework provide a more "production ready" experience? | - No tuning allowed, even to fix load-related errors<br/>&nbsp;&nbsp;&nbsp;&nbsp;- May not achieve parity of pool sizes between Quarkus and Spring applications (or even between Spring 3/Spring 4)                                                                                                                                                                                                                                                               | [`ootb`](https://github.com/quarkusio/spring-quarkus-perf-comparison/blob/ootb)                         |
+| Tuned                 | Performance                                                                                                                                                                                  | Reasonable improvements to help improve performance without changing the architecture of the application<br/>- Code and architectural equivalence are still important<br/><br/>**Acceptable**<br/>- Adjustments to HTTP/database thread/connection pool sizes<br/>- Removal of the [open session in view pattern](https://www.baeldung.com/spring-open-session-in-view)<br/><br/>**Unacceptable**<br/>- Changes specific to a fixed number of CPU cores or memory | [`main`](https://github.com/quarkusio/spring-quarkus-perf-comparison)<br/>The default repository branch |
 
 ## What's in the repo
 This project contains the following modules:
 - [springboot3](springboot3)
     - A Spring Boot 3.x version of the application
 - [springboot4](springboot4)
-    - A Spring Boot 4.x version of the application 
+    - A Spring Boot 4.x version of the application
 - [quarkus3](quarkus3)
     - A Quarkus 3.x version of the application
 - [quarkus3-virtual](quarkus3-virtual)
