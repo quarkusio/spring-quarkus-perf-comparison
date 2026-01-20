@@ -17,7 +17,10 @@ import jakarta.ws.rs.core.Response.Status;
 import org.acme.domain.Fruit;
 import org.acme.repository.FruitRepository;
 
+import io.smallrye.common.annotation.RunOnVirtualThread;
+
 @Path("/fruits")
+@RunOnVirtualThread
 public class FruitController {
 	private final FruitRepository fruitRepository;
 
