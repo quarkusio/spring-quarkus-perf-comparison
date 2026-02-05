@@ -9,7 +9,7 @@
 	<description>Quarkus 3 Virtual Thread example</description>
 	<properties>
 		<assertj.version>3.27.7</assertj.version>
-		<compiler-plugin.version>3.14.1</compiler-plugin.version>
+		<compiler-plugin.version>3.15.0</compiler-plugin.version>
 		<java.version>21</java.version>
 		<maven.compiler.release>21</maven.compiler.release>
 		<quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
