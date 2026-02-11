@@ -40,10 +40,12 @@ sanitize_results() {
   echo "Sanitizing results to remove sensitive domain information"
 
   # Find all files in resultsDir and replace redhat.com and ibm.com patterns
-  find ${resultsDir} -type f -exec sed -i \
+  find ${resultsDir} -type f -exec sed -i.bak \
     -e 's/[^[:space:]]*redhat\.com/*****/g' \
     -e 's/[^[:space:]]*ibm\.com/*****/g' \
     {} +
+
+  rm -rf ${resultsDir}/*.bak
 }
 
 push_results() {
@@ -74,7 +76,7 @@ push_results() {
     mv ${resultsDir}/metrics.json.tmp ${resultsDir}/metrics.json
 
   # Calculate the scenario
-  local scenario=$(jq -r '.config.repo.scenario // ""' metrics.json)
+  local scenario=$(jq -r '.config.repo.scenario // ""' ${resultsDir}/metrics.json)
   local filenameSuffix="latest.json"
 
   if [[ -n "$scenario" ]]; then
