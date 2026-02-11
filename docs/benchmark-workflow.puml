@@ -1,0 +1,87 @@
+@startuml
+!theme plain
+autonumber
+
+' --- Import Icons ---
+!include <logos/jenkins>
+!include <tupadr3/font-awesome-5/github>
+
+title Performance Benchmarking Workflow
+
+' --- Group: Non-public ---
+box "Non-public" #e1f5fe
+    participant "<$jenkins>\nCI System" as CI
+    database "Horreum" as Horreum
+end box
+
+' --- Group: Perf comparison GH repo ---
+box "<$github>\nPerf comparison GH repo\ngithub.com/quarkusio/spring-quarkus-perf-comparison" #f1f8e9
+    participant "Repo" as PerfRepo
+    participant "run-benchmarks.sh\n(Hyperfoil)" as RunBench
+    participant "main.yml\n(qDup)" as QDup
+    participant "push-results.sh" as PushRes
+end box
+
+' --- Group: Benchmarks GH repo ---
+box "<$github>\nBenchmarks GH repo\ngithub.com/quarkusio/benchmarks" #fff3e0
+    participant "GitHub Actions\n& Repo" as BenchRepo
+    participant "image-generator" as ImgGen
+    ' New Participant added here
+    participant "GitHub Pages\nquarkus.io/benchmarks" as GHPages
+end box
+
+' === Step 0: Definition ===
+note over CI
+  Job is defined with
+  configuration options
+end note
+
+' === Step 1: Clone ===
+CI -> PerfRepo: Clone Repo
+
+' === Step 2: Execute ===
+CI -> RunBench: Execute Script
+activate RunBench
+
+' === Step 3: Validation & qDup ===
+RunBench -> RunBench: Validate Input
+RunBench -> QDup: Run via JBang
+activate QDup
+QDup --> RunBench: Return JSON results & Logs
+deactivate QDup
+RunBench --> CI: Return JSON results & Logs
+deactivate RunBench
+
+' === Step 4: Push to Horreum (Conditional) ===
+opt If configured in job
+    CI -> Horreum: Push Results
+end
+
+' === Step 5: Push Results Script (Conditional) ===
+opt If configured in job
+    CI -> PushRes: Execute Script
+    activate PushRes
+    PushRes -> BenchRepo: Create Pull Request\n(JSON Results & logs)
+    deactivate PushRes
+
+    ' === Step 6: Auto-merge JSON ===
+    activate BenchRepo
+    BenchRepo -> BenchRepo: Auto-merge PR\n(JSON & logs)
+
+    ' === Step 7: Image Generation ===
+    BenchRepo -> ImgGen: Trigger Image Generation
+    activate ImgGen
+    ImgGen -> ImgGen: Generate Images
+    deactivate ImgGen
+
+    ' ImgGen usually pushes back to the repo, triggering the merge
+    ImgGen -> BenchRepo: Create Pull Request (Images)
+    BenchRepo -> BenchRepo: Auto-merge PR (Images)
+
+    ' === Step 8: Publish to GitHub Pages ===
+    BenchRepo -> GHPages: Publish to GitHub Pages
+end
+
+deactivate BenchRepo
+
+@enduml

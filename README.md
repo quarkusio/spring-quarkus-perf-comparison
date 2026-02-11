@@ -51,6 +51,12 @@ This project contains the following modules:
 - [quarkus3-spring-compatibility](quarkus3-spring-compatibility)
     - A Quarkus 3.x version of the application using the Spring compatibility layer. You can also recreate this application from the spring application using [a few manual steps](spring-conversion.md).
  
+## Architecture & Workflow
+
+This diagram shows the architecture & workflow of how the benchmarking executes. As you can see, the internal CI system (Jenkins) is just a wrapper around the [`run-benchmarks.sh` script](scripts/perf-lab/run-benchmarks.sh).
+
+![workflow](docs/benchmark-workflow.png)
+
 ## Building
 
 Each module can be built using 
