@@ -12,6 +12,7 @@
 #
 # 3) Run the Quarkus with spring compatibility app 10 times
 # $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar" 10
+set -euo pipefail
 
 thisdir=`dirname "$0"`
 
@@ -58,7 +59,7 @@ do
   TTFR=$((($(_date) - ts)/1000000))
   RSS=`ps -o rss= -p $CURRENT_PID | sed 's/^ *//g'`
   kill $CURRENT_PID
-  wait $CURRENT_PID 2> /dev/null
+  wait $CURRENT_PID 2> /dev/null || true
   TOTAL_RSS=$((TOTAL_RSS + RSS))
   TOTAL_TTFR=$((TOTAL_TTFR + TTFR))
 
