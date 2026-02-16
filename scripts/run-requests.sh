@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -x
+set -xeuo pipefail
 
 curl -i http://localhost:8080/fruits
 echo
