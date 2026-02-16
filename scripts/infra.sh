@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 thisdir="$(realpath $(dirname "$0"))"
 
