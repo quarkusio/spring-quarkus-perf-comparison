@@ -5,6 +5,7 @@
 	<groupId>org.acme</groupId>
 	<artifactId>quarkus3-virtual</artifactId>
 	<version>1.0</version>
+	<packaging>quarkus</packaging> <!-- See https://quarkus.io/blog/building-large-applications -->
 	<name>quarkus3-virtual</name>
 	<description>Quarkus 3 Virtual Thread example</description>
 	<properties>
@@ -92,15 +93,6 @@
 				<artifactId>quarkus-maven-plugin</artifactId>
 				<version>${quarkus.platform.version}</version>
 				<extensions>true</extensions>
-				<executions>
-					<execution>
-						<goals>
-							<goal>build</goal>
-							<goal>generate-code</goal>
-							<goal>generate-code-tests</goal>
-						</goals>
-					</execution>
-				</executions>
 			</plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>

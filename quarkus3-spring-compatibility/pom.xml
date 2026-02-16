@@ -5,6 +5,7 @@
   <groupId>org.acme</groupId>
   <artifactId>quarkus3-spring-compatibility</artifactId>
   <version>1.0</version>
+	<packaging>quarkus</packaging> <!-- See https://quarkus.io/blog/building-large-applications -->
   <name>quarkus3-spring-compatibility</name>
   <description>Quarkus 3 example (using Spring compatibility layer)</description>
   <properties>
@@ -91,15 +92,6 @@
         <artifactId>quarkus-maven-plugin</artifactId>
         <version>${quarkus.platform.version}</version>
         <extensions>true</extensions>
-        <executions>
-          <execution>
-            <goals>
-              <goal>build</goal>
-              <goal>generate-code</goal>
-              <goal>generate-code-tests</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
