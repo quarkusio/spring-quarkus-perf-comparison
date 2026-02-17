@@ -170,6 +170,8 @@ scripts:
     - sh: cd ${{PROJ_REPO_DIR}}
     - sh: git rev-parse HEAD
     - set-state: RUN.config.repo.commit
+    - sh: git rev-parse --short HEAD
+    - set-state: RUN.config.repo.short_commit
 
   cleanup-env:
     - script: sudo

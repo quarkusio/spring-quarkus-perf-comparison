@@ -40,10 +40,12 @@ sanitize_results() {
   echo "Sanitizing results to remove sensitive domain information"
 
   # Find all files in resultsDir and replace redhat.com and ibm.com patterns
-  find ${resultsDir} -type f -exec sed -i \
+  find ${resultsDir} -type f -exec sed -i.bak \
     -e 's/[^[:space:]]*redhat\.com/*****/g' \
     -e 's/[^[:space:]]*ibm\.com/*****/g' \
     {} +
+
+  rm -rf ${resultsDir}/*.bak
 }
 
 push_results() {
@@ -73,9 +75,17 @@ push_results() {
   jq 'del(.env.run)' ${resultsDir}/metrics.json > ${resultsDir}/metrics.json.tmp && \
     mv ${resultsDir}/metrics.json.tmp ${resultsDir}/metrics.json
 
+  # Calculate the scenario
+  local scenario=$(jq -r '.config.repo.scenario // ""' ${resultsDir}/metrics.json)
+  local filenameSuffix="latest.json"
+
+  if [[ -n "$scenario" ]]; then
+    filenameSuffix="latest-${scenario}.json"
+  fi
+
   # Copy the metrics.json to latest
-  cp -f ${resultsDir}/metrics.json ${jobResultsDir}/results-latest.json
-  cp -f ${resultsDir}/metrics.json results/${jobName}-latest.json
+  cp -f ${resultsDir}/metrics.json ${jobResultsDir}/results-${filenameSuffix}
+  cp -f ${resultsDir}/metrics.json results/${jobName}-${filenameSuffix}
 
   # Sanitize the results
   sanitize_results
