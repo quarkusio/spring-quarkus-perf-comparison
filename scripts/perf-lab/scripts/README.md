@@ -1,34 +1,24 @@
-time.js
-=======
+time-to-1st-request.sh
+======================
 
-Node.js script to measure the start time of an application without having to modify application code.
+Bash script to measure the time to first request (TTFR) of an application.
 
-The application is spawned in a background process and a URL is tested until a HTTP 200 response is returned. The time taken to spawn the process and a HTTP 200 reponse is measured and reported to the terminal.
+The script polls a URL until a HTTP 200 response is returned. The time taken from when the script starts until a HTTP 200 response is received is measured and reported to the terminal in milliseconds.
 
-
-Build
-=====
-
-Before the script is run for the first time, the required node.js modules require installing.
-
-```
-
-$ npm install axios
-
-```
+Note: This script does not spawn the application. The application should be started separately (e.g., in the background or in another terminal).
 
 
 Running
 =======
 
-To measure the start time for an application invoke the script;
+To measure the time to first request for an application, start your application and invoke the script:
 
 ```
-$ node time.js "java -jar /path/to/appication-runner.jar"  "http://localhost:8080/fruits"
+$ ./time-to-1st-request.sh "http://localhost:8080/fruits"
 ```
 
-where;
+where:
 
-"java -jar /path/to/application-runner.jar" - The command to start the application being tested
+"http://localhost:8080/fruits" - the URL to test
 
-"http://localhost:8080/fruits" - the URL to test.
+The script will output the time in milliseconds from when it started polling until the first successful HTTP 200 response.
