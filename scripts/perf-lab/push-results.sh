@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 # This script pushes the results of a run from ./run-benchmarks.sh as a pull request to
 # https://github.com/quarkusio/spring-quarkus-perf-comparison

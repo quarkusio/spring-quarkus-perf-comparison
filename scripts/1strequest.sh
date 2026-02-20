@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # 1st argument is the command to execute
 # 2nd argument is the number of iterations. If not specified defaults to 1

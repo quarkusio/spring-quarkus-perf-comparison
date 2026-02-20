@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 callingdir="$(pwd)"
 thisdir="$(realpath $(dirname "$0"))"
