@@ -195,7 +195,7 @@ local first_request_cpu="${current_cpu}"
 local current_cpu=$((current_cpu + 1))
 local monitor_cpu="${current_cpu}"
 
-${JBANG_CMD} qDup@hyperfoil \
+${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -B ${OUTPUT_DIR} \
     -ix \
     ${EXTRA_QDUP_ARGS} \
