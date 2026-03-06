@@ -25,19 +25,19 @@ public class FruitController {
 		this.fruitService = fruitService;
 	}
 
-	@GetMapping
+	@GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 	public List<FruitDTO> getAll() {
 		return this.fruitService.getAllFruits();
 	}
 
-	@GetMapping(path = "/{name}")
+	@GetMapping(path = "/{name}", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<FruitDTO> getFruit(@PathVariable String name) {
 		return this.fruitService.getFruitByName(name)
 			.map(ResponseEntity::ok)
 			.orElseGet(() -> ResponseEntity.notFound().build());
 	}
 
-	@PostMapping
+	@PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
 	public FruitDTO addFruit(@Valid @RequestBody FruitDTO fruit) {
     return this.fruitService.createFruit(fruit);
 	}
