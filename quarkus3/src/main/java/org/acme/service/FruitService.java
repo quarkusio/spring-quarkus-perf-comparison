@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional.TxType;
 
 import org.acme.dto.FruitDTO;
 import org.acme.mapping.FruitMapper;
@@ -18,12 +19,14 @@ public class FruitService {
     this.fruitRepository = fruitRepository;
   }
 
+  @Transactional(TxType.SUPPORTS)
   public List<FruitDTO> getAllFruits() {
     return this.fruitRepository.listAll().stream()
         .map(FruitMapper::map)
         .toList();
   }
 
+  @Transactional(TxType.SUPPORTS)
   public Optional<FruitDTO> getFruitByName(String name) {
     return this.fruitRepository.findByName(name)
         .map(FruitMapper::map);
