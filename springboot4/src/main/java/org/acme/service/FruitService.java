@@ -10,8 +10,6 @@ import org.acme.repository.FruitRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.springframework.transaction.annotation.Propagation.SUPPORTS;
-
 @Service
 public class FruitService {
   private final FruitRepository fruitRepository;
@@ -20,14 +18,14 @@ public class FruitService {
     this.fruitRepository = fruitRepository;
   }
 
-  @Transactional(propagation = SUPPORTS, readOnly = true)
+  @Transactional(readOnly = true)
   public List<FruitDTO> getAllFruits() {
     return this.fruitRepository.findAll().stream()
         .map(FruitMapper::map)
         .toList();
   }
 
-  @Transactional(propagation = SUPPORTS, readOnly = true)
+  @Transactional(readOnly = true)
   public Optional<FruitDTO> getFruitByName(String name) {
     return this.fruitRepository.findByName(name)
         .map(FruitMapper::map);
