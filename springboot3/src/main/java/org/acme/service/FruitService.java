@@ -1,5 +1,7 @@
 package org.acme.service;
 
+import static org.springframework.transaction.annotation.Propagation.SUPPORTS;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -18,14 +20,14 @@ public class FruitService {
     this.fruitRepository = fruitRepository;
   }
 
-  @Transactional(readOnly = true)
+  @Transactional(propagation = SUPPORTS, readOnly = true)
   public List<FruitDTO> getAllFruits() {
     return this.fruitRepository.findAll().stream()
         .map(FruitMapper::map)
         .toList();
   }
 
-  @Transactional(readOnly = true)
+  @Transactional(propagation = SUPPORTS, readOnly = true)
   public Optional<FruitDTO> getFruitByName(String name) {
     return this.fruitRepository.findByName(name)
         .map(FruitMapper::map);

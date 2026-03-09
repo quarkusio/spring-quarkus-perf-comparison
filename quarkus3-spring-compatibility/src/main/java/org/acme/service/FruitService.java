@@ -1,5 +1,7 @@
 package org.acme.service;
 
+import static jakarta.transaction.Transactional.TxType.SUPPORTS;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -19,12 +21,14 @@ public class FruitService {
     this.fruitRepository = fruitRepository;
   }
 
+  @Transactional(SUPPORTS)
   public List<FruitDTO> getAllFruits() {
     return this.fruitRepository.findAll().stream()
         .map(FruitMapper::map)
         .toList();
   }
 
+  @Transactional(SUPPORTS)
   public Optional<FruitDTO> getFruitByName(String name) {
     return this.fruitRepository.findByName(name)
         .map(FruitMapper::map);
