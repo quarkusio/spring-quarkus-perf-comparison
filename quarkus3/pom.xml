@@ -50,10 +50,14 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-config-yaml</artifactId>
     </dependency>
-	  <dependency>
-		  <groupId>io.quarkus</groupId>
-		  <artifactId>quarkus-micrometer-registry-prometheus</artifactId>
-	  </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-micrometer-opentelemetry</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry.instrumentation</groupId>
+      <artifactId>opentelemetry-jdbc</artifactId>
+    </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-postgresql</artifactId>
@@ -61,6 +65,11 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-container-image-jib</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-observability-devservices-lgtm</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>io.quarkus</groupId>

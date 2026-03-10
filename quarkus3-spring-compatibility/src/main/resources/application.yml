@@ -1,4 +1,7 @@
 quarkus:
+  datasource:
+    jdbc:
+      telemetry: true
   jackson:
     serialization-inclusion: non-empty
   rest:
@@ -6,6 +9,11 @@ quarkus:
       optimization:
         # See https://quarkus.io/blog/quarkus-metaprogramming/
         enable-reflection-free-serializers: true
+  otel:
+    logs:
+      enabled: true
+    metrics:
+      enabled: true
 
 "%prod":
   quarkus:

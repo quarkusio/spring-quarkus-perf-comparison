@@ -12,6 +12,9 @@ import org.acme.dto.FruitDTO;
 import org.acme.mapping.FruitMapper;
 import org.acme.repository.FruitRepository;
 
+import io.opentelemetry.instrumentation.annotations.SpanAttribute;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
+
 @ApplicationScoped
 public class FruitService {
   private final FruitRepository fruitRepository;
@@ -20,6 +23,7 @@ public class FruitService {
     this.fruitRepository = fruitRepository;
   }
 
+  @WithSpan("FruitService.getAllFruits")
   @Transactional(SUPPORTS)
   public List<FruitDTO> getAllFruits() {
     return this.fruitRepository.listAll().stream()
@@ -27,17 +31,18 @@ public class FruitService {
         .toList();
   }
 
+  @WithSpan("FruitService.getFruitByName")
   @Transactional(SUPPORTS)
-  public Optional<FruitDTO> getFruitByName(String name) {
+  public Optional<FruitDTO> getFruitByName(@SpanAttribute("arg.name") String name) {
     return this.fruitRepository.findByName(name)
         .map(FruitMapper::map);
   }
 
+  @WithSpan("FruitService.createFruit")
   @Transactional
-  public FruitDTO createFruit(FruitDTO fruitDTO) {
+  public FruitDTO createFruit(@SpanAttribute("arg.fruit") FruitDTO fruitDTO) {
     var fruit = FruitMapper.map(fruitDTO);
     this.fruitRepository.persist(fruit);
-
     return FruitMapper.map(fruit);
   }
 }

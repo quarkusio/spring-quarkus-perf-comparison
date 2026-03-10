@@ -24,6 +24,7 @@ states:
   config.resources.cpu.load_generator: 7-9
   config.resources.cpu.1st_request: 10
   config.resources.cpu.monitor: 11
+  config.resources.cpu.otel: 12-14
 
   config.profiler.name: none #jfr flamegraph
   config.profiler.events: cpu
@@ -231,11 +232,14 @@ scripts:
     - sh: ./mvnw versions:set-property -Dproperty=quarkus.platform.version -DnewVersion=${{VERSION}}
 
   start-test-services:
-    - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -c 3 -p '${{config.resources.cpu.db}}' -s
+    - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -c 3 -l 3 -p '${{config.resources.cpu.db}}' -g '${{config.resources.cpu.otel}}' -s
       watch:
         - regex: "Error: PostgreSQL failed to become ready"
           then:
             - abort: PostgreSQL failed to become ready
+        - regex: "Error: Otel LGTM failed to become ready"
+          then:
+            - abort: Otel LGTM failed to become ready
 
   stop-test-services:
     - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -d
@@ -586,6 +590,19 @@ scripts:
         command: vmstat 1
         log_file: ${{log_dir}}/vmstat-${{runtime_name}}-${{iteration}}.log
     - script: monitor-postgres
+    - script: monitor-otel-lgtm
+
+  monitor-otel-lgtm:
+    - sh: LGTM_PID=$(${{PROJ_REPO_DIR}}/scripts/infra.sh -o)
+    - sh: echo LGTM_PID
+    - set-state: LGTM_PID
+    - script:
+        name: monitor-process
+        async: true
+      with:
+        name: lgtm-pidstat
+        command: pidstat -u -p $(pgrep -d , -P ${{LGTM_PID}}) 1
+        log_file: ${{log_dir}}/lgtm-pidstat-${{runtime_name}}-${{iteration}}.log
 
   monitor-postgres:
     - sh: POSTGRES_PID=$(${{PROJ_REPO_DIR}}/scripts/infra.sh -r)
