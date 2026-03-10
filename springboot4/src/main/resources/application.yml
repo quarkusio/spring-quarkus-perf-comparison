@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: springboot4
   datasource:
     username: fruits
     password: fruits
@@ -26,6 +28,27 @@ spring:
         # @simasch: Sets the hibernate batch size to be the same that Quarkus uses
         # see https://github.com/quarkusio/spring-quarkus-perf-comparison/pull/114
         default_batch_fetch_size: 16
+
+management:
+  observations:
+    annotations:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/logs
 
 # In order to remove errors and allow the Spring application to handle the load without errors
 # See https://github.com/quarkusio/spring-quarkus-perf-comparison/issues/60#issuecomment-3724614394

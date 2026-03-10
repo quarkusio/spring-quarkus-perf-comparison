@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: springboot3
   datasource:
     username: fruits
     password: fruits

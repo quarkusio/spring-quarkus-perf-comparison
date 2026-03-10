@@ -12,8 +12,8 @@ import org.acme.repository.FruitRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import io.opentelemetry.instrumentation.annotations.SpanAttribute;
-import io.opentelemetry.instrumentation.annotations.WithSpan;
+import io.micrometer.observation.annotation.ObservationKeyValue;
+import io.micrometer.observation.annotation.Observed;
 
 @Service
 public class FruitService {
@@ -23,7 +23,7 @@ public class FruitService {
     this.fruitRepository = fruitRepository;
   }
 
-  @WithSpan("FruitService.getAllFruits")
+  @Observed(name = "FruitService.getAllFruits")
   @Transactional(propagation = SUPPORTS, readOnly = true)
   public List<FruitDTO> getAllFruits() {
     return this.fruitRepository.findAll().stream()
@@ -31,16 +31,16 @@ public class FruitService {
         .toList();
   }
 
-  @WithSpan("FruitService.getFruitByName")
+  @Observed(name = "FruitService.getFruitByName")
   @Transactional(propagation = SUPPORTS, readOnly = true)
-  public Optional<FruitDTO> getFruitByName(@SpanAttribute("arg.name") String name) {
+  public Optional<FruitDTO> getFruitByName(@ObservationKeyValue("arg.name") String name) {
     return this.fruitRepository.findByName(name)
         .map(FruitMapper::map);
   }
 
-  @WithSpan("FruitService.createFruit")
+  @Observed(name = "FruitService.createFruit")
   @Transactional
-  public FruitDTO createFruit(@SpanAttribute("arg.fruit") FruitDTO fruitDTO) {
+  public FruitDTO createFruit(@ObservationKeyValue("arg.fruit") FruitDTO fruitDTO) {
     var fruit = FruitMapper.map(fruitDTO);
     var savedFruit = this.fruitRepository.save(fruit);
 
