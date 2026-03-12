@@ -266,6 +266,11 @@ OUTPUT_DIR="/tmp"
 # Process the inputs - Manual parsing for portability
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h|--help)
+      help
+      exit 0
+      ;;
+
     --jvm-args)
       JVM_ARGS="$2"
       shift 2

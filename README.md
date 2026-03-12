@@ -157,7 +157,28 @@ AVG time to first request: 0.150 sec
 
 ### Acceptable: Run on a single machine, with solid automation and detailed output
 
-These scripts are being developed.
+These scripts are being developed, but in the mean time if you are on a Linux machine with at least 12 cores you can use the [scripts used in Red Hat/IBM performance labs](https://github.com/quarkusio/spring-quarkus-perf-comparison/tree/main/scripts/perf-lab).
+To achieve this you need to pass `--host LOCAL` to the `./run-benchmarks.sh` script.
+For instance, from the `scripts/perf-lab/` directory:
+
+```shell
+./run-benchmarks.sh \
+  --host LOCAL \
+  --drop-fs-caches \
+  --runtimes quarkus3-jvm,quarkus3-virtual \
+  --quarkus-version "3.32.2" \
+  --output-dir ./results \
+  --tests measure-time-to-first-request
+```
+
+> [!NOTE]
+> `qDup`, which is used by these scripts, officially only supports the `bash` shell, so your mileage may vary if you are using a different shell.
+
+To explore all available options (including the full list of runtimes and tests), run:
+
+```shell
+./run-benchmarks.sh --help
+```
 
 To produce charts from the output, you can use the scripts at https://github.com/quarkusio/benchmarks.
 
