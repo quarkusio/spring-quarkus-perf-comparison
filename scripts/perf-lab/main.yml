@@ -594,7 +594,7 @@ scripts:
 
   monitor-otel-lgtm:
     - sh: LGTM_PID=$(${{PROJ_REPO_DIR}}/scripts/infra.sh -o)
-    - sh: echo LGTM_PID
+    - sh: echo $LGTM_PID
     - set-state: LGTM_PID
     - script:
         name: monitor-process
