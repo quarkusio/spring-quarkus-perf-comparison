@@ -80,7 +80,7 @@ start_otel() {
     -p 3000:3000 \
     -p 4040:4040 \
     -p 9090:9090 \
-    grafana/otel-lgtm:0.12.0)
+    docker.io/grafana/otel-lgtm:0.12.0)
   echo "Grafana Otel LGTM process: $pid"
 
   echo "Waiting for Grafana Otel LGTM to be ready..."
