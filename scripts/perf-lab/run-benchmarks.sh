@@ -195,7 +195,7 @@ local first_request_cpu="${current_cpu}"
 local current_cpu=$((current_cpu + 1))
 local monitor_cpu="${current_cpu}"
 
-${JBANG_CMD} qDup@hyperfoil \
+${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -B ${OUTPUT_DIR} \
     -ix \
     ${EXTRA_QDUP_ARGS} \
@@ -239,10 +239,10 @@ CPUS="4"
 SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
 SCM_REPO_BRANCH="main"
 SCENARIO="tuned"
-GRAALVM_VERSION="25.0.1-graalce"
+GRAALVM_VERSION="25.0.2-graalce"
 HOST="LOCAL"
 ITERATIONS="3"
-JAVA_VERSION="25.0.1-tem"
+JAVA_VERSION="25.0.2-tem"
 NATIVE_QUARKUS_BUILD_OPTIONS=""
 NATIVE_SPRING3_BUILD_OPTIONS=""
 NATIVE_SPRING4_BUILD_OPTIONS=""
@@ -266,6 +266,11 @@ OUTPUT_DIR="/tmp"
 # Process the inputs - Manual parsing for portability
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h|--help)
+      help
+      exit 0
+      ;;
+
     --jvm-args)
       JVM_ARGS="$2"
       shift 2

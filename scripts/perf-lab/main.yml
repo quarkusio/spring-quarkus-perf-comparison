@@ -4,8 +4,8 @@ states:
   env.run.host.name: 127.0.0.1
   env.run.host.target: ${{env.run.host.user}}@${{env.run.host.name}}
 
-  config.jvm.version: 25.0.1-tem
-  config.jvm.graalvm.version: 25.0.1-graalce
+  config.jvm.version: 25.0.2-tem
+  config.jvm.graalvm.version: 25.0.2-graalce
 
   config.quarkus.version: #3.28.3
   config.springboot3.version: #3.5.6
@@ -172,6 +172,23 @@ scripts:
     - set-state: RUN.config.repo.commit
     - sh: git rev-parse --short HEAD
     - set-state: RUN.config.repo.short_commit
+    - read-state: ${{config.repo.scenario}}
+      then:
+        - regex: ootb
+          then:
+            - set-state:
+                key: RUN.config.repo.scenarioName
+                value: Out of the box
+          else:
+            - regex: tuned
+              then:
+                - set-state:
+                    key: RUN.config.repo.scenarioName
+                    value: Tuned
+              else:
+                - set-state:
+                    key: RUN.config.repo.scenarioName
+                    value: ${{config.repo.scenario}}
 
   cleanup-env:
     - script: sudo
