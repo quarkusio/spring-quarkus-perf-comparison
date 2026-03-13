@@ -194,6 +194,8 @@ local current_cpu=$((current_cpu + 3))
 local first_request_cpu="${current_cpu}"
 local current_cpu=$((current_cpu + 1))
 local monitor_cpu="${current_cpu}"
+local current_cpu=$((current_cpu + 1))
+local otel_cpu="${current_cpu}-$((current_cpu + 2))"
 
 ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -B ${OUTPUT_DIR} \
@@ -212,6 +214,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S config.resources.cpu.load_generator="${load_gen_cpus}" \
     -S config.resources.cpu.1st_request="${first_request_cpu}" \
     -S config.resources.cpu.monitor="${monitor_cpu}" \
+    -S config.resources.cpu.otel="${otel_cpu}" \
     -S config.springboot3.version=${SPRING_BOOT3_VERSION} \
     -S config.springboot4.version=${SPRING_BOOT4_VERSION} \
     -S config.jvm.memory="${JVM_MEMORY}" \
