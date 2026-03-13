@@ -72,7 +72,7 @@ states:
       updateScript: update-quarkus-version
       updateVersion: ${{config.quarkus.version}}
       buildCmd: "./mvnw ${{config.quarkus.build_config_args}} clean package -DskipTests -Pnative ${{config.quarkus.native_build_options}}"
-      runCmd: "${{APP_CMD_PREFIX}} ${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
+      runCmd: "${{QUARKUS3_DIR}}/target/quarkus3-runner ${{config.jvm.memory}}"
       logFileStartedRegex: ".*quarkus3.+started in.*"
     - name: spring3-jvm
       type: jvm
@@ -355,22 +355,15 @@ scripts:
       then:
         - queue-download: ${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: start-test-services
+        - sh: make -C ${{HELPER_SCRIPTS_DIR}}
         - script: sync-drop-fs-cache
-        - sh: ${{RUNTIME.runCmd}} &>${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log &
-        - sh: APP_PID=$!
-        - sh: timeout 60s bash -c "taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh ${{TARGET_URL}}"
+        - sh: ${{APP_CMD_PREFIX}} ${{HELPER_SCRIPTS_DIR}}/time_to_1st_request "${{RUNTIME.runCmd}}" "${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log" "${{TARGET_URL}}" 60
           then:
-            - regex: Terminated
+            - regex: http_code=2\\d\\d attempts=\\d+ elapsed=(?<nanoseconds>\\d+) ns
               then:
-                - sh: kill -15 $APP_PID
-                - abort: Run ${{RUNTIME.runCmd}} didn't start within allotted timeout
-            - regex: .*\D.*
-              then:
-                - sh: kill -15 $APP_PID
-                - abort: Timeout script returned a non-numeric value
+                - set-state: START_TIME ${{= ${{nanoseconds}}/1000000 }}
               else:
-                - set-state: START_TIME
-        - sh: kill -15 $APP_PID
+                - abort: failed to measure time to first request
         - script: state-array-push
           with:
             array: RUN.output.results.${{RUNTIME.name}}.startup.timings
