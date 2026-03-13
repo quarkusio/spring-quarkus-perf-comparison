@@ -12,6 +12,7 @@ help() {
   echo
   echo "Syntax: push-results.sh [options]"
   echo "options:"
+  echo "  -d <DESCRIPTION>                    A human-readable description to be added to the run output and part of the PR metadata"
   echo "  -r <RUN_RESULTS_DIR>                The directory containing the results to publish"
   echo "  -t <GITHUB_TOKEN>                   The GitHub token to use to create the pull request"
 }
@@ -98,7 +99,7 @@ push_results() {
 
   # Commit
   echo "Committing results"
-  git commit -m "Adding results from perf lab run ${jobName}.${currentDateTime}"
+  git commit -m "Adding results from perf lab run ${jobName}.${currentDateTime}\n\n${DESCRIPTION}"
 
   # Push the branch
   echo "Pushing results to local branch ${branchName}"
@@ -109,7 +110,7 @@ push_results() {
   gh pr create \
     -l perf-lab-run \
     -t "Adding results from perf lab run ${jobName}.${currentDateTime}" \
-    -b "This PR was automatically created to add the results from the perf lab run ${jobName}.${currentDateTime}." \
+    -b "This PR was automatically created to add the results from the perf lab run ${jobName}.${currentDateTime}.\n\n${DESCRIPTION}" \
     -B main
 
   # Log out GH CLI
@@ -119,6 +120,7 @@ push_results() {
 # Setup default values
 RUN_RESULTS_DIR=""
 GITHUB_TOKEN=""
+DESCRIPTION=""
 currentDateTime=$(date +%Y-%m-%d_%H-%M-%S)
 branchName="upload-results-${currentDateTime}"
 jobName="spring-quarkus-perf-comparison"
@@ -126,8 +128,11 @@ jobResultsDir="results/${jobName}"
 resultsDir="${jobResultsDir}/${currentDateTime}"
 
 # Process the inputs
-while getopts "r:t:" option; do
+while getopts "d:r:t:" option; do
   case $option in
+    d) DESCRIPTION=$OPTARG
+      ;;
+
     r) RUN_RESULTS_DIR=$OPTARG
       ;;
 
