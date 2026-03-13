@@ -12,6 +12,7 @@ help() {
   echo "options:"
   echo "  --cpus <CPUS>                                           How many CPUs to allocate to the application"
   echo "                                                              Default: ${CPUS}"
+  echo "  --description <DESCRIPTION>                             A human-readable description to be added to the run output"
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                                              NOTE: This is an advanced option. Make sure you know what you are doing when using it."
@@ -123,6 +124,7 @@ print_values() {
   echo "  JVM_ARGS: $JVM_ARGS"
   echo "  EXTRA_QDUP_ARGS: $EXTRA_QDUP_ARGS"
   echo "  OUTPUT_DIR: $OUTPUT_DIR"
+  echo "  DESCRIPTION: '${DESCRIPTION}'"
   echo
 }
 
@@ -226,6 +228,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S config.repo.branch=${SCM_REPO_BRANCH} \
     -S config.repo.url=${SCM_REPO_URL} \
     -S config.repo.scenario=${SCENARIO} \
+    -S config.run.description="${DESCRIPTION}" \
     -S env.run.host.user=${USER} \
     -S env.run.host.target=${target} \
     -S env.run.host.name=${HOST} \
@@ -239,6 +242,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
 
 # Define defaults
 CPUS="4"
+DESCRIPTION=""
 SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
 SCM_REPO_BRANCH="main"
 SCENARIO="tuned"
@@ -269,6 +273,16 @@ OUTPUT_DIR="/tmp"
 # Process the inputs - Manual parsing for portability
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h|--help)
+      help
+      exit 0
+      ;;
+
+    --description)
+      DESCRIPTION="$2"
+      shift 2
+      ;;
+
     --jvm-args)
       JVM_ARGS="$2"
       shift 2
