@@ -27,6 +27,15 @@ spring:
         # see https://github.com/quarkusio/spring-quarkus-perf-comparison/pull/114
         default_batch_fetch_size: 16
 
+# Turn on prometheus actuator endpoint
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+
 # In order to remove errors and allow the Spring application to handle the load without errors
 # See https://github.com/quarkusio/spring-quarkus-perf-comparison/issues/60#issuecomment-3724614394
 # for a conversation about why this setting is set this way
