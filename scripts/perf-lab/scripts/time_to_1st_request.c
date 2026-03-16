@@ -223,7 +223,6 @@ int main(int argc, char *argv[]) {
 	char req[sizeof(path) + sizeof(host) + 100], buf[64];
 	snprintf(req, sizeof(req), "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host);
 
-	bool success = false;
 	int attempts = 0, code = 0;
 
 	long end_time = 0;
@@ -242,7 +241,7 @@ int main(int argc, char *argv[]) {
 #endif
 
 	// Poll URL until we get 2xx response
-	while (!success && (now_nsec() - start_time) < timeout_ns) {
+	while ((now_nsec() - start_time) < timeout_ns) {
 		int fd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		attempts++;
 		if (connect(fd, res->ai_addr, res->ai_addrlen) == 0 &&
@@ -265,29 +264,12 @@ int main(int argc, char *argv[]) {
 
 	printf("http_code=%d attempts=%d elapsed=%ld ns\n", code, attempts, end_time - start_time);
 
-	if (child_pid < 0) {
-		perror("fork failed");
-		free(cmd_copy);
-		return 1;
-	}
+	// Clean up: kill child process
+	kill(child_pid, SIGTERM);
+	waitpid(child_pid, NULL, 0);
 
-	success = code >= 200 && code < 300;
+	// Clean up shared memory
+	free(cmd_copy);
 
-	if (success) {
-		// Clean up: kill child process
-		kill(child_pid, SIGTERM);
-		waitpid(child_pid, NULL, 0);
-
-		free(cmd_copy);
-		return 0;
-	} else {
-		fprintf(stderr, "Failed to get 2xx response after %d attempts\n", attempts);
-
-		// Clean up: kill child process
-		kill(child_pid, SIGTERM);
-		waitpid(child_pid, NULL, 0);
-
-		free(cmd_copy);
-		return 1;
-	}
+	return (code >= 200 && code < 300) ? 0 : 1;
 }
