@@ -37,12 +37,12 @@ management:
         include:
           - health
           - prometheus
+  tracing:
+    sampling:
+      probability: 0.1
   observations:
     annotations:
       enabled: true
-  tracing:
-    sampling:
-      probability: 1.0
   otlp:
     metrics:
       export:
