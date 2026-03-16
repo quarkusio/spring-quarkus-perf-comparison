@@ -6,7 +6,7 @@ spring:
     hikari:
       # @simasch: Sets the jdbc pool size to be the same that Quarkus uses
       # see https://github.com/quarkusio/spring-quarkus-perf-comparison/pull/114
-      maximum-pool-size: 20
+      maximum-pool-size: 50
   jackson:
     default-property-inclusion: non_empty
   jpa:
