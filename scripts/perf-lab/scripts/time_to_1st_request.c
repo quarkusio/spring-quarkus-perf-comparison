@@ -37,6 +37,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <sys/mman.h>
+#include <stdatomic.h>
 
 #ifdef __linux__
 #include <sched.h>
@@ -64,7 +66,16 @@ static int pin_to_core(int core) {
 }
 #endif
 
-pid_t forkme(char *args[], const char *log_path) {
+void atomic_barrier(atomic_int *barrier) {
+		// Signal parent that we're about to exec
+		atomic_fetch_add(barrier, -1);
+		// Wait for parent to signal it's ready
+		while (atomic_load(barrier) != 0) {
+			// Busy wait - this should be very brief
+		}
+}
+
+pid_t forkme(char *args[], const char *log_path, atomic_int *ready_flag) {
 	pid_t pid = fork();
 
 	if (pid == 0) {
@@ -77,6 +88,7 @@ pid_t forkme(char *args[], const char *log_path) {
 				close(log);
 			}
 		}
+		atomic_barrier(ready_flag);
 		execvp(args[0], args);
 		// execvp only returns if there is an error
 		exit(1);
@@ -212,25 +224,42 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+	// Create shared memory for atomic synchronization flag
+	atomic_int *ready_flag = mmap(NULL, sizeof(atomic_int), PROT_READ | PROT_WRITE,
+	                               MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+	if (ready_flag == MAP_FAILED) {
+		perror("mmap");
+		free(cmd_copy);
+		return 1;
+	}
+	atomic_init(ready_flag, 2);
+
 	struct addrinfo hints = { .ai_family = AF_UNSPEC, .ai_socktype = SOCK_STREAM };
 	struct addrinfo *res;
 
 	if (getaddrinfo(host, port, &hints, &res) != 0) {
 		perror("getaddrinfo");
-		return false;
+		munmap(ready_flag, sizeof(atomic_int));
+		free(cmd_copy);
+		return 1;
 	}
 
 	char req[sizeof(path) + sizeof(host) + 100], buf[64];
 	snprintf(req, sizeof(req), "GET %s HTTP/1.0\r\nHost: %s\r\n\r\n", path, host);
 
 	int attempts = 0, code = 0;
-
 	long end_time = 0;
-	// Record start time
-	long start_time = now_nsec();
 
 	// Fork and execute command
-	pid_t child_pid = forkme(cmd_args, log_path);
+	pid_t child_pid = forkme(cmd_args, log_path, ready_flag);
+
+	if (child_pid < 0) {
+		perror("fork failed");
+		freeaddrinfo(res);
+		munmap(ready_flag, sizeof(atomic_int));
+		free(cmd_copy);
+		return 1;
+	}
 
 #ifdef __linux__
 	// Pin parent process to specified core (child runs on default cores)
@@ -239,6 +268,11 @@ int main(int argc, char *argv[]) {
 		// Continue execution even if pinning fails
 	}
 #endif
+
+	atomic_barrier(ready_flag);
+
+	// Record start time immediately after barrier
+	long start_time = now_nsec();
 
 	// Poll URL until we get 2xx response
 	while ((now_nsec() - start_time) < timeout_ns) {
@@ -269,6 +303,7 @@ int main(int argc, char *argv[]) {
 	waitpid(child_pid, NULL, 0);
 
 	// Clean up shared memory
+	munmap(ready_flag, sizeof(atomic_int));
 	free(cmd_copy);
 
 	return (code >= 200 && code < 300) ? 0 : 1;
