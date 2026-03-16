@@ -30,6 +30,13 @@ spring:
         default_batch_fetch_size: 16
 
 management:
+  # Turn on prometheus actuator endpoint
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
   observations:
     annotations:
       enabled: true
