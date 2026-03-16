@@ -23,8 +23,8 @@ clean:
 test: $(TARGET)
 	@echo "Testing compilation..."
 	@./$(TARGET) 2>&1 | grep -q "Usage:" && echo "✓ Binary compiled successfully" || echo "✗ Test failed"
-	@echo "Runt test using python server"
-	@./$(TARGET) "python3 -m http.server 8080" /dev/null "http://127.0.0.1:8080"
+	@echo "Run test using python server"
+	@./$(TARGET) "python3 -m http.server 8080" /dev/null "http://127.0.0.1:8080" 4
 
 # Help target
 help:
@@ -40,6 +40,5 @@ help:
 	@echo ""
 	@echo "Usage example:"
 	@echo "  make"
-	@echo "  ./time_to_1st_request \"java -jar app.jar\" /dev/null http://localhost:8080/health"
-
+	@echo "  ./time_to_1st_request \"java -jar app.jar\" /dev/null http://localhost:8080/health 4"
 .PHONY: all clean test help

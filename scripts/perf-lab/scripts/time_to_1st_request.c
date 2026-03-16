@@ -21,6 +21,7 @@
 #define _POSIX_C_SOURCE 200809L
 #define _DEFAULT_SOURCE
 #define _DARWIN_C_SOURCE
+#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,11 +38,31 @@
 #include <fcntl.h>
 #include <signal.h>
 
+#ifdef __linux__
+#include <sched.h>
+#endif
+
 static long now_nsec() {
 	struct timespec t;
 	clock_gettime(CLOCK_MONOTONIC_RAW, &t);
 	return t.tv_sec * 1e9 + t.tv_nsec;
 }
+
+#ifdef __linux__
+// Pin the current process to a specific CPU core
+// Returns 0 on success, -1 on failure
+static int pin_to_core(int core) {
+	cpu_set_t cpuset;
+	CPU_ZERO(&cpuset);
+	CPU_SET(core, &cpuset);
+
+	if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) == -1) {
+		perror("sched_setaffinity");
+		return -1;
+	}
+	return 0;
+}
+#endif
 
 pid_t forkme(char *args[], const char *log_path) {
 	pid_t pid = fork();
@@ -139,19 +160,26 @@ static int parse_url(const char *url, char *host, char *port, char *path) {
 }
 
 int main(int argc, char *argv[]) {
-	if (argc < 4) {
-		fprintf(stderr, "Usage: %s <command> <log_path> <url> [timeout in seconds]\n", argv[0]);
-		fprintf(stderr, "Example: %s \"java -jar app.jar\" \"/tmp/my.log\" http://localhost:8080/health\n", argv[0]);
+	if (argc < 5) {
+		fprintf(stderr, "Usage: %s <command> <log_path> <url> <core> [timeout in seconds]\n", argv[0]);
+		fprintf(stderr, "Example: %s \"java -jar app.jar\" \"/tmp/my.log\" http://localhost:8080/health 4\n", argv[0]);
 		return 1;
 	}
 
 	const char *command = argv[1];
 	const char *log_path = argv[2];
 	const char *url = argv[3];
+	int core = atoi(argv[4]);
 	long timeout_ns = 5 * 1e9;
 
-	if (argc == 5) {
-		timeout_ns = atoi(argv[4]) * 1e9;
+	if (argc == 6) {
+		timeout_ns = atoi(argv[5]) * 1e9;
+	}
+
+	// Validate core number
+	if (core < 0) {
+		fprintf(stderr, "Invalid core number: %d\n", core);
+		return 1;
 	}
 
 	// Parse URL
@@ -204,6 +232,14 @@ int main(int argc, char *argv[]) {
 
 	// Fork and execute command
 	pid_t child_pid = forkme(cmd_args, log_path);
+
+#ifdef __linux__
+	// Pin parent process to specified core (child runs on default cores)
+	if (pin_to_core(core) == -1) {
+		fprintf(stderr, "Warning: Failed to pin process to core %d\n", core);
+		// Continue execution even if pinning fails
+	}
+#endif
 
 	// Poll URL until we get 2xx response
 	while (!success && (now_nsec() - start_time) < timeout_ns) {

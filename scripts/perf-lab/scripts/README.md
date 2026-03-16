@@ -20,5 +20,5 @@ Run without arguments to see usage instructions:
 
 Example:
 ```bash
-./time_to_1st_request "java -jar app.jar" /dev/null "http://localhost:8080/health"
+./time_to_1st_request "java -jar app.jar" /dev/null "http://localhost:8080/health" 4
 ```

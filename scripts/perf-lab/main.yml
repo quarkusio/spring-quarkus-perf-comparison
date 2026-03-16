@@ -357,7 +357,7 @@ scripts:
         - script: start-test-services
         - sh: make -C ${{HELPER_SCRIPTS_DIR}}
         - script: sync-drop-fs-cache
-        - sh: ${{APP_CMD_PREFIX}} ${{HELPER_SCRIPTS_DIR}}/time_to_1st_request "${{RUNTIME.runCmd}}" "${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log" "${{TARGET_URL}}" 60
+        - sh: ${{APP_CMD_PREFIX}} ${{HELPER_SCRIPTS_DIR}}/time_to_1st_request "${{RUNTIME.runCmd}}" "${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log" "${{TARGET_URL}}" ${{config.resources.cpu.1st_request}} 60
           then:
             - regex: http_code=2\\d\\d attempts=\\d+ elapsed=(?<nanoseconds>\\d+) ns
               then:
