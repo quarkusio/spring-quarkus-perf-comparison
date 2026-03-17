@@ -89,6 +89,7 @@ pid_t forkme(char *args[], const char *log_path, atomic_int *ready_flag) {
 			}
 		}
 		atomic_barrier(ready_flag);
+		*((long*)ready_flag) = now_nsec();
 		execvp(args[0], args);
 		// execvp only returns if there is an error
 		exit(1);
@@ -224,9 +225,10 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	// Create shared memory for atomic synchronization flag
-	atomic_int *ready_flag = mmap(NULL, sizeof(atomic_int), PROT_READ | PROT_WRITE,
-	                               MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+	// Create shared memory for atomic synchronization flag and timestamp. We
+	// use the same memory for both, so we allocate space for the bigger one
+	atomic_int *ready_flag = mmap(NULL, sizeof(atomic_int) > sizeof(long) ? sizeof(atomic_int) : sizeof(long),
+								   PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 	if (ready_flag == MAP_FAILED) {
 		perror("mmap");
 		free(cmd_copy);
@@ -296,6 +298,7 @@ int main(int argc, char *argv[]) {
 
 	freeaddrinfo(res);
 
+	start_time = *((long*)ready_flag);
 	printf("http_code=%d attempts=%d elapsed=%ld ns\n", code, attempts, end_time - start_time);
 
 	// Clean up: kill child process
