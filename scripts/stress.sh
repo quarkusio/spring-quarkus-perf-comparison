@@ -3,6 +3,14 @@
 callingdir="$(pwd)"
 thisdir="$(realpath $(dirname "$0"))"
 
+function _date() {
+    current=$(date +%s%N)
+    if [ $? -ne 0 ]; then
+      current=$(gdate +%s%N)
+    fi
+    echo "$current"
+}
+
 # Check if jbang is installed
 if ! command -v jbang >/dev/null 2>&1; then
   echo "Error: jbang is not installed."
@@ -20,6 +28,8 @@ set -euo pipefail
 
 ${thisdir}/infra.sh -s
 
+ts=$(_date)
+
 # -XX:ActiveProcessorCount doesn't limit the number of available cores as we might think
 # It also doesn't isolate cores, meaning the cores the java process uses could be shared with other workloads
 # See https://github.com/quarkusio/spring-quarkus-perf-comparison/issues/73
@@ -35,10 +45,24 @@ ${thisdir}/infra.sh -s
 #
 # When running in the lab environment (see perf-lab/run-benchmarks.sh & perf-lab/main.yml), this is taken care of by using taskset on Linux.
 java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m -jar ${callingdir}/$1 &
+CURRENT_PID=$!
 
-# Give the app a chance to fully start before throwing load at it
-sleep 20
+# Wait and measure TTFR
+while ! (curl -sf http://localhost:8080/fruits > /dev/null)
+do
+  # Spin here and do nothing rather waiting some arbitrary unlucky timing
+  :
+done
 
-jbang wrk@hyperfoil -t2 -c100 -d20s --timeout 1s http://localhost:8080/fruits
+TTFR=$((($(_date) - ts)/1000000))
+RSS=`ps -o rss= -p $CURRENT_PID | sed 's/^ *//g'`
+
+echo "-------------------------------------------------"
+printf "Time to first request: %.3f sec\n" $(echo "$TTFR / 1000" | bc -l)
+printf "RSS (after 1st request): %.1f MB\n" $(echo "$RSS / 1024" | bc -l)
+echo "-------------------------------------------------"
+
+jbang wrk@hyperfoil -t2 -c100 -d20s --timeout 1s --latency http://localhost:8080/fruits
+
 ${thisdir}/infra.sh -d
 kill $(lsof -t -i:8080) &>/dev/null
