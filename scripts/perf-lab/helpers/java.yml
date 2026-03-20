@@ -1,20 +1,59 @@
 name: Java related scripts
 scripts:
   ensure-graalvm:
-    - script: sdk-select-java
-      with:
-        java_version: ${{config.jvm.graalvm.version}}
-        install_if_missing: true
-    - log: Setting GRAALVM_HOME
-    - sh: export GRAALVM_HOME=$(sdk home java ${{config.jvm.graalvm.version}})
+    - read-state: ${{config.jvm.graalvm.home}}
+      then:
+        - regex: ^$
+          then:
+            # No local GraalVM path provided, use SDKMAN
+            - script: sdk-select-java
+              with:
+                java_version: ${{config.jvm.graalvm.version}}
+                install_if_missing: true
+            - log: Setting GRAALVM_HOME from SDKMAN
+            - sh: export GRAALVM_HOME=$(sdk home java ${{config.jvm.graalvm.version}})
+          else:
+            # Local GraalVM path provided
+            - log: Using locally installed GraalVM from ${{config.jvm.graalvm.home}}
+            - sh: export GRAALVM_HOME=${{config.jvm.graalvm.home}}
+            - sh: test -d "$GRAALVM_HOME"
+              then:
+                - regex: ".*"
+                  else:
+                    - abort: GraalVM home directory does not exist at ${{config.jvm.graalvm.home}}
+            - sh: test -x "$GRAALVM_HOME/bin/native-image"
+              then:
+                - regex: ".*"
+                  else:
+                    - abort: GraalVM native-image executable not found or not executable at ${{config.jvm.graalvm.home}}/bin/native-image
     - log: Showing GraalVM version
     - sh: $GRAALVM_HOME/bin/java -version
 
   ensure-java:
-    - script: sdk-select-java
-      with:
-        java_version: ${{config.jvm.version}}
-        set_as_default: Y
-        install_if_missing: true
+    - read-state: ${{config.jvm.home}}
+      then:
+        - regex: ^$
+          then:
+            # No local Java path provided, use SDKMAN
+            - script: sdk-select-java
+              with:
+                java_version: ${{config.jvm.version}}
+                set_as_default: Y
+                install_if_missing: true
+          else:
+            # Local Java path provided
+            - log: Using locally installed Java from ${{config.jvm.home}}
+            - sh: export JAVA_HOME=${{config.jvm.home}}
+            - sh: export PATH=$JAVA_HOME/bin:$PATH
+            - sh: test -d "$JAVA_HOME"
+              then:
+                - regex: ".*"
+                  else:
+                    - abort: Java home directory does not exist at ${{config.jvm.home}}
+            - sh: test -x "$JAVA_HOME/bin/java"
+              then:
+                - regex: ".*"
+                  else:
+                    - abort: Java executable not found or not executable at ${{config.jvm.home}}/bin/java
     - log: Showing Java version
     - sh: java -version

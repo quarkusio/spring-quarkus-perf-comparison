@@ -73,8 +73,8 @@ push_results() {
 
   cp -R ${RUN_RESULTS_DIR}/* ${resultsDir}/
 
-  # Strip out the .env section of the json
-  jq 'del(.env.run)' ${resultsDir}/metrics.json > ${resultsDir}/metrics.json.tmp && \
+  # Strip out the .env section and local path configurations from the json
+  jq 'del(.env.run, .config.jvm.home, .config.jvm.graalvm.home)' ${resultsDir}/metrics.json > ${resultsDir}/metrics.json.tmp && \
     mv ${resultsDir}/metrics.json.tmp ${resultsDir}/metrics.json
 
   # Calculate the scenario

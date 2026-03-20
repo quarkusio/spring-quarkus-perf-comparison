@@ -4,7 +4,9 @@ states:
   env.run.host.name: 127.0.0.1
   env.run.host.target: ${{env.run.host.user}}@${{env.run.host.name}}
 
+  config.jvm.home: #/path/to/java
   config.jvm.version: 25.0.2-tem
+  config.jvm.graalvm.home: #/path/to/graalvm
   config.jvm.graalvm.version: 25.0.2-graalce
 
   config.quarkus.version: #3.28.3
@@ -296,7 +298,7 @@ scripts:
           then:
             - regex: native
               then:
-                - sh: "sed -n 's/.*Peak RSS: \\([0-9.]*\\)GB.*/\\1/p' ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log"
+                - sh: "sed -n 's/.*Peak RSS: \\([0-9.]*\\)\\(GB\\|GiB\\).*/\\1/p' ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log"
                 - set-state: NATIVE_BUILD_RSS
                 - script: state-array-push
                   with:
@@ -319,7 +321,7 @@ scripts:
 
             # The following metrics should be the same in all test iterations, so just pick the 1st
             # Capture the binary size
-            - sh: "sed -n 's/^[[:space:]]*\\([0-9.]*\\)MB in total image size.*/\\1/p' ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-0.log"
+            - sh: "sed -n 's/^[[:space:]]*\\([0-9.]*\\)\\(MB\\|MiB\\) in total image size.*/\\1/p' ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-0.log"
             - set-state: RUN.output.results.${{RUNTIME.name}}.build.native.binarySize
 
             # Capture the number of classes

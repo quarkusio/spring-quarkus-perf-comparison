@@ -16,15 +16,21 @@ help() {
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                                              NOTE: This is an advanced option. Make sure you know what you are doing when using it."
+  echo "  --graalvm-home <GRAALVM_HOME>                           Path to a locally installed GraalVM/Mandrel distribution"
+  echo "                                                              If set, this takes precedence over --graalvm-version"
   echo "  --graalvm-version <GRAALVM_VERSION>                     The GraalVM version to use if running any native tests (from SDKMAN)"
   echo "                                                              Default: ${GRAALVM_VERSION}"
+  echo "                                                              Ignored if --graalvm-home is set"
   echo "  --host <HOST>                                           The HOST to run the benchmarks on"
   echo "                                                              LOCAL is a keyword that can be used to run everything on the local machine"
   echo "                                                              Default: ${HOST}"
   echo "  --iterations <ITERATIONS>                               The number of iterations to run each test"
   echo "                                                              Default: ${ITERATIONS}"
+  echo "  --java-home <JAVA_HOME>                                 Path to a locally installed Java distribution"
+  echo "                                                              If set, this takes precedence over --java-version"
   echo "  --java-version <JAVA_VERSION>                           The Java version to use (from SDKMAN)"
   echo "                                                              Default: ${JAVA_VERSION}"
+  echo "                                                              Ignored if --java-home is set"
   echo "  --jvm-args <JVM_ARGS>                                   Any runtime JVM args to be passed to the apps"
   echo "  --jvm-memory <JVM_MEMORY>                               JVM Memory setting (i.e. -Xmx -Xmn -Xms)"
   echo "  --native-quarkus-build-options <NATIVE_QUARKUS_OPTS>    Native build options to be passed to Quarkus native build process"
@@ -100,9 +106,11 @@ print_values() {
   echo "#####################"
   echo "Configuration Values:"
   echo "  CPUS: $CPUS"
+  echo "  GRAALVM_HOME: $GRAALVM_HOME"
   echo "  GRAALVM_VERSION: $GRAALVM_VERSION"
   echo "  HOST: $HOST"
   echo "  ITERATIONS: $ITERATIONS"
+  echo "  JAVA_HOME: $JAVA_HOME"
   echo "  JAVA_VERSION: $JAVA_VERSION"
   echo "  NATIVE_QUARKUS_BUILD_OPTIONS: $NATIVE_QUARKUS_BUILD_OPTIONS"
   echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
@@ -203,7 +211,9 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     ${EXTRA_QDUP_ARGS} \
     ./main.yml \
     ./helpers/ \
+    -S config.jvm.graalvm.home="${GRAALVM_HOME}" \
     -S config.jvm.graalvm.version=${GRAALVM_VERSION} \
+    -S config.jvm.home="${JAVA_HOME}" \
     -S config.jvm.version=${JAVA_VERSION} \
     -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
     -S config.jvm.args="${JVM_ARGS}" \
@@ -243,9 +253,11 @@ DESCRIPTION=""
 SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
 SCM_REPO_BRANCH="main"
 SCENARIO="tuned"
+GRAALVM_HOME=""
 GRAALVM_VERSION="25.0.2-graalce"
 HOST="LOCAL"
 ITERATIONS="3"
+JAVA_HOME=""
 JAVA_VERSION="25.0.2-tem"
 NATIVE_QUARKUS_BUILD_OPTIONS=""
 NATIVE_SPRING3_BUILD_OPTIONS=""
@@ -310,6 +322,11 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
 
+    --graalvm-home)
+      GRAALVM_HOME="$2"
+      shift 2
+      ;;
+
     --graalvm-version)
       GRAALVM_VERSION="$2"
       shift 2
@@ -322,6 +339,11 @@ while [[ $# -gt 0 ]]; do
 
     --iterations)
       ITERATIONS="$2"
+      shift 2
+      ;;
+
+    --java-home)
+      JAVA_HOME="$2"
       shift 2
       ;;
 
