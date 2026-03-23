@@ -45,12 +45,12 @@
 		<dependency>
 			<groupId>io.opentelemetry.instrumentation</groupId>
 			<artifactId>opentelemetry-logback-appender-1.0</artifactId>
-			<version>2.24.0-alpha</version>
+			<version>2.23.0-alpha</version>
 		</dependency>
 		<dependency>
 			<groupId>io.opentelemetry.instrumentation</groupId>
 			<artifactId>opentelemetry-jdbc</artifactId>
-			<version>2.24.0-alpha</version>
+			<version>2.23.0-alpha</version>
     </dependency>
     <dependency>
 			<groupId>io.micrometer</groupId>
