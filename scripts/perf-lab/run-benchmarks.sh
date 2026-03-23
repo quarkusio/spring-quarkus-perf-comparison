@@ -8,10 +8,31 @@ help() {
   echo "  - jbang (https://www.jbang.dev/download)"
   echo "  - jq (https://stedolan.github.io/jq)"
   echo
+  echo "IMPORTANT: You need to have enough cpus in order to run this script. We recommend 14 cpus minimum allocated as follows:"
+  echo "  - 4 CPUs for the application"
+  echo "  - 3 CPUs for PostgreSQL"
+  echo "  - 3 CPUs for the load generator"
+  echo "  - 1 CPU for monitoring the system during test execution"
+  echo "  - 1 CPU for the time to first request measurement"
+  echo "      NOTE: This CPU can share one of the cpus from the load generator, since the TTFR & load measurements are not done at the same time."
+  echo
+  echo "Using a tool like 'lscpu -e' can help you understand how many CPUs you have available and how best to allocate them."
+  echo "  - Its important to avoid sharing physical cores between workloads and keep workloads on the same NUMA node when possible."
+  echo
+  echo "See https://github.com/quarkusio/spring-quarkus-perf-comparison/blob/main/scripts/perf-lab/README.md#usage for more information."
+  echo
   echo "Syntax: run-benchmarks.sh [options]"
   echo "options:"
-  echo "  --cpus <CPUS>                                           How many CPUs to allocate to the application"
-  echo "                                                              Default: ${CPUS}"
+  echo "  --cpus-app <CPUS_APP>                                   CPU list for the application (e.g. 0,2,4,6)"
+  echo "                                                              Default: ${CPUS_APP}"
+  echo "  --cpus-db <CPUS_DB>                                     CPU list for the database (e.g. 8,10,12)"
+  echo "                                                              Default: ${CPUS_DB}"
+  echo "  --cpus-first-request <CPUS_FIRST_REQUEST>               CPU for time-to-first-request measurement (e.g. 1)"
+  echo "                                                              Default: ${CPUS_FIRST_REQUEST}"
+  echo "  --cpus-load-gen <CPUS_LOAD_GEN>                         CPU list for the load generator (e.g. 1,3,5)"
+  echo "                                                              Default: ${CPUS_LOAD_GEN}"
+  echo "  --cpus-monitoring <CPUS_MONITORING>                     CPU for monitoring (e.g. 7)"
+  echo "                                                              Default: ${CPUS_MONITORING}"
   echo "  --description <DESCRIPTION>                             A human-readable description to be added to the run output"
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
@@ -105,7 +126,11 @@ print_values() {
   echo
   echo "#####################"
   echo "Configuration Values:"
-  echo "  CPUS: $CPUS"
+  echo "  CPUS_APP=$CPUS_APP"
+  echo "  CPUS_DB=$CPUS_DB"
+  echo "  CPUS_LOAD_GEN=$CPUS_LOAD_GEN"
+  echo "  CPUS_MONITORING=$CPUS_MONITORING"
+  echo "  CPUS_FIRST_REQUEST=$CPUS_FIRST_REQUEST"
   echo "  GRAALVM_HOME: $GRAALVM_HOME"
   echo "  GRAALVM_VERSION: $GRAALVM_VERSION"
   echo "  HOST: $HOST"
@@ -194,17 +219,6 @@ run_benchmarks() {
 
 #  jbang qDup@hyperfoil --trace="target" \
 
-local current_cpu=$((CPUS - 1))
-local app_cpus="0-${current_cpu}"
-local current_cpu=$((current_cpu + 1))
-local db_cpus="${current_cpu}-$((current_cpu + 2))"
-local current_cpu=$((current_cpu + 3))
-local load_gen_cpus="${current_cpu}-$((current_cpu + 2))"
-local current_cpu=$((current_cpu + 3))
-local first_request_cpu="${current_cpu}"
-local current_cpu=$((current_cpu + 1))
-local monitor_cpu="${current_cpu}"
-
 ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -B ${OUTPUT_DIR} \
     -ix \
@@ -218,12 +232,12 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
     -S config.jvm.args="${JVM_ARGS}" \
     -S config.profiler.name=${PROFILER} \
-    -S config.resources.app_cpus=${CPUS} \
-    -S config.resources.cpu.app="${app_cpus}" \
-    -S config.resources.cpu.db="${db_cpus}" \
-    -S config.resources.cpu.load_generator="${load_gen_cpus}" \
-    -S config.resources.cpu.1st_request="${first_request_cpu}" \
-    -S config.resources.cpu.monitor="${monitor_cpu}" \
+    -S config.resources.app_cpus="${CPUS_APP}" \
+    -S config.resources.cpu.app="${CPUS_APP}" \
+    -S config.resources.cpu.db="${CPUS_DB}" \
+    -S config.resources.cpu.load_generator="${CPUS_LOAD_GEN}" \
+    -S config.resources.cpu.1st_request="${CPUS_FIRST_REQUEST}" \
+    -S config.resources.cpu.monitor="${CPUS_MONITORING}" \
     -S config.springboot3.version=${SPRING_BOOT3_VERSION} \
     -S config.springboot4.version=${SPRING_BOOT4_VERSION} \
     -S config.jvm.memory="${JVM_MEMORY}" \
@@ -248,7 +262,11 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
 }
 
 # Define defaults
-CPUS="4"
+CPUS_APP="0,1,2,3"
+CPUS_DB="4,5,6"
+CPUS_LOAD_GEN="10,11,12"
+CPUS_MONITORING="13"
+CPUS_FIRST_REQUEST="10"
 DESCRIPTION=""
 SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
 SCM_REPO_BRANCH="main"
@@ -299,11 +317,6 @@ while [[ $# -gt 0 ]]; do
 
     --repo-branch)
       SCM_REPO_BRANCH="$2"
-      shift 2
-      ;;
-
-    --cpus)
-      CPUS="$2"
       shift 2
       ;;
 
@@ -452,6 +465,31 @@ while [[ $# -gt 0 ]]; do
 
     --wait-time)
       WAIT_TIME="$2"
+      shift 2
+      ;;
+
+    --cpus-app)
+      CPUS_APP="$2"
+      shift 2
+      ;;
+
+    --cpus-db)
+      CPUS_DB="$2"
+      shift 2
+      ;;
+
+    --cpus-load-gen)
+      CPUS_LOAD_GEN="$2"
+      shift 2
+      ;;
+
+    --cpus-monitoring)
+      CPUS_MONITORING="$2"
+      shift 2
+      ;;
+
+    --cpus-first-request)
+      CPUS_FIRST_REQUEST="$2"
       shift 2
       ;;
 

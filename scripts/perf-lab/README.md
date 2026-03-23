@@ -55,7 +55,11 @@ The script also has 3 dependencies that need to be resolved before it can be run
 
 | Option                           | Parameter                     | Description                                                                                                                                                                                                             | Default                                                                                                              |
 |----------------------------------|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `--cpus`                         | `<CPUS>`                      | How many CPUs to allocate to the application                                                                                                                                                                            | `4`                                                                                                                  |
+| `--cpus-app`                     | `<CPUS_APP>`                  | CPU list for the application                                                                                                                                                                                            | `0,2,4,6`                                                                                                            |
+| `--cpus-db`                      | `<CPUS_DB>`                   | CPU list for the database                                                                                                                                                                                               | `8,10,12`                                                                                                            |
+| `--cpus-first-request`           | `<CPUS_FIRST_REQUEST>`        | CPU for time-to-first-request measurement                                                                                                                                                                               | `9`                                                                                                                  |
+| `--cpus-load-gen`                | `<CPUS_LOAD_GEN>`             | CPU list for the load generator                                                                                                                                                                                         | `1,3,5`                                                                                                              |
+| `--cpus-monitoring`              | `<CPUS_MONITORING>`           | CPU for monitoring                                                                                                                                                                                                      | `7`                                                                                                                  |
 | `--drop-fs-caches`               |                               | Purge/drop OS filesystem caches between iterations                                                                                                                                                                      |                                                                                                                      |
 | `--extra-qdup-args`              | `<EXTRA_QDUP_ARGS>`           | Any extra arguments that need to be passed to qDup ahead of the qDup scripts<br/>**NOTE:** This is an advanced option. Make sure you know what you are doing when using it.                                             |                                                                                                                      |
 | `--graalvm-home`                 | `<GRAALVM_HOME>`              | Path to a locally installed GraalVM/Mandrel distribution<br/>If set, this takes precedence over `--graalvm-version`                                                                                                     |                                                                                                                      |
@@ -81,6 +85,131 @@ The script also has 3 dependencies that need to be resolved before it can be run
 | `--tests`                        | `<TESTS_TO_RUN>`              | The tests to run, separated by commas<br/>Accepted values (1 or more of): `test-build`, `measure-build-times`, `measure-time-to-first-request`, `measure-rss`, `run-load-test`                                          | `test-build,measure-build-times,measure-time-to-first-request,measure-rss,run-load-test`                             |
 | `--user`                         | `<USER>`                      | The user on `<HOST>` to run the benchmark                                                                                                                                                                               |                                                                                                                      |
 | `--wait-time`                    | `<WAIT_TIME>`                 | Wait time (in seconds) to wait for things like application startup                                                                                                                                                      | `20`                                                                                                                 |
+
+### Proper CPU affinity
+
+Proper CPU pinning is important for the performance of the benchmark to ensure proper isolation of the workloads.
+
+You need to have enough cpus in order to run this script. We recommend 15 cpus minimum allocated as follows:
+- 4 CPUs for the application
+- 3 CPUs for the database
+- 3 CPUs for the load generator
+- 1 CPU for monitoring the system during test execution
+- 1 CPU for the time to first request measurement
+
+Using a tool like `lscpu -e` can help you understand how many CPUs you have available and how best to allocate them. It's important to avoid sharing physical cores between workloads and keep workloads on the same NUMA node when possible.
+
+For example, `lscpu -e` reports the following in our lab environment:
+
+```
+CPU NODE SOCKET CORE L1d:L1i:L2:L3 ONLINE    MAXMHZ    MINMHZ       MHZ
+  0    0      0    0 0:0:0:0          yes 3900.0000 1000.0000 3900.0000
+  1    1      1    1 16:16:16:1       yes 3900.0000 1000.0000 3900.0000
+  2    0      0    2 7:7:7:0          yes 3900.0000 1000.0000 3900.0000
+  3    1      1    3 23:23:23:1       yes 3900.0000 1000.0000 3900.0000
+  4    0      0    4 1:1:1:0          yes 3900.0000 1000.0000 3900.0000
+  5    1      1    5 17:17:17:1       yes 3900.0000 1000.0000 3900.0000
+  6    0      0    6 6:6:6:0          yes 3900.0000 1000.0000 3900.0000
+  7    1      1    7 22:22:22:1       yes 3900.0000 1000.0000 3900.0000
+  8    0      0    8 2:2:2:0          yes 3900.0000 1000.0000 3900.0000
+  9    1      1    9 18:18:18:1       yes 3900.0000 1000.0000 3900.0000
+ 10    0      0   10 5:5:5:0          yes 3900.0000 1000.0000 3900.0000
+ 11    1      1   11 21:21:21:1       yes 3900.0000 1000.0000 2800.6411
+ 12    0      0   12 3:3:3:0          yes 3900.0000 1000.0000 3900.0000
+ 13    1      1   13 19:19:19:1       yes 3900.0000 1000.0000 3900.0000
+ 14    0      0   14 4:4:4:0          yes 3900.0000 1000.0000 3900.0000
+ 15    1      1   15 20:20:20:1       yes 3900.0000 1000.0000 2799.9961
+ 16    0      0   16 8:8:8:0          yes 3900.0000 1000.0000 3900.0000
+ 17    1      1   17 24:24:24:1       yes 3900.0000 1000.0000 3900.0000
+ 18    0      0   18 15:15:15:0       yes 3900.0000 1000.0000 3900.0000
+ 19    1      1   19 31:31:31:1       yes 3900.0000 1000.0000 3900.0000
+ 20    0      0   20 9:9:9:0          yes 3900.0000 1000.0000 3900.0000
+ 21    1      1   21 25:25:25:1       yes 3900.0000 1000.0000 3900.0000
+ 22    0      0   22 14:14:14:0       yes 3900.0000 1000.0000 3900.0000
+ 23    1      1   23 30:30:30:1       yes 3900.0000 1000.0000 3900.0000
+ 24    0      0   24 10:10:10:0       yes 3900.0000 1000.0000 3900.0000
+ 25    1      1   25 26:26:26:1       yes 3900.0000 1000.0000 3900.0000
+ 26    0      0   26 13:13:13:0       yes 3900.0000 1000.0000 3900.0000
+ 27    1      1   27 29:29:29:1       yes 3900.0000 1000.0000 3900.0000
+ 28    0      0   28 11:11:11:0       yes 3900.0000 1000.0000 3900.0000
+ 29    1      1   29 27:27:27:1       yes 3900.0000 1000.0000 3900.0000
+ 30    0      0   30 12:12:12:0       yes 3900.0000 1000.0000 3900.0000
+ 31    1      1   31 28:28:28:1       yes 3900.0000 1000.0000 2801.5439
+ 32    0      0    0 0:0:0:0          yes 3900.0000 1000.0000 3900.0000
+ 33    1      1    1 16:16:16:1       yes 3900.0000 1000.0000 3900.0000
+ 34    0      0    2 7:7:7:0          yes 3900.0000 1000.0000 3900.0000
+ 35    1      1    3 23:23:23:1       yes 3900.0000 1000.0000 3900.0000
+ 36    0      0    4 1:1:1:0          yes 3900.0000 1000.0000 3900.0000
+ 37    1      1    5 17:17:17:1       yes 3900.0000 1000.0000 3900.0000
+ 38    0      0    6 6:6:6:0          yes 3900.0000 1000.0000 3900.0000
+ 39    1      1    7 22:22:22:1       yes 3900.0000 1000.0000 3900.0000
+ 40    0      0    8 2:2:2:0          yes 3900.0000 1000.0000 3900.0000
+ 41    1      1    9 18:18:18:1       yes 3900.0000 1000.0000 3900.0000
+ 42    0      0   10 5:5:5:0          yes 3900.0000 1000.0000 3900.0000
+ 43    1      1   11 21:21:21:1       yes 3900.0000 1000.0000 3900.0000
+ 44    0      0   12 3:3:3:0          yes 3900.0000 1000.0000 3900.0000
+ 45    1      1   13 19:19:19:1       yes 3900.0000 1000.0000 2800.0010
+ 46    0      0   14 4:4:4:0          yes 3900.0000 1000.0000 3900.0000
+ 47    1      1   15 20:20:20:1       yes 3900.0000 1000.0000 3900.0000
+ 48    0      0   16 8:8:8:0          yes 3900.0000 1000.0000 3900.0000
+ 49    1      1   17 24:24:24:1       yes 3900.0000 1000.0000 3900.0000
+ 50    0      0   18 15:15:15:0       yes 3900.0000 1000.0000 3900.0000
+ 51    1      1   19 31:31:31:1       yes 3900.0000 1000.0000 3900.0000
+ 52    0      0   20 9:9:9:0          yes 3900.0000 1000.0000 3900.0000
+ 53    1      1   21 25:25:25:1       yes 3900.0000 1000.0000 3900.0000
+ 54    0      0   22 14:14:14:0       yes 3900.0000 1000.0000 3900.0000
+ 55    1      1   23 30:30:30:1       yes 3900.0000 1000.0000 3900.0000
+ 56    0      0   24 10:10:10:0       yes 3900.0000 1000.0000 3900.0000
+ 57    1      1   25 26:26:26:1       yes 3900.0000 1000.0000 3900.0000
+ 58    0      0   26 13:13:13:0       yes 3900.0000 1000.0000 3900.0000
+ 59    1      1   27 29:29:29:1       yes 3900.0000 1000.0000 3900.0000
+ 60    0      0   28 11:11:11:0       yes 3900.0000 1000.0000 3900.0000
+ 61    1      1   29 27:27:27:1       yes 3900.0000 1000.0000 3900.0000
+ 62    0      0   30 12:12:12:0       yes 3900.0000 1000.0000 3900.0000
+ 63    1      1   31 28:28:28:1       yes 3900.0000 1000.0000 3900.0000
+```
+
+We can make some assumptions from looking at the `lscpu -e` output:
+
+The system has `64` logical CPUs total
+- The table has 64 rows (CPU 0 through CPU 63), one per logical CPU.
+
+There are `2` sockets / `2` [NUMA](https://en.wikipedia.org/wiki/Non-uniform_memory_access) nodes
+- The `SOCKET` column contains only values `0` and `1`, and the `NODE` column mirrors it exactly 
+- There are 2 physical sockets, each corresponding to one NUMA node
+
+There are `32` physical cores (`16` per socket)
+- The CORE column lists values 0–31, but each value appears exactly twice across the full table.
+- That repetition is the hyperthreading signature: one physical core → two logical CPUs.
+    - 64 logical CPUs ÷ 2 = 32 physical cores, split evenly as 16 per socket.
+
+Hyperthreading sibling pairing (N and N+32)
+- CPUs `0–31` and CPUs `32–63` share identical `CORE` and cache (L1d:L1i:L2:L3) values in pairs (e.g., CPU 0 and CPU 32 both map to CORE 0 with cache set 0:0:0:0), confirming the sibling relationship.
+
+Even/odd CPU index → Socket 0 / Socket 1
+- Looking at the `SOCKET` column, even-indexed CPUs (0, 2, 4, …, 30 and their siblings 32, 34, …, 62) all belong to Socket 0, while odd-indexed CPUs (1, 3, 5, …, 31 and siblings 33, 35, …, 63) belong to Socket 1.
+
+**Key principle:** Avoid sharing physical cores between workloads (no hyperthreading siblings across workload boundaries), and keep workloads on the same NUMA node when possible.
+
+**Recommended allocation** (using whole physical cores, avoiding hyperthreading siblings across workloads):
+
+| Workload                      | CPUs       | NUMA Node |
+|-------------------------------|------------|-----------|
+| Application (4 CPUs)          | `2,4,6,8`  | Socket 0  |
+| Database (3 CPUs)             | `10,12,14` | Socket 0  |
+| Load generator (3 CPUs)       | `22,24,26` | Socket 0  |
+| System monitor (1 CPU)        | `28`       | Socket 0  |
+| Time-to-first-request (1 CPU) | `22`       | Socket 0  |
+
+**Rationale:**
+- All workloads are on Socket 0 (same NUMA node).
+- Leave CPU 0 (and its sibling 32) entirely free for the OS and IRQ handling. All 15 remaining Socket 0 physical cores cover the workload exactly.
+- The **application** gets Socket 0 cores to benefit from shared L3 cache with the **database** (also Socket 0) — this minimizes cross-NUMA latency for DB calls.
+- The **database** stays on Socket 0 too, close to the app.
+- The time to first request (TTFR) workload can share one of the same CPUs as the load generator because those two tests never run at the same time.
+- **No hyperthreading siblings are shared** between workloads, eliminating contention on shared execution units, L1/L2 caches.
+
+This approach uses 14 out of 32 physical cores (no hyperthreading), leaving the remaining cores free for the OS and other system processes. This is also why the defaults are set the way they are
 
 ### Available Runtimes
 
@@ -178,6 +307,7 @@ Runs [all the tests](#available-tests) against [all the runtimes](#available-run
     --host <REMOTE_HOST> \
     --quarkus-version 3.28.4 \
     --springboot3-version 3.5.6 \
+    --springboot4-version 4.0.1 \
     --tests 'measure-build-times,measure-time-to-first-request,measure-rss,run-load-test' \
     --runtimes 'quarkus3-jvm,quarkus3-native,spring4-jvm,spring4-jvm-aot,spring4-native,spring3-jvm,spring3-jvm-aot,spring3-native' \
     --iterations 5 \
@@ -191,7 +321,7 @@ Runs [all the tests](#available-tests) against [all the runtimes](#available-run
 
 - **Version Specification:** It is strongly recommended to explicitly set the Quarkus and Spring Boot versions to ensure consistent and reproducible benchmarks.
 - **Remote Execution:** When using a HOST other than `LOCAL`, the `--user` (USER) parameter is required.
-- **Resource Constraints:** The `--cpus` (CPU constraints) and `--jvm-memory` (memory constraints) options use cgroups to limit resources available to the benchmarked applications.
+- **Resource Constraints:** The `--cpus-*` options (CPU affinity) and `--jvm-memory` (memory constraints) use `taskset` to control resource allocation. Use `lscpu -e` to understand CPU topology and avoid sharing physical cores between workloads.
 - **Profiling:** When profiling is enabled, async profiler will be used to generate JFR files or flamegraphs depending on the selected option.
 
 ## Exit Codes
