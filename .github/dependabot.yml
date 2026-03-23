@@ -50,6 +50,10 @@ updates:
       - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
         update-types:
           - "version-update:semver-major"
+      - dependency-name: "io.opentelemetry.instrumentation:*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
 
   - package-ecosystem: maven
     directory: /springboot4
@@ -61,6 +65,10 @@ updates:
       - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
         update-types:
           - "version-update:semver-major"
+      - dependency-name: "io.opentelemetry.instrumentation:*"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
 
   # OOTB branch
   - package-ecosystem: github-actions
