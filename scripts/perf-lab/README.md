@@ -87,7 +87,7 @@ The script also has 3 dependencies that need to be resolved before it can be run
 | `--user`                         | `<USER>`                      | The user on `<HOST>` to run the benchmark                                                                                                                                                                               |                                                                                                                      |
 | `--wait-time`                    | `<WAIT_TIME>`                 | Wait time (in seconds) to wait for things like application startup                                                                                                                                                      | `20`                                                                                                                 |
 
-### Proper CPU pinning
+### Proper CPU affinity
 
 Proper CPU pinning is important for the performance of the benchmark to ensure proper isolation of the workloads.
 
@@ -176,7 +176,7 @@ We can make some assumptions from looking at the `lscpu -e` output:
 The system has `64` logical CPUs total
 - The table has 64 rows (CPU 0 through CPU 63), one per logical CPU.
 
-There are `2` sockets / `2` NUMA nodes
+There are `2` sockets / `2` [NUMA](https://en.wikipedia.org/wiki/Non-uniform_memory_access) nodes
 - The `SOCKET` column contains only values `0` and `1`, and the `NODE` column mirrors it exactly 
 - There are 2 physical sockets, each corresponding to one NUMA node
 
