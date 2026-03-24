@@ -76,7 +76,7 @@ function _date() {
       fi
       # Read the HTTP response status line and extract the status code
       if ! read -r _ status_code _ <&3; then
-        exec 3>&- 2>/dev/null
+        exec 3>&-
         continue
       fi
       # Close the file descriptor
