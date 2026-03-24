@@ -180,6 +180,34 @@ make_json_array() {
   echo "$json"
 }
 
+# Counts the number of CPUs in a taskset --cpu-list specification.
+# Handles: single CPUs (5), ranges (0-3), step ranges (0-7:2), and combinations (0-3,8,10-12).
+count_cpus() {
+  local cpu_list="$1"
+  local count=0
+
+  IFS=',' read -ra parts <<< "$cpu_list"
+  for part in "${parts[@]}"; do
+    if [[ "$part" =~ ^([0-9]+)-([0-9]+):([0-9]+)$ ]]; then
+      # Step range: start-end:step
+      local start="${BASH_REMATCH[1]}"
+      local end="${BASH_REMATCH[2]}"
+      local step="${BASH_REMATCH[3]}"
+      count=$(( count + (end - start) / step + 1 ))
+    elif [[ "$part" =~ ^([0-9]+)-([0-9]+)$ ]]; then
+      # Range: start-end
+      local start="${BASH_REMATCH[1]}"
+      local end="${BASH_REMATCH[2]}"
+      count=$(( count + end - start + 1 ))
+    else
+      # Single CPU
+      count=$(( count + 1 ))
+    fi
+  done
+
+  echo "$count"
+}
+
 setup_jbang() {
   if command -v jbang &> /dev/null; then
     echo "Using installed jbang ($(jbang --version))"
@@ -232,7 +260,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
     -S config.jvm.args="${JVM_ARGS}" \
     -S config.profiler.name=${PROFILER} \
-    -S config.resources.app_cpus="${CPUS_APP}" \
+    -S config.resources.app_cpus="$(count_cpus "${CPUS_APP}")" \
     -S config.resources.cpu.app="${CPUS_APP}" \
     -S config.resources.cpu.db="${CPUS_DB}" \
     -S config.resources.cpu.load_generator="${CPUS_LOAD_GEN}" \
