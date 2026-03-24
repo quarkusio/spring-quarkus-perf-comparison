@@ -358,21 +358,16 @@ scripts:
         - queue-download: ${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log
         - script: start-test-services
         - script: sync-drop-fs-cache
-        - sh: ${{RUNTIME.runCmd}} &>${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log &
-        - sh: APP_PID=$!
-        - sh: timeout 60s bash -c "taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh ${{TARGET_URL}}"
+        - sh: timeout 60s bash -c "taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh '${{RUNTIME.runCmd}}' '${{TARGET_URL}}' '${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log'"
           then:
             - regex: Terminated
               then:
-                - sh: kill -15 $APP_PID
                 - abort: Run ${{RUNTIME.runCmd}} didn't start within allotted timeout
-            - regex: .*\D.*
+            - regex: TTFR=(?<nanoseconds>\\d+) ns
               then:
-                - sh: kill -15 $APP_PID
-                - abort: Timeout script returned a non-numeric value
+                - set-state: START_TIME ${{= ${{nanoseconds}} / 1000000 }}
               else:
-                - set-state: START_TIME
-        - sh: kill -15 $APP_PID
+                - abort: Timeout script returned invalid output
         - script: state-array-push
           with:
             array: RUN.output.results.${{RUNTIME.name}}.startup.timings
