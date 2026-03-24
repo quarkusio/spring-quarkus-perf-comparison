@@ -70,9 +70,15 @@ function _date() {
     # Try to open a TCP connection to the target host and port and use file descriptor 3 for it
     if exec 3<>/dev/tcp/"$HOST"/"$PORT"; then
       # Send HTTP GET request to the server
-      echo -e "GET $URL_PATH HTTP/1.0\r\nHost: $HOST\r\nConnection: close\r\n\r\n" >&3
+      if ! echo -e "GET $URL_PATH HTTP/1.0\r\nHost: $HOST\r\nConnection: close\r\n\r\n" >&3; then
+        exec 3>&-
+        continue
+      fi
       # Read the HTTP response status line and extract the status code
-      read -r _ status_code _ <&3
+      if ! read -r _ status_code _ <&3; then
+        exec 3>&-
+        continue
+      fi
       # Close the file descriptor
       exec 3>&-
       # If we got a 200 OK response, exit the loop
