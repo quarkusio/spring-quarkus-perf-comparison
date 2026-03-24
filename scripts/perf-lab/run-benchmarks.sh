@@ -294,258 +294,263 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S DROP_OS_FILESYSTEM_CACHES=${DROP_OS_FILESYSTEM_CACHES}
 }
 
-# Define defaults
-CPUS_APP="0,1,2,3"
-CPUS_DB="4,5,6"
-CPUS_OTEL="7,8,9"
-CPUS_LOAD_GEN="10,11,12"
-CPUS_MONITORING="13"
-CPUS_FIRST_REQUEST="10"
-DESCRIPTION=""
-SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
-SCM_REPO_BRANCH="main"
-SCENARIO="tuned"
-GRAALVM_HOME=""
-GRAALVM_VERSION="25.0.2-graalce"
-HOST="LOCAL"
-ITERATIONS="3"
-JAVA_HOME=""
-JAVA_VERSION="25.0.2-tem"
-NATIVE_QUARKUS_BUILD_OPTIONS=""
-NATIVE_SPRING3_BUILD_OPTIONS=""
-NATIVE_SPRING4_BUILD_OPTIONS=""
-PROFILER="none"
-QUARKUS_BUILD_CONFIG_ARGS=""
-QUARKUS_VERSION=""
-ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-virtual" "quarkus3-native" "spring3-jvm" "spring3-virtual" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-virtual" "spring4-jvm-aot" "spring4-native")
-RUNTIMES=${ALLOWED_RUNTIMES[@]}
-SPRING_BOOT3_VERSION=""
-SPRING_BOOT4_VERSION=""
-ALLOWED_TESTS_TO_RUN=("test-build" "measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
-TESTS_TO_RUN=${ALLOWED_TESTS_TO_RUN[@]}
-USER=""
-JVM_MEMORY=""
-WAIT_TIME="20"
-DROP_OS_FILESYSTEM_CACHES=false
-JVM_ARGS=""
-EXTRA_QDUP_ARGS=""
-OUTPUT_DIR="/tmp"
+# Only run main logic when executed directly (not when sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
-# Process the inputs - Manual parsing for portability
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -h|--help)
-      help
-      exit 0
-      ;;
+  # Define defaults
+  CPUS_APP="0,1,2,3"
+  CPUS_DB="4,5,6"
+  CPUS_OTEL="7,8,9"
+  CPUS_LOAD_GEN="10,11,12"
+  CPUS_MONITORING="13"
+  CPUS_FIRST_REQUEST="10"
+  DESCRIPTION=""
+  SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
+  SCM_REPO_BRANCH="main"
+  SCENARIO="tuned"
+  GRAALVM_HOME=""
+  GRAALVM_VERSION="25.0.2-graalce"
+  HOST="LOCAL"
+  ITERATIONS="3"
+  JAVA_HOME=""
+  JAVA_VERSION="25.0.2-tem"
+  NATIVE_QUARKUS_BUILD_OPTIONS=""
+  NATIVE_SPRING3_BUILD_OPTIONS=""
+  NATIVE_SPRING4_BUILD_OPTIONS=""
+  PROFILER="none"
+  QUARKUS_BUILD_CONFIG_ARGS=""
+  QUARKUS_VERSION=""
+  ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-virtual" "quarkus3-native" "spring3-jvm" "spring3-virtual" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-virtual" "spring4-jvm-aot" "spring4-native")
+  RUNTIMES=${ALLOWED_RUNTIMES[@]}
+  SPRING_BOOT3_VERSION=""
+  SPRING_BOOT4_VERSION=""
+  ALLOWED_TESTS_TO_RUN=("test-build" "measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
+  TESTS_TO_RUN=${ALLOWED_TESTS_TO_RUN[@]}
+  USER=""
+  JVM_MEMORY=""
+  WAIT_TIME="20"
+  DROP_OS_FILESYSTEM_CACHES=false
+  JVM_ARGS=""
+  EXTRA_QDUP_ARGS=""
+  OUTPUT_DIR="/tmp"
 
-    --description)
-      DESCRIPTION="$2"
-      shift 2
-      ;;
+  # Process the inputs - Manual parsing for portability
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h|--help)
+        help
+        exit 0
+        ;;
 
-    --jvm-args)
-      JVM_ARGS="$2"
-      shift 2
-      ;;
+      --description)
+        DESCRIPTION="$2"
+        shift 2
+        ;;
 
-    --repo-branch)
-      SCM_REPO_BRANCH="$2"
-      shift 2
-      ;;
+      --jvm-args)
+        JVM_ARGS="$2"
+        shift 2
+        ;;
 
-    --drop-fs-caches)
-      DROP_OS_FILESYSTEM_CACHES=true
-      shift
-      ;;
+      --repo-branch)
+        SCM_REPO_BRANCH="$2"
+        shift 2
+        ;;
 
-    --extra-qdup-args)
-      EXTRA_QDUP_ARGS="$2"
-      shift 2
-      ;;
+      --drop-fs-caches)
+        DROP_OS_FILESYSTEM_CACHES=true
+        shift
+        ;;
 
-    --output-dir)
-      OUTPUT_DIR="$2"
-      shift 2
-      ;;
+      --extra-qdup-args)
+        EXTRA_QDUP_ARGS="$2"
+        shift 2
+        ;;
 
-    --graalvm-home)
-      GRAALVM_HOME="$2"
-      shift 2
-      ;;
+      --output-dir)
+        OUTPUT_DIR="$2"
+        shift 2
+        ;;
 
-    --graalvm-version)
-      GRAALVM_VERSION="$2"
-      shift 2
-      ;;
+      --graalvm-home)
+        GRAALVM_HOME="$2"
+        shift 2
+        ;;
 
-    --host)
-      HOST="$2"
-      shift 2
-      ;;
+      --graalvm-version)
+        GRAALVM_VERSION="$2"
+        shift 2
+        ;;
 
-    --iterations)
-      ITERATIONS="$2"
-      shift 2
-      ;;
+      --host)
+        HOST="$2"
+        shift 2
+        ;;
 
-    --java-home)
-      JAVA_HOME="$2"
-      shift 2
-      ;;
+      --iterations)
+        ITERATIONS="$2"
+        shift 2
+        ;;
 
-    --java-version)
-      JAVA_VERSION="$2"
-      shift 2
-      ;;
+      --java-home)
+        JAVA_HOME="$2"
+        shift 2
+        ;;
 
-    --repo-url)
-      SCM_REPO_URL="$2"
-      shift 2
-      ;;
+      --java-version)
+        JAVA_VERSION="$2"
+        shift 2
+        ;;
 
-    --native-quarkus-build-options)
-      NATIVE_QUARKUS_BUILD_OPTIONS="$2"
-      shift 2
-      ;;
+      --repo-url)
+        SCM_REPO_URL="$2"
+        shift 2
+        ;;
 
-    --native-spring3-build-options)
-      NATIVE_SPRING3_BUILD_OPTIONS="$2"
-      shift 2
-      ;;
+      --native-quarkus-build-options)
+        NATIVE_QUARKUS_BUILD_OPTIONS="$2"
+        shift 2
+        ;;
 
-    --native-spring4-build-options)
-      NATIVE_SPRING4_BUILD_OPTIONS="$2"
-      shift 2
-      ;;
+      --native-spring3-build-options)
+        NATIVE_SPRING3_BUILD_OPTIONS="$2"
+        shift 2
+        ;;
 
-    --profiler)
-      if [[ "$2" =~ ^(none|jfr|flamegraph)$ ]]; then
-        PROFILER="$2"
-      else
-        echo "!! [ERROR] --profiler option must be one of (none, jfr, flamegraph)!!"
-        exit_abnormal
-      fi
-      shift 2
-      ;;
+      --native-spring4-build-options)
+        NATIVE_SPRING4_BUILD_OPTIONS="$2"
+        shift 2
+        ;;
 
-    --quarkus-build-config-args)
-      QUARKUS_BUILD_CONFIG_ARGS="$2"
-      shift 2
-      ;;
-
-    --quarkus-version)
-      QUARKUS_VERSION="$2"
-      shift 2
-      ;;
-
-    --runtimes)
-      rt=($(IFS=','; echo $2))
-
-      for item in "${rt[@]}"; do
-        if [[ ! "${ALLOWED_RUNTIMES[@]}" =~ "${item}" ]]; then
-          echo "!! [ERROR] --runtimes option must contain 1 or more of [${ALLOWED_RUNTIMES[@]}]!!"
+      --profiler)
+        if [[ "$2" =~ ^(none|jfr|flamegraph)$ ]]; then
+          PROFILER="$2"
+        else
+          echo "!! [ERROR] --profiler option must be one of (none, jfr, flamegraph)!!"
           exit_abnormal
         fi
-      done
+        shift 2
+        ;;
 
-      RUNTIMES=${rt[@]}
-      shift 2
-      ;;
+      --quarkus-build-config-args)
+        QUARKUS_BUILD_CONFIG_ARGS="$2"
+        shift 2
+        ;;
 
-    --scenario)
-      if [[ "$2" =~ ^(tuned|ootb)$ ]]; then
-        SCENARIO="$2"
-      else
-        echo "!! [ERROR] --scenario option must be one of (tuned, ootb)!!"
-        exit_abnormal
-      fi
-      shift 2
-      ;;
+      --quarkus-version)
+        QUARKUS_VERSION="$2"
+        shift 2
+        ;;
 
-    --springboot3-version)
-      SPRING_BOOT3_VERSION="$2"
-      shift 2
-      ;;
+      --runtimes)
+        rt=($(IFS=','; echo $2))
 
-    --springboot4-version)
-      SPRING_BOOT4_VERSION="$2"
-      shift 2
-      ;;
+        for item in "${rt[@]}"; do
+          if [[ ! "${ALLOWED_RUNTIMES[@]}" =~ "${item}" ]]; then
+            echo "!! [ERROR] --runtimes option must contain 1 or more of [${ALLOWED_RUNTIMES[@]}]!!"
+            exit_abnormal
+          fi
+        done
 
-    --tests)
-      ttr=($(IFS=','; echo $2))
+        RUNTIMES=${rt[@]}
+        shift 2
+        ;;
 
-      for item in "${ttr[@]}"; do
-        if [[ ! "${ALLOWED_TESTS_TO_RUN[@]}" =~ "${item}" ]]; then
-          echo "!! [ERROR] --tests option must contain 1 or more of [${ALLOWED_TESTS_TO_RUN[@]}]!!"
+      --scenario)
+        if [[ "$2" =~ ^(tuned|ootb)$ ]]; then
+          SCENARIO="$2"
+        else
+          echo "!! [ERROR] --scenario option must be one of (tuned, ootb)!!"
           exit_abnormal
         fi
-      done
+        shift 2
+        ;;
 
-      TESTS_TO_RUN=${ttr[@]}
-      shift 2
-      ;;
+      --springboot3-version)
+        SPRING_BOOT3_VERSION="$2"
+        shift 2
+        ;;
 
-    --user)
-      USER="$2"
-      shift 2
-      ;;
+      --springboot4-version)
+        SPRING_BOOT4_VERSION="$2"
+        shift 2
+        ;;
 
-    --jvm-memory)
-      JVM_MEMORY="$2"
-      shift 2
-      ;;
+      --tests)
+        ttr=($(IFS=','; echo $2))
 
-    --wait-time)
-      WAIT_TIME="$2"
-      shift 2
-      ;;
+        for item in "${ttr[@]}"; do
+          if [[ ! "${ALLOWED_TESTS_TO_RUN[@]}" =~ "${item}" ]]; then
+            echo "!! [ERROR] --tests option must contain 1 or more of [${ALLOWED_TESTS_TO_RUN[@]}]!!"
+            exit_abnormal
+          fi
+        done
 
-    --cpus-app)
-      CPUS_APP="$2"
-      shift 2
-      ;;
+        TESTS_TO_RUN=${ttr[@]}
+        shift 2
+        ;;
 
-    --cpus-db)
-      CPUS_DB="$2"
-      shift 2
-      ;;
+      --user)
+        USER="$2"
+        shift 2
+        ;;
 
-    --cpus-otel)
-      CPUS_OTEL="$2"
-      shift 2
-      ;;
+      --jvm-memory)
+        JVM_MEMORY="$2"
+        shift 2
+        ;;
 
-    --cpus-load-gen)
-      CPUS_LOAD_GEN="$2"
-      shift 2
-      ;;
+      --wait-time)
+        WAIT_TIME="$2"
+        shift 2
+        ;;
 
-    --cpus-monitoring)
-      CPUS_MONITORING="$2"
-      shift 2
-      ;;
+      --cpus-app)
+        CPUS_APP="$2"
+        shift 2
+        ;;
 
-    --cpus-first-request)
-      CPUS_FIRST_REQUEST="$2"
-      shift 2
-      ;;
+      --cpus-db)
+        CPUS_DB="$2"
+        shift 2
+        ;;
 
-    -*)
-      echo "!! [ERROR] Unknown option: $1"
-      exit_abnormal
-      ;;
+      --cpus-otel)
+        CPUS_OTEL="$2"
+        shift 2
+        ;;
 
-    *)
-      echo "!! [ERROR] Unexpected argument: $1"
-      exit_abnormal
-      ;;
-  esac
-done
+      --cpus-load-gen)
+        CPUS_LOAD_GEN="$2"
+        shift 2
+        ;;
 
-validate_values
-calculate_scenario
-print_values
-setup_jbang
-run_benchmarks
+      --cpus-monitoring)
+        CPUS_MONITORING="$2"
+        shift 2
+        ;;
+
+      --cpus-first-request)
+        CPUS_FIRST_REQUEST="$2"
+        shift 2
+        ;;
+
+      -*)
+        echo "!! [ERROR] Unknown option: $1"
+        exit_abnormal
+        ;;
+
+      *)
+        echo "!! [ERROR] Unexpected argument: $1"
+        exit_abnormal
+        ;;
+    esac
+  done
+
+  validate_values
+  calculate_scenario
+  print_values
+  setup_jbang
+  run_benchmarks
+
+fi

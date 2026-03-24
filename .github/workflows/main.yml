@@ -33,6 +33,16 @@ defaults:
     shell: bash
 
 jobs:
+  script-tests:
+    runs-on: ubuntu-latest
+    name: "Script unit tests"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run script tests
+        working-directory: scripts/perf-lab/tests
+        run: ./run-benchmarks-tests.sh
+
   jvm-build-test:
     runs-on: ubuntu-latest
     strategy:
