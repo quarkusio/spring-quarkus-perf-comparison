@@ -1,7 +1,7 @@
 name: Java related scripts
 scripts:
   ensure-graalvm:
-    - read-state: ${{config.jvm.graalvm.home}}
+    - sh: echo "${{config.jvm.graalvm.home:}}"
       then:
         - regex: ^$
           then:
@@ -30,7 +30,7 @@ scripts:
     - sh: $GRAALVM_HOME/bin/java -version
 
   ensure-java:
-    - read-state: ${{config.jvm.home}}
+    - sh: echo "${{config.jvm.home:}}"
       then:
         - regex: ^$
           then:

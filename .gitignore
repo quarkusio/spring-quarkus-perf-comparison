@@ -17,3 +17,4 @@ buildNumber.properties
 .classpath
 /.idea/
 /.profileconfig.json
+.claude
