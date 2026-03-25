@@ -52,13 +52,22 @@ jobs:
           - '21'
           - '25'
         app:
-          - { "name": "springboot3", "dir": "springboot3", "args": "" }
-          - { "name": "springboot3-virtual", "dir": "springboot3", "args": "-Dspring.threads.virtual.enabled=true" }
-          - { "name": "springboot4", "dir": "springboot4", "args": "" }
-          - { "name": "springboot4-virtual", "dir": "springboot4", "args": "-Dspring.threads.virtual.enabled=true" }
-          - { "name": "quarkus3", "dir": "quarkus3", "args": "" }
-          - { "name": "quarkus3-virtual", "dir": "quarkus3-virtual", "args": "" }
-          - { "name": "quarkus3-spring-compatibility", "dir": "quarkus3-spring-compatibility", "args": "" }
+          - { "name": "springboot3", "dir": "springboot3", "build-args": "", "run-args": "", "app-jar": "target/springboot3.jar" }
+          - { "name": "springboot3-virtual", "dir": "springboot3", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "", "app-jar": "target/springboot3.jar" }
+          - { "name": "springboot4", "dir": "springboot4", "build-args": "", "run-args": "", "app-jar": "target/springboot4.jar" }
+          - { "name": "springboot4-virtual", "dir": "springboot4", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "", "app-jar": "target/springboot4.jar" }
+          - { "name": "quarkus3", "dir": "quarkus3", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar" }
+          - { "name": "quarkus3-leyden", "dir": "quarkus3", "build-args": "-Dquarkus.package.jar.aot.enabled=true", "run-args": "-XX:AOTCache=quarkus3/target/quarkus-app/app.aot", "app-jar": "target/quarkus-app/quarkus-run.jar" }
+          - { "name": "quarkus3-virtual", "dir": "quarkus3-virtual", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar" }
+          - { "name": "quarkus3-virtual-leyden", "dir": "quarkus3-virtual", "build-args": "-Dquarkus.package.jar.aot.enabled=true", "run-args": "-XX:AOTCache=quarkus3-virtual/target/quarkus-app/app.aot", "app-jar": "target/quarkus-app/quarkus-run.jar" }
+          - { "name": "quarkus3-spring-compatibility", "dir": "quarkus3-spring-compatibility", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar" }
+        exclude:
+          - java: '21'
+            app:
+              name: quarkus3-leyden
+          - java: '21'
+            app:
+              name: quarkus3-virtual-leyden
     name: "[jvm-build-test-java${{ matrix.java }}]: ${{ matrix.app.name }}"
     steps:
       - uses: actions/checkout@v6
@@ -73,7 +82,7 @@ jobs:
       - name: Build and test
         working-directory: ${{ matrix.app.dir }}
         run: |
-          ./mvnw -B clean verify ${{ matrix.app.args }} \
+          ./mvnw -B clean verify ${{ matrix.app.build-args }} \
             -Dmaven.compiler.release=${{ matrix.java }} \
             -Djava.version=${{ matrix.java }}
 
@@ -82,32 +91,6 @@ jobs:
 
       - name: Validate simple scripts
         run: |
-          case "${{ matrix.app.name }}" in
-            springboot3)
-            TARGET_DIR="${{ matrix.app.dir }}/target/springboot3.jar"
-            ;;
-            springboot3-virtual)
-            TARGET_DIR="${{ matrix.app.dir }}/target/springboot3.jar"
-            ;;
-            springboot4)
-            TARGET_DIR="${{ matrix.app.dir }}/target/springboot4.jar"
-            ;;
-            springboot4-virtual)
-            TARGET_DIR="${{ matrix.app.dir }}/target/springboot4.jar"
-            ;;
-            quarkus3)
-            TARGET_DIR="${{ matrix.app.dir }}/target/quarkus-app/quarkus-run.jar"
-            ;;
-            quarkus3-virtual)
-            TARGET_DIR="${{ matrix.app.dir }}/target/quarkus-app/quarkus-run.jar"
-            ;;
-            quarkus3-spring-compatibility)
-            TARGET_DIR="${{ matrix.app.dir }}/target/quarkus-app/quarkus-run.jar"
-            ;;
-            *)
-            echo "Unknown app: ${{ matrix.app.name }}"
-            exit 1
-            ;;
-          esac
-          scripts/stress.sh "$TARGET_DIR"
-          scripts/1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar $TARGET_DIR" 5
+          TARGET_APP_JAR="${{ matrix.app.dir }}/${{ matrix.app.app-jar }}"
+          scripts/stress.sh "$TARGET_APP_JAR"
+          scripts/1strequest.sh "java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m ${{ matrix.app.run-args }} -jar $TARGET_APP_JAR" 5

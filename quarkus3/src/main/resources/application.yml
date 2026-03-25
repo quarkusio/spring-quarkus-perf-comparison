@@ -2,6 +2,8 @@ quarkus:
   datasource:
     jdbc:
       telemetry: true
+    devservices:
+      image-name: ghcr.io/quarkusio/postgres-17-perf:main
   jackson:
     serialization-inclusion: non-empty
   rest:
