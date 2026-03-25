@@ -75,7 +75,7 @@ function _date() {
         continue
       fi
       # Read the HTTP response status line and extract the status code
-      if read -r _ status_code _ <&3; then
+      if ! read -r _ status_code _ <&3; then
         exec 3>&-
         continue
       fi
