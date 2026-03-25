@@ -73,6 +73,7 @@ help() {
   echo "  --runtimes <RUNTIMES>                                   The runtimes to test, separated by commas"
   echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-virtual, quarkus3-native, spring3-jvm, spring3-virtual, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-virtual, spring4-jvm-aot, spring4-native"
   echo "                                                              Default: 'quarkus3-jvm,quarkus-jvm-virtual,quarkus3-native,spring3-jvm,spring3-jvm-aot,spring3-virtual,spring3-native,spring4-jvm,spring4-virtual,spring4-jvm-aot,spring4-native'"
+  echo "  --run-identifier <RUN_IDENTIFIER>                       An optional identifier for this run to be added to the run output"
   echo "  --scenario <SCENARIO>                                   The scenario to run"
   echo "                                                              Accepted values: tuned, ootb"
   echo "                                                              Default: Depends on the value of --repo-branch"
@@ -158,6 +159,7 @@ print_values() {
   echo "  EXTRA_QDUP_ARGS: $EXTRA_QDUP_ARGS"
   echo "  OUTPUT_DIR: $OUTPUT_DIR"
   echo "  DESCRIPTION: '${DESCRIPTION}'"
+  echo "  RUN_IDENTIFIER: '${RUN_IDENTIFIER}'"
   echo
 }
 
@@ -278,6 +280,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S config.repo.url=${SCM_REPO_URL} \
     -S config.repo.scenario=${SCENARIO} \
     -S config.run.description="${DESCRIPTION}" \
+    -S config.run.identifier="${RUN_IDENTIFIER}" \
     -S env.run.host.user=${USER} \
     -S env.run.host.target=${target} \
     -S env.run.host.name=${HOST} \
@@ -299,6 +302,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   CPUS_MONITORING="13"
   CPUS_FIRST_REQUEST="10"
   DESCRIPTION=""
+  RUN_IDENTIFIER=""
   SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
   SCM_REPO_BRANCH="main"
   SCENARIO="tuned"
@@ -338,6 +342,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
       --description)
         DESCRIPTION="$2"
+        shift 2
+        ;;
+
+      --run-identifier)
+        RUN_IDENTIFIER="$2"
         shift 2
         ;;
 
