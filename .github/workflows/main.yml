@@ -52,15 +52,19 @@ jobs:
           - '21'
           - '25'
         app:
-          - { "name": "springboot3", "dir": "springboot3", "build-args": "", "run-args": "", "app-jar": "target/springboot3.jar" }
-          - { "name": "springboot3-virtual", "dir": "springboot3", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "", "app-jar": "target/springboot3.jar" }
-          - { "name": "springboot4", "dir": "springboot4", "build-args": "", "run-args": "", "app-jar": "target/springboot4.jar" }
-          - { "name": "springboot4-virtual", "dir": "springboot4", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "", "app-jar": "target/springboot4.jar" }
-          - { "name": "quarkus3", "dir": "quarkus3", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar" }
-          - { "name": "quarkus3-leyden", "dir": "quarkus3", "build-args": "-Dquarkus.package.jar.aot.enabled=true", "run-args": "-XX:AOTCache=quarkus3/target/quarkus-app/app.aot", "app-jar": "target/quarkus-app/quarkus-run.jar" }
-          - { "name": "quarkus3-virtual", "dir": "quarkus3-virtual", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar" }
-          - { "name": "quarkus3-virtual-leyden", "dir": "quarkus3-virtual", "build-args": "-Dquarkus.package.jar.aot.enabled=true", "run-args": "-XX:AOTCache=quarkus3-virtual/target/quarkus-app/app.aot", "app-jar": "target/quarkus-app/quarkus-run.jar" }
-          - { "name": "quarkus3-spring-compatibility", "dir": "quarkus3-spring-compatibility", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar" }
+          - { "name": "springboot3", "dir": "springboot3", "build-args": "", "run-args": "", "app-jar": "target/springboot3.jar", "isSpringLeyden": false }
+          - { "name": "springboot3-leyden", "dir": "springboot3", "build-args": "", "run-args": "-XX:AOTCache=target/app.aot", "app-jar": "target/springboot3.jar", "isSpringLeyden": true }
+          - { "name": "springboot3-virtual", "dir": "springboot3", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "", "app-jar": "target/springboot3.jar", "isSpringLeyden": false }
+          - { "name": "springboot3-virtual-leyden", "dir": "springboot3", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "-XX:AOTCache=target/app.aot", "app-jar": "target/springboot3.jar", "isSpringLeyden": true }
+          - { "name": "springboot4", "dir": "springboot4", "build-args": "", "run-args": "", "app-jar": "target/springboot4.jar", "isSpringLeyden": false }
+          - { "name": "springboot4-leyden", "dir": "springboot4", "build-args": "", "run-args": "-XX:AOTCache=target/app.aot", "app-jar": "target/springboot4.jar", "isSpringLeyden": true }
+          - { "name": "springboot4-virtual", "dir": "springboot4", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "", "app-jar": "target/springboot4.jar", "isSpringLeyden": false }
+          - { "name": "springboot4-virtual-leyden", "dir": "springboot4", "build-args": "-Dspring.threads.virtual.enabled=true", "run-args": "-XX:AOTCache=target/app.aot", "app-jar": "target/springboot4.jar", "isSpringLeyden": true }
+          - { "name": "quarkus3", "dir": "quarkus3", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
+          - { "name": "quarkus3-leyden", "dir": "quarkus3", "build-args": "-Dquarkus.package.jar.aot.enabled=true", "run-args": "-XX:AOTCache=target/quarkus-app/app.aot", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
+          - { "name": "quarkus3-virtual", "dir": "quarkus3-virtual", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
+          - { "name": "quarkus3-virtual-leyden", "dir": "quarkus3-virtual", "build-args": "-Dquarkus.package.jar.aot.enabled=true", "run-args": "-XX:AOTCache=target/quarkus-app/app.aot", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
+          - { "name": "quarkus3-spring-compatibility", "dir": "quarkus3-spring-compatibility", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
         exclude:
           - java: '21'
             app:
@@ -68,6 +72,18 @@ jobs:
           - java: '21'
             app:
               name: quarkus3-virtual-leyden
+          - java: '21'
+            app:
+              name: springboot3-leyden
+          - java: '21'
+            app:
+              name: springboot3-virtual-leyden
+          - java: '21'
+            app:
+              name: springboot4-leyden
+          - java: '21'
+            app:
+              name: springboot4-virtual-leyden
     name: "[jvm-build-test-java${{ matrix.java }}]: ${{ matrix.app.name }}"
     steps:
       - uses: actions/checkout@v6
@@ -79,18 +95,38 @@ jobs:
           distribution: temurin
           cache: maven
 
-      - name: Build and test
+      - name: Build and test (non Spring leyden)
+        if: matrix.app.isSpringLeyden == false
         working-directory: ${{ matrix.app.dir }}
         run: |
           ./mvnw -B clean verify ${{ matrix.app.build-args }} \
             -Dmaven.compiler.release=${{ matrix.java }} \
             -Djava.version=${{ matrix.java }}
 
+      - name: Build and test (Spring leyden)
+        if: matrix.app.isSpringLeyden == true
+        working-directory: ${{ matrix.app.dir }}
+        run: |
+          # Start the services
+          ../scripts/infra.sh -s
+          
+          # Build and run the app tests
+          ./mvnw -B clean verify ${{ matrix.app.build-args }} \
+            -Dmaven.compiler.release=${{ matrix.java }} \
+            -Djava.version=${{ matrix.java }}
+          
+          # Training run
+          java -Djarmode=tools -jar ${{ matrix.app.app-jar }} extract --destination target/aot-app && \
+            java -XX:AOTCacheOutput=target/app.aot -Dspring.context.exit=onRefresh -jar ${{ matrix.app.app-jar }}
+          
+          # Stop the services
+          ../scripts/infra.sh -d
+
       - name: Setup JBang
         uses: jbangdev/setup-jbang@main
 
       - name: Validate simple scripts
+        working-directory: ${{ matrix.app.dir }}
         run: |
-          TARGET_APP_JAR="${{ matrix.app.dir }}/${{ matrix.app.app-jar }}"
-          scripts/stress.sh "$TARGET_APP_JAR"
-          scripts/1strequest.sh "java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m ${{ matrix.app.run-args }} -jar $TARGET_APP_JAR" 5
+          ../scripts/stress.sh "${{ matrix.app.app-jar }}"
+          ../scripts/1strequest.sh "java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m ${{ matrix.app.run-args }} -jar ${{ matrix.app.app-jar }}" 3

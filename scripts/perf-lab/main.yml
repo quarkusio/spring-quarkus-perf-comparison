@@ -100,6 +100,14 @@ states:
       buildCmd: "${{APP_CMD_PREFIX}} ./mvnw clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
       logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
+    - name: spring3-leyden
+      type: jvm
+      dir: ${{SPRING3_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot3.version}}
+      buildCmd: "./mvnw clean package -DskipTests && java -Djarmode=tools -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar extract --destination ${{SPRING3_BOOT_DIR}}/target/aot-app && java -XX:AOTCacheOutput=${{SPRING3_BOOT_DIR}}/target/app.aot -Dspring.context.exit=onRefresh -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      runCmd: "${{BASE_JAVA_CMD}} -XX:AOTCache=${{SPRING3_BOOT_DIR}}/target/app.aot -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
     - name: spring3-virtual
       type: jvm
       dir: ${{SPRING3_BOOT_DIR}}
@@ -107,6 +115,14 @@ states:
       updateVersion: ${{config.springboot3.version}}
       buildCmd: "${{APP_CMD_PREFIX}} ./mvnw clean package -DskipTests -Dspring.threads.virtual.enabled=true"
       runCmd: "${{BASE_JAVA_CMD}} -Dspring.threads.virtual.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
+    - name: spring3-virtual-leyden
+      type: jvm
+      dir: ${{SPRING3_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot3.version}}
+      buildCmd: "./mvnw clean package -DskipTests -Dspring.threads.virtual.enabled=true && java -Djarmode=tools -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar extract --destination ${{SPRING3_BOOT_DIR}}/target/aot-app && java -XX:AOTCacheOutput=${{SPRING3_BOOT_DIR}}/target/app.aot -Dspring.context.exit=onRefresh -Dspring.threads.virtual.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
+      runCmd: "${{BASE_JAVA_CMD}} -XX:AOTCache=${{SPRING3_BOOT_DIR}}/target/app.aot -Dspring.threads.virtual.enabled=true -jar ${{SPRING3_BOOT_DIR}}/target/springboot3.jar"
       logFileStartedRegex: ".*Started SpringBoot3Application in.+seconds.*"
     - name: spring3-jvm-aot
       type: jvm
@@ -132,6 +148,14 @@ states:
       buildCmd: "${{APP_CMD_PREFIX}} ./mvnw clean package -DskipTests"
       runCmd: "${{BASE_JAVA_CMD}} -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
       logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
+    - name: spring4-leyden
+      type: jvm
+      dir: ${{SPRING4_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot4.version}}
+      buildCmd: "./mvnw clean package -DskipTests && java -Djarmode=tools -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar extract --destination ${{SPRING4_BOOT_DIR}}/target/aot-app && java -XX:AOTCacheOutput=${{SPRING4_BOOT_DIR}}/target/app.aot -Dspring.context.exit=onRefresh -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
+      runCmd: "${{BASE_JAVA_CMD}} -XX:AOTCache=${{SPRING4_BOOT_DIR}}/target/app.aot -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
+      logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
     - name: spring4-virtual
       type: jvm
       dir: ${{SPRING4_BOOT_DIR}}
@@ -139,6 +163,14 @@ states:
       updateVersion: ${{config.springboot4.version}}
       buildCmd: "${{APP_CMD_PREFIX}} ./mvnw clean package -DskipTests -Dspring.threads.virtual.enabled=true"
       runCmd: "${{BASE_JAVA_CMD}} -Dspring.threads.virtual.enabled=true -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
+      logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
+    - name: spring4-virtual-leyden
+      type: jvm
+      dir: ${{SPRING4_BOOT_DIR}}
+      updateScript: update-spring-boot-version
+      updateVersion: ${{config.springboot4.version}}
+      buildCmd: "./mvnw clean package -DskipTests -Dspring.threads.virtual.enabled=true && java -Djarmode=tools -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar extract --destination ${{SPRING4_BOOT_DIR}}/target/aot-app && java -XX:AOTCacheOutput=${{SPRING4_BOOT_DIR}}/target/app.aot -Dspring.threads.virtual.enabled=true -Dspring.context.exit=onRefresh -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
+      runCmd: "${{BASE_JAVA_CMD}} -XX:AOTCache=${{SPRING4_BOOT_DIR}}/target/app.aot -Dspring.threads.virtual.enabled=true -jar ${{SPRING4_BOOT_DIR}}/target/springboot4.jar"
       logFileStartedRegex: ".*Started SpringBoot4Application in.+seconds.*"
     - name: spring4-jvm-aot
       type: jvm
@@ -232,6 +264,11 @@ scripts:
     - sh: git remote get-url origin
     - sh: git branch --show-current
 
+  run-build:
+    - script: start-test-services
+    - sh: ${{BUILD_CMD}}
+    - script: stop-test-services
+
   update-spring-boot-version:
     - script: check-dependency-exists
       with:
@@ -284,7 +321,9 @@ scripts:
     - log: Test Build - ${{RUNTIME.name}}
     - sh: cd ${{RUNTIME.dir}}
     - sh: java -version
-    - sh: ${{RUNTIME.buildCmd}}
+    - script: run-build
+      with:
+        BUILD_CMD: ${{RUNTIME.buildCmd}}
       watch:
       - regex: BUILD FAILURE
         then:
@@ -301,13 +340,15 @@ scripts:
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - queue-download: ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log
+        - script: start-test-services
         - script: sync-drop-fs-cache
-        - sh: /usr/bin/time -p ${{RUNTIME.buildCmd}} 2>&1 >${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log | grep real | awk '{print $2}'
+        - sh: /usr/bin/time -p sh -c '${{RUNTIME.buildCmd}}' 2>&1 >${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log | grep real | awk '{print $2}'
         - set-state: BUILD_TIME
         - script: state-array-push
           with:
             array: RUN.output.results.${{RUNTIME.name}}.build.timings
             value: ${{BUILD_TIME}}
+        - script: stop-test-services
 
         # If its a native build, gather the native build rss as well
         - read-state: ${{TYPE}}
@@ -368,7 +409,9 @@ scripts:
     - log: Measuring Time to first request
     - sh: java -version
     - sh: cd ${{RUNTIME.dir}}
-    - sh: ${{RUNTIME.buildCmd}}
+    - script: run-build
+      with:
+        BUILD_CMD: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - queue-download: ${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIME.name}}-${{ITERATION}}.log
@@ -399,7 +442,9 @@ scripts:
     - log: Measuring RSS
     - sh: java -version
     - sh: cd ${{RUNTIME.dir}}
-    - sh: ${{RUNTIME.buildCmd}}
+    - script: run-build
+      with:
+        BUILD_CMD: ${{RUNTIME.buildCmd}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - queue-download: ${{REPO_DIR}}/logs/measure-rss-${{RUNTIME.name}}-${{ITERATION}}.log
@@ -438,7 +483,9 @@ scripts:
   run-load-test:
     - log: Running workload
     - sh: cd ${{RUNTIME.dir}}
-    - sh: ${{RUNTIME.buildCmd}}
+    - script: run-build
+      with:
+        BUILD_CMD: ${{RUNTIME.buildCmd}}
     - set-state:
         key: APP_LOG_REGEX
         value: ${{RUNTIME.logFileStartedRegex}}
