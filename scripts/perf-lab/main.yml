@@ -11,7 +11,7 @@ states:
   config.units.rss.firstRequest: MiB
   config.units.rss.load: MiB
   config.units.load.throughput: tps
-  config.units.load.throughputDensity: req / sec per Mib
+  config.units.load.throughputDensity: tps per MiB
   config.units.load.errors.connectionErrors: absolute number
   config.units.load.errors.requestTimeouts: absolute number
 
