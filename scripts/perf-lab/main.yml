@@ -32,6 +32,8 @@ states:
   config.springboot3.native_build_options:
   config.springboot4.native_build_options:
 
+  config.run.dropOsFilesystemCaches: false
+
   config.resources.cpu.app: 0-3
   config.resources.cpu.db: 4-6
   config.resources.cpu.load_generator: 7-9
@@ -51,7 +53,6 @@ states:
   MONITOR_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.monitor}}
   RUN.WRK_BIN: ${{LOAD_GEN_CMD_PREFIX}} jbang -R -XX:+UseNUMA wrk@hyperfoil
 
-  DROP_OS_FILESYSTEM_CACHES:
   PAUSE_TIME: 5
   PROFILER_JVM_ARGS:
   BASE_JAVA_CMD: ${{APP_CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
@@ -278,7 +279,16 @@ scripts:
   run-build:
     - script: start-test-services
     - sh: ${{BUILD_CMD}}
+      watch:
+        - regex: "BUILD FAILURE"
+          then:
+            - set-state: BUILD_FAILED true
     - script: stop-test-services
+    - read-state: ${{BUILD_FAILED}}
+      then:
+        - regex: "true"
+          then:
+            - abort: Build failed
 
   update-spring-boot-version:
     - script: check-dependency-exists
@@ -355,6 +365,11 @@ scripts:
         - script: sync-drop-fs-cache
         - sh: /usr/bin/time -p sh -c '${{RUNTIME.buildCmd}}' 2>&1 >${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log | grep real | awk '{print $2}'
         - set-state: BUILD_TIME
+        - sh: cat ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log
+          then:
+            - regex: "BUILD FAILURE"
+              then:
+                - abort: Build failed for ${{RUNTIME.name}} iteration ${{ITERATION}}. Check ${{REPO_DIR}}/logs/build-times-${{RUNTIME.name}}-${{ITERATION}}.log for details.
         - script: state-array-push
           with:
             array: RUN.output.results.${{RUNTIME.name}}.build.timings
@@ -710,6 +725,7 @@ roles:
       - config-env
       - ensure-requirements
       - clone-repo
+      - ensure-container-runtime
       - capture-repo-info
       - stop-test-services
       - start-timestamp

@@ -281,6 +281,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S config.repo.scenario=${SCENARIO} \
     -S config.run.description="${DESCRIPTION}" \
     -S config.run.identifier="${RUN_IDENTIFIER}" \
+    -S config.run.dropOsFilesystemCaches=${DROP_OS_FILESYSTEM_CACHES} \
     -S env.run.host.user=${USER} \
     -S env.run.host.target=${target} \
     -S env.run.host.name=${HOST} \
@@ -288,8 +289,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
     -S PROJ_REPO_NAME="$(basename ${SCM_REPO_URL} .git)" \
     -S RUNTIMES="$(make_json_array $RUNTIMES)" \
     -S PAUSE_TIME=${WAIT_TIME} \
-    -S TESTS="$(make_json_array $TESTS_TO_RUN)" \
-    -S DROP_OS_FILESYSTEM_CACHES=${DROP_OS_FILESYSTEM_CACHES}
+    -S TESTS="$(make_json_array $TESTS_TO_RUN)"
 }
 
 # Only run main logic when executed directly (not when sourced)

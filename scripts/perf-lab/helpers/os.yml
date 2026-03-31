@@ -116,7 +116,7 @@ scripts:
     - sh: sudo purge
 
   sync-drop-fs-cache:
-    - read-state: ${{DROP_OS_FILESYSTEM_CACHES:false}}
+    - read-state: ${{config.run.dropOsFilesystemCaches:false}}
       then:
         - regex: true
           then:

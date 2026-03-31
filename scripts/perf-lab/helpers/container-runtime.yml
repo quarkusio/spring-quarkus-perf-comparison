@@ -1,0 +1,45 @@
+name: Container runtime related scripts
+scripts:
+  ensure-container-runtime:
+    # Bootstrap testcontainers to check for container runtime availability
+    - sh: jbang ${{HELPER_SCRIPTS_DIR}}/check_testcontainers.java
+      then:
+        - regex: "Container runtime not found"
+          then:
+            # Testcontainers couldn't load - check if podman is available
+            - sh: command -v podman || true
+              then:
+                # Podman is available
+                - regex: "podman"
+                  then:
+                    # Try enabling the podman socket
+                    - script: enable-podman-socket
+
+                    # Try to bootstrap testcontainers again
+                    - sh: jbang ${{HELPER_SCRIPTS_DIR}}/check_testcontainers.java
+                      then:
+                        - regex: "Container runtime not found"
+                          then:
+                            - abort: Cannot determine container runtime environment after enabling podman socket
+
+                        - regex: "Container runtime is available"
+                          then:
+                            - log: Container runtime is available!!!!
+                  # Podman is not available
+                  else:
+                    - abort: Cannot determine container runtime environment - podman not available
+
+        - regex: "Container runtime is available"
+          then:
+            - log: Container runtime is available!
+
+  enable-podman-socket:
+    - script: enable-podman-socket-${{os}}
+
+  enable-podman-socket-linux:
+    - sh: systemctl --user enable --now podman.socket
+    - sh: export TESTCONTAINERS_DOCKER_CLIENT_STRATEGY=org.testcontainers.dockerclient.RootlessDockerClientProviderStrategy
+    - sh: export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
+
+  enable-podman-socket-macos:
+    - sh: export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
