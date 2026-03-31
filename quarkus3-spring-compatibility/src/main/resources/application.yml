@@ -16,7 +16,7 @@ quarkus:
       enabled: true
     traces:
       "sampler": traceidratio
-      "sampler.arg": 0.1
+      "sampler-arg": 0.1
 
 "%prod":
   quarkus:
