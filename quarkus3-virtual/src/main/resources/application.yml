@@ -17,8 +17,9 @@ quarkus:
     metrics:
       enabled: true
     traces:
-      "sampler": traceidratio
-      "sampler.arg": 0.1
+      sampler:
+        ~: traceidratio
+        arg: 0.1
 
 "%prod":
   quarkus:
