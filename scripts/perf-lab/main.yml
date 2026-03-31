@@ -545,13 +545,16 @@ scripts:
               then:
                 - script: async-profiler-install
                 - script: async-profiler-configure
+                - set-state:
+                    key: PROFILER_LOGFILE
+                    value: "${{RUNTIME.name}}-${{ITERATION}}.${{= '${{config.profiler.name}}' == 'jfr' ? 'jfr' : 'html' }}"
                 - script:
                     name: async-profiler-run
                     async: true
                   with:
                     wait_start: LOAD_STEADY_STATE_START
                     pid: ${{JVM_PID}}
-                    suffix: "${{RUNTIME.name}}-${{ITERATION}}.${{= '${{config.profiler.name}}' == 'jfr' ? 'jfr' : 'html' }}"
+                    suffix: ${{PROFILER_LOGFILE}}
                     format: ${{config.profiler.name}}
                     events: ${{config.profiler.events}}
                     delay: 10s
