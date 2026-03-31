@@ -229,6 +229,10 @@ setup_jbang() {
 }
 
 calculate_scenario() {
+  if [[ -n "$SCENARIO_SET_BY_USER" ]]; then
+    return  # User explicitly set the scenario, so we don't override it
+  fi
+
   if [[ "$SCM_REPO_BRANCH" == "main" ]]; then
     SCENARIO="tuned"
   elif [[ "$SCM_REPO_BRANCH" == "ootb" ]]; then
@@ -307,6 +311,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
   SCM_REPO_BRANCH="main"
   SCENARIO="tuned"
+  SCENARIO_SET_BY_USER=""
   GRAALVM_HOME=""
   GRAALVM_VERSION="25.0.2-graalce"
   HOST="LOCAL"
@@ -463,6 +468,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       --scenario)
         if [[ "$2" =~ ^(tuned|ootb)$ ]]; then
           SCENARIO="$2"
+          SCENARIO_SET_BY_USER="true"
         else
           echo "!! [ERROR] --scenario option must be one of (tuned, ootb)!!"
           exit_abnormal

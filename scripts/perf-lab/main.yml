@@ -720,9 +720,9 @@ roles:
       - update-state
 #      - output-vars
       - detect-os
-      - capture-system-info
       - cleanup-env
       - config-env
+      - capture-system-info
       - ensure-requirements
       - clone-repo
       - ensure-container-runtime
