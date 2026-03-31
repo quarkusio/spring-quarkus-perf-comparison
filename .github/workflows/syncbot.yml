@@ -1,0 +1,125 @@
+name: Branch sync
+
+on:
+  pull_request:
+    branches:
+      - main
+      - ootb
+
+jobs:
+  prep-changes:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Get target branch
+        id: target-branch
+        run: |
+          if [ "${{ github.base_ref }}" == "main" ]; then
+            echo "branch=ootb" >> $GITHUB_OUTPUT
+          else
+            echo "branch=main" >> $GITHUB_OUTPUT
+          fi
+          echo "Target branch for sync: $(cat $GITHUB_OUTPUT | grep branch | cut -d= -f2)"
+
+      - name: Cherry-pick commits to target branch
+        id: cherry-pick
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name syncbot
+          git config user.email github-actions@github.com
+          
+          # Fetch all branches
+          git fetch origin
+          
+          # Get the source branch name and target branch
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          TARGET_BRANCH="${{ steps.target-branch.outputs.branch }}"
+          SYNC_BRANCH="sync-${SOURCE_BRANCH}-to-${TARGET_BRANCH}"
+          
+          echo "Source branch: $SOURCE_BRANCH"
+          echo "Target branch: $TARGET_BRANCH"
+          echo "Sync branch: $SYNC_BRANCH"
+          
+          # Store branch names for next step
+          echo "source_branch=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
+          echo "target_branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
+          echo "sync_branch=$SYNC_BRANCH" >> $GITHUB_OUTPUT
+          
+          # Delete local sync branch if it exists
+          git branch -D $SYNC_BRANCH 2>/dev/null || true
+          
+          # Create sync branch from target branch (will reset if remote exists)
+          git checkout -b $SYNC_BRANCH origin/$TARGET_BRANCH
+          
+          # Get all commits from the PR
+          COMMITS=$(git log --reverse --format="%H" origin/$TARGET_BRANCH..origin/$SOURCE_BRANCH)
+          
+          # Cherry-pick each commit
+          echo "Cherry-picking commits..."
+          for commit in $COMMITS; do
+            echo "Cherry-picking $commit"
+            git cherry-pick $commit || {
+              echo "Cherry-pick failed for $commit"
+              git cherry-pick --abort
+              echo "cherry_pick_failed=true" >> $GITHUB_OUTPUT
+              exit 1
+            }
+          done
+          
+          echo "Successfully cherry-picked all commits"
+
+      - name: Push sync branch and create PR
+        if: steps.cherry-pick.outputs.cherry_pick_failed != 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SOURCE_BRANCH="${{ steps.cherry-pick.outputs.source_branch }}"
+          TARGET_BRANCH="${{ steps.cherry-pick.outputs.target_branch }}"
+          SYNC_BRANCH="${{ steps.cherry-pick.outputs.sync_branch }}"
+          
+          # Push the sync branch
+          git push origin $SYNC_BRANCH --force
+          echo "Successfully pushed sync branch"
+          
+          # Create PR using GitHub CLI
+          PR_TITLE="[Sync] $(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
+          PR_BODY="Automated sync of PR #${{ github.event.pull_request.number }} from \`$SOURCE_BRANCH\` to \`$TARGET_BRANCH\`
+          
+          Syncbot will not be offended sync isn't appropriate and you close this PR.
+          
+          Original PR: #${{ github.event.pull_request.number }}"
+          
+          # Check if PR already exists
+          EXISTING_PR=$(gh pr list --head $SYNC_BRANCH --base $TARGET_BRANCH --json number --jq '.[0].number' || echo "")
+          
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR already exists: #$EXISTING_PR"
+            gh pr edit $EXISTING_PR --body "$PR_BODY"
+          else
+            NEW_PR=$(gh pr create --base $TARGET_BRANCH --head $SYNC_BRANCH --title "$PR_TITLE" --body "$PR_BODY" --label "sync")
+            echo "Created new PR: $NEW_PR"
+          fi
+
+      - name: Update PR comment with matched PR
+        if: steps.cherry-pick.outputs.cherry_pick_failed != 'true'
+        uses: quarkusio/action-helpers@main
+        with:
+          action: maintain-one-comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            🤖 This PR has been synchronized to the `${{ steps.cherry-pick.outputs.target_branch }}` branch. 🔄
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - name: Update PR comment with matched PR
+        if: steps.cherry-pick.outputs.cherry_pick_failed == 'true'
+        uses: quarkusio/action-helpers@main
+        with:
+          action: maintain-one-comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            🤖 It was too hard to synch this change to the `${{ steps.cherry-pick.outputs.target_branch }}` branch. 😢
+          pr-number: ${{ github.event.pull_request.number }}
