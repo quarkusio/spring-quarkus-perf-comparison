@@ -296,9 +296,9 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
   # Define defaults
-  CPUS_APP="0,1,2,3"
-  CPUS_DB="4,5,6"
-  CPUS_LOAD_GEN="10,11,12"
+  CPUS_APP="0-3"
+  CPUS_DB="4-6"
+  CPUS_LOAD_GEN="10-12"
   CPUS_MONITORING="13"
   CPUS_FIRST_REQUEST="10"
   DESCRIPTION=""
@@ -325,7 +325,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   ALLOWED_TESTS_TO_RUN=("test-build" "measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
   TESTS_TO_RUN=${ALLOWED_TESTS_TO_RUN[@]}
   USER=""
-  JVM_MEMORY=""
+  JVM_MEMORY="-Xms512m -Xmx512m"
   WAIT_TIME="20"
   DROP_OS_FILESYSTEM_CACHES=false
   JVM_ARGS=""
