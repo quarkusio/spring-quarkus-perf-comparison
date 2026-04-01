@@ -509,6 +509,7 @@ scripts:
   run-load-test:
     - log: Running workload
     - sh: cd ${{RUNTIME.dir}}
+    - set-state: RUNTIME_NAME ${{RUNTIME.name}}
     - script: run-build
       with:
         BUILD_CMD: ${{RUNTIME.buildCmd}}
@@ -580,7 +581,17 @@ scripts:
             - abort: unable to connect to target application
         - sleep: 30s # Wait for the app to complete warmup
         - signal: LOAD_STEADY_STATE_START
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s --timeout 30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log
+        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s --timeout 30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log &
+        - sh: WRK_PID=$! && echo $WRK_PID
+        - set-state: WRK_PID
+        - script:
+            name: monitor-process
+            async: true
+          with:
+            name: pidstat
+            command: pidstat -u -w -t -p ${{WRK_PID}} 1
+            log_file: ${{REPO_DIR}}/logs/pidstat-wrk-${{RUNTIME_NAME}}-${{ITERATION}}.log
+        - sh: wait ${{WRK_PID}}
         - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIME.name}}-${{ITERATION}}.log | grep "Requests/sec" | awk '{print $2}'
           then:
             - set-state: THROUGHPUT
@@ -667,7 +678,7 @@ scripts:
         async: true
       with:
         name: pidstat
-        command: pidstat -u -p ${{pid}} 1
+        command: pidstat -u -w -t -p ${{pid}} 1
         log_file: ${{log_dir}}/pidstat-${{runtime_name}}-${{iteration}}.log
     - script:
         name: monitor-process
@@ -686,15 +697,12 @@ scripts:
     - script: monitor-postgres
 
   monitor-postgres:
-    - sh: POSTGRES_PID=$(${{PROJ_REPO_DIR}}/scripts/infra.sh -r)
-    - sh: echo $POSTGRES_PID
-    - set-state: POSTGRES_PID
     - script:
         name: monitor-process
         async: true
       with:
         name: postgres-pidstat
-        command: pidstat -u -p $(pgrep -d , -P ${{POSTGRES_PID}}) 1
+        command: pidstat -u -w -p ALL -G "postgres" 1
         log_file: ${{log_dir}}/postgres-pidstat-${{runtime_name}}-${{iteration}}.log
 
   monitor-process:
