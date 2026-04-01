@@ -11,7 +11,7 @@ scripts:
   ensure-jvm-opts:
     - read-state: config.profiler.name
       then:
-        - regex: jfr|flamegraph
+        - regex: ^(jfr|flamegraph)$
           then:
             - set-state: PROFILER_JVM_ARGS -XX:+UnlockDiagnosticVMOptions -XX:+DebugNonSafepoints
 

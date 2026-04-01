@@ -40,7 +40,7 @@ states:
   config.resources.cpu.1st_request: 10
   config.resources.cpu.monitor: 11
 
-  config.profiler.name: none #jfr flamegraph
+  config.profiler.name: none #jfr syncjfr flamegraph
   config.profiler.events: cpu
 
   config.repo.branch: main
@@ -528,7 +528,16 @@ scripts:
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
         - set-signal: LOG_REGEX_REACHED 1
-        - sh: ${{RUNTIME.runCmd}} &>${{LOG_FILE}} &
+        - read-state: ${{config.profiler.name}}
+          then:
+            - regex: "^syncjfr$"
+              then:
+                - queue-download: ${{REPO_DIR}}/logs/jfr.${{RUNTIME.name}}-${{ITERATION}}.jfr
+                - sh: echo "${{RUNTIME.runCmd}}" | sed 's#-jar#-XX:StartFlightRecording=filename=${{REPO_DIR}}/logs/jfr.${{RUNTIME.name}}-${{ITERATION}}.jfr,settings=profile,dumponexit=true -jar#'
+                - set-state: SYNCJFR_RUN_CMD
+                - sh: ${{SYNCJFR_RUN_CMD}} &>${{LOG_FILE}} &
+              else:
+                - sh: ${{RUNTIME.runCmd}} &>${{LOG_FILE}} &
         - sh: PID=$!
         - sh: echo $PID
         - set-state: JVM_PID
@@ -541,7 +550,7 @@ scripts:
         - log: JVM_PID = ${{JVM_PID}}
         - read-state: ${{config.profiler.name}}
           then:
-            - regex: "jfr|flamegraph"
+            - regex: "^(jfr|flamegraph)$"
               then:
                 - script: async-profiler-install
                 - script: async-profiler-configure

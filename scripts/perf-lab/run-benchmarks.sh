@@ -60,8 +60,9 @@ help() {
   echo "  --native-spring4-build-options <NATIVE_SPRING4_OPTS>    Native build options to be passed to Spring 4.x native build process"
   echo "  --output-dir <OUTPUT_DIR>                               The directory containing the run output"
   echo "                                                              Default: ${OUTPUT_DIR}"
-  echo "  --profiler <PROFILER>                                   Enable profiling with async profiler"
-  echo "                                                              Accepted values: none, jfr, flamegraph"
+  echo "  --profiler <PROFILER>                                   Enable profiling"
+  echo "                                                              Accepted values: none, jfr, syncjfr, flamegraph"
+  echo "                                                              jfr/flamegraph use async profiler, syncjfr uses JVM sync profiler"
   echo "                                                              Default: ${PROFILER}"
   echo "  --quarkus-build-config-args <QUARKUS_BUILD_CONFIG_ARGS> Quarkus app configuration properties fixed at build time"
   echo "  --quarkus-version <QUARKUS_VERSION>                     The Quarkus version to use"
@@ -432,10 +433,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         ;;
 
       --profiler)
-        if [[ "$2" =~ ^(none|jfr|flamegraph)$ ]]; then
+        if [[ "$2" =~ ^(none|jfr|syncjfr|flamegraph)$ ]]; then
           PROFILER="$2"
         else
-          echo "!! [ERROR] --profiler option must be one of (none, jfr, flamegraph)!!"
+          echo "!! [ERROR] --profiler option must be one of (none, jfr, syncjfr, flamegraph)!!"
           exit_abnormal
         fi
         shift 2
