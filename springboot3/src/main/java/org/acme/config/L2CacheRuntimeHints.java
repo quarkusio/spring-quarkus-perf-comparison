@@ -1,4 +1,4 @@
-package org.acme;
+package org.acme.config;
 
 import org.hibernate.cache.jcache.internal.JCacheRegionFactory;
 

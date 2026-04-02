@@ -1,4 +1,4 @@
-package org.acme;
+package org.acme.config;
 
 import org.springframework.aot.hint.MemberCategory;
 import org.springframework.aot.hint.RuntimeHints;

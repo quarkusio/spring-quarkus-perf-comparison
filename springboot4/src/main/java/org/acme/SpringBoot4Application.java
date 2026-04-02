@@ -1,5 +1,7 @@
 package org.acme;
 
+import org.acme.config.HibernateNativeHints;
+import org.acme.config.L2CacheRuntimeHints;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ImportRuntimeHints;

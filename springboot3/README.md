@@ -10,11 +10,11 @@ To compile for AOT mode:
 `./mvnw clean compile spring-boot:process-aot package`
 
 To run in AOT mode:
-`java -Dspring.aot.enabled=true -jar target/app.jar`
+`java -Dspring.aot.enabled=true -jar target/springboot3.jar`
 
 ## Native Mode
 To compile for native mode:
 `./mvnw clean native:compile -Pnative`
 
 To run in native mode:
-`target/springboot3`
+`./target/springboot3`
