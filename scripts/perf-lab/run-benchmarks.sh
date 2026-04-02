@@ -326,7 +326,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   QUARKUS_BUILD_CONFIG_ARGS=""
   QUARKUS_VERSION=""
   ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-jvm-aot" "spring4-native")
-  RUNTIMES=${ALLOWED_RUNTIMES[@]}
+  DEFAULT_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-native")
+  RUNTIMES=${DEFAULT_RUNTIMES[@]}
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""
   ALLOWED_TESTS_TO_RUN=("test-build" "measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
