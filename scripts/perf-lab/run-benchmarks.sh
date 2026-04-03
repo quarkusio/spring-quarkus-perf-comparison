@@ -91,8 +91,9 @@ help() {
   echo "                                                              Default: Whatever version is set in pom.xml of the Spring Boot 4 app"
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
   echo "  --tests <TESTS_TO_RUN>                                  The tests to run, separated by commas"
-  echo "                                                              Accepted values (1 or more of): test-build, measure-build-times, measure-time-to-first-request, measure-rss, run-load-test"
-  echo "                                                              Default: 'test-build,measure-build-times,measure-time-to-first-request,measure-rss,run-load-test'"
+  echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test"
+  echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test'"
+  echo "                                                              NOTE: Build times (measure-build-times) are always measured during the build phase"
   echo "  --user <USER>                                           The user on <HOST> to run the benchmark"
   echo "  --wait-time <WAIT_TIME>                                 Wait time (in seconds) to wait for things like application startup"
   echo "                                                              Default: ${WAIT_TIME}"
@@ -330,8 +331,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   RUNTIMES=${DEFAULT_RUNTIMES[@]}
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""
-  ALLOWED_TESTS_TO_RUN=("test-build" "measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
-  TESTS_TO_RUN=${ALLOWED_TESTS_TO_RUN[@]}
+  ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
+  DEFAULT_TESTS_TO_RUN=("measure-time-to-first-request" "measure-rss" "run-load-test")
+  TESTS_TO_RUN=${DEFAULT_TESTS_TO_RUN[@]}
   USER=""
   JVM_MEMORY="-Xms512m -Xmx512m"
   WAIT_TIME="20"
@@ -553,6 +555,15 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         ;;
     esac
   done
+
+  # Strip measure-build-times from TESTS_TO_RUN - it always runs during the build phase
+  filtered_tests=()
+  for item in ${TESTS_TO_RUN[@]}; do
+    if [[ "$item" != "measure-build-times" ]]; then
+      filtered_tests+=("$item")
+    fi
+  done
+  TESTS_TO_RUN=${filtered_tests[@]}
 
   validate_values
   calculate_scenario
