@@ -271,20 +271,14 @@ scripts:
                     value: ${{config.repo.scenario}}
 
   cleanup-env:
-    - script: sudo
-      with:
-        command: rm -Rf ${{PROJ_REPO_DIR}}
+    - sh: rm -Rf ${{PROJ_REPO_DIR}}
 
   config-env:
-    - script: sudo
-      with:
-        command: rm -Rf ${{REPO_DIR}}/logs
+    - sh: rm -Rf ${{REPO_DIR}}/logs
     - sh: mkdir -p ${{REPO_DIR}}/logs
 
   clone-repo:
-    - script: sudo
-      with:
-        command: rm -Rf ${{REPO_DIR}}
+    - sh: rm -Rf ${{REPO_DIR}}
     - sh: mkdir -p ${{REPO_DIR}}/logs
     - sh: cd ${{REPO_DIR}}
     - log: Cloning project repo ${{config.repo.branch}}@${{config.repo.url}}
@@ -742,9 +736,7 @@ scripts:
 
   download-metrics:
     - sh: mkdir -p ${{METRICS_DIR}}
-    - script: sudo
-      with:
-        command: rm -Rf ${{METRICS_DIR}}/metrics.json
+    - sh: rm -Rf ${{METRICS_DIR}}/metrics.json
     - set-state: RUN.output.config ${{RUN.config}}
     - set-state: RUN.output.env ${{RUN.env}}
     - sh: echo '${{RUN.output}}' > ${{METRICS_DIR}}/metrics.json
