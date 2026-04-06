@@ -2,7 +2,7 @@ name: Maven scripts
 scripts:
   check-dependency-exists:
     - sh: cd ${{DIR}}
-    - sh: ./mvnw dependency:get -Dartifact=${{groupId}}:${{artifactId}}:${{version}} -Dpackaging=pom
+    - sh: ./mvnw -q dependency:get -Dartifact=${{groupId}}:${{artifactId}}:${{version}} -Dpackaging=pom
       then:
         - regex: BUILD FAILURE
           then:

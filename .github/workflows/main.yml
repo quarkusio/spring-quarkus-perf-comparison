@@ -99,7 +99,7 @@ jobs:
         if: matrix.app.isSpringLeyden == false
         working-directory: ${{ matrix.app.dir }}
         run: |
-          ./mvnw -B clean verify ${{ matrix.app.build-args }} \
+          ./mvnw -q -B clean verify ${{ matrix.app.build-args }} \
             -Dmaven.compiler.release=${{ matrix.java }} \
             -Djava.version=${{ matrix.java }}
 
@@ -111,7 +111,7 @@ jobs:
           ../scripts/infra.sh -s
           
           # Build and run the app tests
-          ./mvnw -B clean verify ${{ matrix.app.build-args }} \
+          ./mvnw -q -B clean verify ${{ matrix.app.build-args }} \
             -Dmaven.compiler.release=${{ matrix.java }} \
             -Djava.version=${{ matrix.java }}
           
