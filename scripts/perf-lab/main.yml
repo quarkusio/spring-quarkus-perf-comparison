@@ -300,6 +300,10 @@ scripts:
       with:
         DIR: ${{RUNTIMECMD.dir}}
         VERSION: ${{RUNTIMECMD.updateVersion:}}
+    - log: "Downloading dependencies for ${{RUNTIMECMD.updateVersion:}}"
+    # Pre-download dependencies to exclude it from build time
+    # also to ensure any dependency resolution issues are caught before we start measuring build times
+    - sh: ./mvnw dependency:go-offline
 
   build-and-cache-runtime:
     - script: measure-build-times
@@ -381,9 +385,6 @@ scripts:
     - log: GraalVM Version
     - sh: $GRAALVM_HOME/bin/java -version
     - set-state: TYPE ${{RUNTIMECMD.type}}
-    # Pre-download dependencies to exclude it from build time
-    # also to ensure any dependency resolution issues are caught before we start measuring build times
-    - sh: ./mvnw dependency:go-offline
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
         - queue-download: ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-${{ITERATION}}.log
