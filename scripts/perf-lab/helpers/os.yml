@@ -108,9 +108,7 @@ scripts:
     - script: install-package-${{os}}
 
   sync-drop-fs-cache-linux:
-    - script: sudo
-      with:
-        command: sh -c "echo 3 > /proc/sys/vm/drop_caches"
+    - sh: echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
 
   sync-drop-fs-cache-macos:
     - sh: sudo purge
