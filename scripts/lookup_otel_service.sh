@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Ensure jq is installed
-if ! command -v jq &> /dev/null; then
-    echo '[{"error": "jq is required. Please install it."}]'
-    exit 1
-fi
-
 DATASOURCES=$(curl -s http://localhost:3000/api/datasources)
 
 if [ -z "$DATASOURCES" ] || [[ "$DATASOURCES" == *"message"*"Unauthorized"* ]]; then
