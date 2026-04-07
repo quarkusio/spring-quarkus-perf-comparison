@@ -348,6 +348,10 @@ scripts:
           then:
             - abort: PostgreSQL failed to become ready
 
+  capture-otel-data:
+    - sh: ${{PROJ_REPO_DIR}}/scripts/lookup_otel_service.sh > ${{REPO_DIR}}/logs/otel-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1
+    - queue-download: ${{REPO_DIR}}/logs/otel-${{RUNTIMECMD.name}}-${{ITERATION}}.log
+
   stop-test-services:
     - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -d
 
@@ -667,6 +671,7 @@ scripts:
         - signal: LOAD_TEST_COMPLETE
         - sh: kill -15 $PID
         - sh: sleep ${{PAUSE_TIME}}
+        - script: capture-otel-data
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
