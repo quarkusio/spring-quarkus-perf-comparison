@@ -206,4 +206,51 @@ The results are published to https://github.com/quarkusio/benchmarks/tree/main/r
 - Why Quarkus is Fast: https://quarkus.io/performance/
 - How the Quarkus team measure performance (and some anti-patterns to be aware of): https://quarkus.io/guides/performance-measure
 
+# Running `run-benchmarks.sh` directly on Bare Metal
+
+You can run the benchmark directly on a bare metal machine without the Jenkins infrastructure, which is useful for
+local development and testing.
+
+## Prerequisites
+- Linux system with at least 14 real physical cores
+
+## Configure Passwordless sudo for Required Commands
+Some commands require sudo privileges. `qDup` expects these commands to run without password prompts. To configure this,
+either create a user called `jenkins` or adapt the following instructions for your existing user.
+
+Execute: `sudo visudo`
+```text
+jenkins ALL=(root) NOPASSWD: /usr/bin/tee /proc/sys/vm/drop_caches
+jenkins ALL=(root) NOPASSWD: /usr/bin/tee /proc/sys/kernel/perf_event_paranoid
+jenkins ALL=(root) NOPASSWD: /usr/bin/tee /proc/sys/kernel/kptr_restrict
+```
+
+## Running a Benchmark Example
+
+The following example demonstrates how to run a benchmark with specific parameters. Adapt these values to match
+your environment:
+
+```bash
+cd scripts/perf-lab
+BRANCH=main
+REPO=https://github.com/quarkusio/spring-quarkus-perf-comparison.git
+QDUP_USER=jenkins
+./run-benchmarks.sh --repo-branch $BRANCH --scenario tuned --output-dir run --graalvm-version 25.0.2-graalce \
+  --host 127.0.0.1 --iterations 1 --java-version 25.0.2-tem --repo-url $REPO --profiler none \
+  --quarkus-version 3.34.1 --springboot3-version 3.5.13 --springboot4-version 4.0.5 --user $QDUP_USER \
+  --wait-time 30 --run-identifier local-1 --drop-fs-caches \
+  --jvm-args "-XX:+UseNUMA -Dserver.tomcat.threads.max=50 -Dserver.tomcat.threads.min-spare=50" \
+  --description "Local Test" --cpus-app 0,1,2,3 --cpus-db 4,5,6 --cpus-first-request 7 --cpus-load-gen 7,8,9 \
+  --cpus-monitoring 16 --cpus-otel 10,11,12 --jvm-memory "-Xmx512m -Xms512m" --runtimes quarkus3-jvm,spring4-jvm \
+  --tests run-load-test
+```
+
+### Important Configuration Notes
+
+- **CPU Allocation**: Adjust all `--cpus-*` parameters to match your system's available cores.
+- **Memory Settings**: The `--jvm-memory` parameter sets both min and max heap to 512MB.
+- **Versions**: Update `--graalvm-version`, `--java-version`, `--quarkus-version`, and Spring Boot versions to match
+  your desired test configuration.
+- **REPO**: For local development, point `REPO` to your local repository path. When using a local path, the `BRANCH`
+  parameter is ignored.
 

@@ -281,12 +281,22 @@ scripts:
     - sh: rm -Rf ${{REPO_DIR}}
     - sh: mkdir -p ${{REPO_DIR}}/logs
     - sh: cd ${{REPO_DIR}}
-    - log: Cloning project repo ${{config.repo.branch}}@${{config.repo.url}}
-    - sh: git clone -b ${{config.repo.branch}} ${{config.repo.url}}
-    - sh: cd ${{PROJ_REPO_NAME}}
-    - log: Checked out repo
-    - sh: git remote get-url origin
-    - sh: git branch --show-current
+    - log: "Repository url: ${{config.repo.url}}"
+    # Check if config.repo.url is a folder then copy to REPO_DIR
+    # It allows you to make changes locally without push to a remote repository
+    - sh: "[ -d \"${{config.repo.url}}\" ] && echo true || echo false"
+      then:
+        - regex: true
+          then:
+          - sh: cp -R ${{config.repo.url}} ${{REPO_DIR}}
+        - regex: false
+          then:
+          - log: Cloning project repo ${{config.repo.branch}}@${{config.repo.url}}
+          - sh: git clone -b ${{config.repo.branch}} ${{config.repo.url}}
+          - sh: cd ${{PROJ_REPO_NAME}}
+          - log: Checked out repo
+          - sh: git remote get-url origin
+          - sh: git branch --show-current
 
   update-runtime-version:
     - log: "Updating version: ${{RUNTIMECMD.updateVersion:}}"
