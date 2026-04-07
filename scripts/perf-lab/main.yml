@@ -49,10 +49,10 @@ states:
 
   config.num_iterations: 3
 
-  APP_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.app}}
-  LOAD_GEN_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.load_generator}}
-  MONITOR_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.monitor}}
-  RUN.WRK_BIN: ${{LOAD_GEN_CMD_PREFIX}} jbang -R -XX:+UseNUMA wrk@hyperfoil
+  APP_CMD_PREFIX: numactl --membind=0 --physcpubind=${{config.resources.cpu.app}}
+  LOAD_GEN_CMD_PREFIX: numactl --membind=0 --physcpubind=${{config.resources.cpu.load_generator}}
+  MONITOR_CMD_PREFIX: numactl --membind=0 --physcpubind=${{config.resources.cpu.monitor}}
+  RUN.WRK_BIN: ${{LOAD_GEN_CMD_PREFIX}} jbang wrk@hyperfoil
 
   PAUSE_TIME: 5
   PROFILER_JVM_ARGS:
@@ -487,7 +487,7 @@ scripts:
         - queue-download: ${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIMECMD.name}}-${{ITERATION}}.log
         - script: start-test-services
         - script: sync-drop-fs-cache
-        - sh: timeout 60s bash -c "taskset --cpu-list ${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh '${{RUNTIMECMD.runCmd}}' '${{TARGET_URL}}' '${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIMECMD.name}}-${{ITERATION}}.log'"
+        - sh: timeout 60s bash -c "numactl --membind=0 --physcpubind=${{config.resources.cpu.1st_request}} ${{HELPER_SCRIPTS_DIR}}/time-to-1st-request.sh '${{RUNTIMECMD.runCmd}}' '${{TARGET_URL}}' '${{REPO_DIR}}/logs/measure-time-to-first-request-${{RUNTIMECMD.name}}-${{ITERATION}}.log'"
           then:
             - regex: Terminated
               then:
