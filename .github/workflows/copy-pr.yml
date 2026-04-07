@@ -1,0 +1,79 @@
+# How to use this workflow:
+#
+# You review PR #411 and click the Merge button to merge it into main.
+# Right after merging, you type a comment on that same PR:
+#  /copy ootb
+#
+# The Action kicks in. It takes the code you just merged, creates a new PR against the ootb branch, and replies to
+# your comment with a link to the new PR.
+
+name: Copy Merged PR to Another Branch
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  copy-pr:
+    # Only run if the comment is on a PR AND starts with "/copy "
+    if: ${{ github.event.issue.pull_request && startsWith(github.event.comment.body, '/copy ') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # Needed to push the new branch
+      pull-requests: write  # Needed to create the new PR and leave comments
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # Required to fetch all branches and git history
+
+      - name: Copy (Cherry-pick) and Create PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Extract the target branch from the comment (e.g., "ootb")
+          TARGET_BRANCH=$(echo "$COMMENT_BODY" | awk '{print $2}')
+          
+          # Check if the PR is already merged and get its commit ID
+          PR_STATE=$(gh pr view $PR_NUMBER --json state --jq '.state')
+          MERGE_COMMIT=$(gh pr view $PR_NUMBER --json mergeCommit --jq '.mergeCommit.oid')
+          
+          if [ "$PR_STATE" != "MERGED" ]; then
+            gh pr comment $PR_NUMBER --body "❌ Please merge this PR into \`main\` first before copying it!"
+            exit 1
+          fi
+          
+          # Configure Git bot identity
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Checkout target branch (ootb) and create a new working branch
+          NEW_BRANCH="copy-pr-${PR_NUMBER}-to-${TARGET_BRANCH}"
+          git checkout $TARGET_BRANCH
+          git checkout -b $NEW_BRANCH
+          
+          # Try to cherry-pick the commit. 
+          # (Squash merges work with standard cherry-pick. Standard merges require -m 1)
+          if ! git cherry-pick $MERGE_COMMIT 2>/dev/null; then
+            if ! git cherry-pick -m 1 $MERGE_COMMIT; then
+              git cherry-pick --abort
+              gh pr comment $PR_NUMBER --body "❌ **Merge conflict!** I could not automatically copy the code to \`$TARGET_BRANCH\`. You will need to do this manually."
+              exit 1
+            fi
+          fi
+          
+          # Push the new branch to GitHub
+          git push origin $NEW_BRANCH
+          
+          # Create the new Pull Request targeting 'ootb'
+          NEW_PR_URL=$(gh pr create \
+            --base $TARGET_BRANCH \
+            --head $NEW_BRANCH \
+            --title "Copy PR #$PR_NUMBER to $TARGET_BRANCH" \
+            --body "Automated PR to copy merged changes from #$PR_NUMBER to \`$TARGET_BRANCH\`.")
+          
+          # Leave a success comment
+          gh pr comment $PR_NUMBER --body "✅ Successfully copied! New PR created here: $NEW_PR_URL"
