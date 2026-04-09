@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 thisdir="$(realpath $(dirname "$0"))"
 
 help() {
