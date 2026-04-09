@@ -771,10 +771,10 @@ roles:
       - target-host
     setup-scripts:
       - update-state
-#      - output-vars
-      - detect-os
       - cleanup-env
       - config-env
+#      - output-vars
+      - detect-os
       - capture-system-info
       - ensure-requirements
       - clone-repo
