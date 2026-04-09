@@ -80,7 +80,7 @@ start_otel() {
     -p 3000:3000 \
     -p 4040:4040 \
     -p 9090:9090 \
-    docker.io/grafana/otel-lgtm:0.12.0)
+    docker.io/grafana/otel-lgtm@sha256:205bfb9b4907c9acac5b99a407ad5fc4bf528a73dc735fa39ffc2c3a9335cbe9)
   echo "Grafana Otel LGTM process: $pid"
 
   echo "Waiting for Grafana Otel LGTM to be ready..."
@@ -113,7 +113,7 @@ start_postgres() {
     --rm \
     --name ${DB_CONTAINER_NAME} \
     -p 5432:5432 \
-    ghcr.io/quarkusio/postgres-17-perf:main \
+    ghcr.io/quarkusio/postgres-17-perf@sha256:25547aa2c1a44685066f552e1c262929cf629cbc2f3a82bd18fa791a03f7cd48 \
     -c fsync=off \
     -c synchronous_commit=off \
     -c autovacuum=off \
