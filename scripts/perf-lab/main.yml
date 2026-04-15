@@ -425,7 +425,8 @@ scripts:
             - regex: native
               then:
                 - sh: "sed -n 's/.*Peak RSS: \\([0-9.]*\\)\\(GB\\|GiB\\).*/\\1/p' ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-${{ITERATION}}.log"
-                - set-state: NATIVE_BUILD_RSS
+                  then:
+                    - set-state: NATIVE_BUILD_RSS
                 - script: state-array-push
                   with:
                     array: RUN.output.results.${{RUNTIMECMD.name}}.build.native.rss
@@ -448,31 +449,38 @@ scripts:
             # The following metrics should be the same in all test iterations, so just pick the 1st
             # Capture the binary size
             - sh: "sed -n 's/^[[:space:]]*\\([0-9.]*\\)\\(MB\\|MiB\\) in total image size.*/\\1/p' ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-0.log"
-            - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.native.binarySize
+              then:
+                - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.native.binarySize
 
             # Capture the number of classes
             - sh: "cat ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-0.log | grep \"types.*fields.*methods found reachable\" | awk '{print $1}'"
-            - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.classCount
+              then:
+                - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.classCount
 
             # Capture the number of fields
             - sh: "cat ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-0.log | grep \"types.*fields.*methods found reachable\" | awk '{print $3}'"
-            - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.fieldCount
+              then:
+                - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.fieldCount
 
             # Capture the number of methods
             - sh: "cat ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-0.log | grep \"types.*fields.*methods found reachable\" | awk '{print $6}'"
-            - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.methodCount
+              then:
+                - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.methodCount
 
             # Capture the number of classes registered for reflection
             - sh: "cat ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-0.log | grep \"types.*fields.*methods registered for reflection\" | awk '{print $1}'"
-            - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.reflectionClassCount
+              then:
+                - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.reflectionClassCount
 
             # Capture the number of fields registered for reflection
             - sh: "cat ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-0.log | grep \"types.*fields.*methods registered for reflection\" | awk '{print $3}'"
-            - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.reflectionFieldCount
+              then:
+                - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.reflectionFieldCount
 
             # Capture the number of methods registered for reflection
             - sh: "cat ${{REPO_DIR}}/logs/build-times-${{RUNTIMECMD.name}}-0.log | grep \"types.*fields.*methods registered for reflection\" | awk '{print $6}'"
-            - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.reflectionMethodCount
+              then:
+                - set-state: RUN.output.results.${{RUNTIMECMD.name}}.build.reflectionMethodCount
 
   measure-time-to-first-request:
     - log: Measuring Time to first request
@@ -569,7 +577,8 @@ scripts:
               then:
                 - queue-download: ${{REPO_DIR}}/logs/jfr.${{RUNTIMECMD.name}}-${{ITERATION}}.jfr
                 - sh: echo "${{RUNTIMECMD.runCmd}}" | sed 's#-jar#-XX:StartFlightRecording=filename=${{REPO_DIR}}/logs/jfr.${{RUNTIMECMD.name}}-${{ITERATION}}.jfr,settings=profile,dumponexit=true -jar#'
-                - set-state: SYNCJFR_RUN_CMD
+                  then:
+                    - set-state: SYNCJFR_RUN_CMD
                 - sh: ${{SYNCJFR_RUN_CMD}} &>${{LOG_FILE}} &
               else:
                 - sh: ${{RUNTIMECMD.runCmd}} &>${{LOG_FILE}} &

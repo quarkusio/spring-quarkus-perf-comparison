@@ -256,7 +256,7 @@ run_benchmarks() {
 
 #  jbang qDup@hyperfoil --trace="target" \
 
-${JBANG_CMD} io.hyperfoil.tools:qDup:0.10.8 \
+${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -B ${OUTPUT_DIR} \
     -ix \
     ${EXTRA_QDUP_ARGS} \
