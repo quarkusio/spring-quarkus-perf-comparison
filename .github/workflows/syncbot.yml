@@ -103,7 +103,7 @@ jobs:
           echo "Successfully pushed sync branch"
 
           # Create PR using GitHub CLI
-          PR_TITLE="[Sync] $(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
+          PR_TITLE="[Sync -> ${TARGET_BRANCH}] $(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
           PR_BODY="Automated sync of PR #${{ github.event.pull_request.number }} from \`$SOURCE_BRANCH\` to \`$TARGET_BRANCH\`
 
           Syncbot will not be offended if the sync isn't appropriate and you close this PR.
