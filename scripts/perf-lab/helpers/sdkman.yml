@@ -5,7 +5,8 @@ scripts:
     - regex: "no sdk in"
       else:
         - sh: whoami
-        - regex: (?<me>.*)
+          then:
+            - regex: (?<me>.*)
         - sh: "[[ -d /home/${{me}}/.sdkman ]] && rm -rf /home/${{me}}/.sdkman"
         - sh: sed -i 's/#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!.*//g' /home/${{me}}/.bashrc
         - sh: sed -i 's/export SDKMAN_DIR=.*//g' /home/${{me}}/.bashrc
