@@ -98,6 +98,7 @@ help() {
   echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test'"
   echo "                                                              NOTE: Build times (measure-build-times) are always measured during the build phase"
   echo "  --user <USER>                                           The user on <HOST> to run the benchmark"
+  echo "  --use-container-host-network                            Use host networking instead of port mapping on infra containers"
   echo "  --wait-time <WAIT_TIME>                                 Wait time (in seconds) to wait for things like application startup"
   echo "                                                              Default: ${WAIT_TIME}"
 }
@@ -162,6 +163,7 @@ print_values() {
   echo "  SCM_REPO_URL: $SCM_REPO_URL"
   echo "  SCM_REPO_BRANCH: $SCM_REPO_BRANCH"
   echo "  DROP_OS_FILESYSTEM_CACHES: $DROP_OS_FILESYSTEM_CACHES"
+  echo "  USE_CONTAINER_HOST_NETWORK: $USE_CONTAINER_HOST_NETWORK"
   echo "  JVM_ARGS: $JVM_ARGS"
   echo "  EXTRA_QDUP_ARGS: $EXTRA_QDUP_ARGS"
   echo "  OUTPUT_DIR: $OUTPUT_DIR"
@@ -294,6 +296,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -S config.run.description="${DESCRIPTION}" \
     -S config.run.identifier="${RUN_IDENTIFIER}" \
     -S config.run.dropOsFilesystemCaches=${DROP_OS_FILESYSTEM_CACHES} \
+    -S config.run.useContainerHostNetwork=${USE_CONTAINER_HOST_NETWORK} \
     -S env.run.host.user=${USER} \
     -S env.run.host.target=${target} \
     -S env.run.host.name=${HOST} \
@@ -344,6 +347,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   JVM_MEMORY="-Xms512m -Xmx512m"
   WAIT_TIME="20"
   DROP_OS_FILESYSTEM_CACHES=false
+  USE_CONTAINER_HOST_NETWORK=false
   JVM_ARGS=""
   EXTRA_QDUP_ARGS=""
   OUTPUT_DIR="/tmp"
@@ -378,6 +382,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
       --drop-fs-caches)
         DROP_OS_FILESYSTEM_CACHES=true
+        shift
+        ;;
+
+      --use-container-host-network)
+        USE_CONTAINER_HOST_NETWORK=true
         shift
         ;;
 

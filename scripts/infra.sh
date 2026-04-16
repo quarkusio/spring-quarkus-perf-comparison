@@ -14,6 +14,7 @@ help() {
   echo " -l <OTEL_CPUS>        The number of cpus to allocate to the Otel container"
   echo " -m <DB_MEMORY>        Memory to allocate to the database container"
   echo "                         Default: ${DB_MEMORY}"
+  echo " -n                    Use host networking instead of port mapping on infra containers"
   echo " -o                    Output the Otel process host PID"
   echo " -p <DB_CPUSET_CPUS>   Database CPUs in which to allow execution (0-3, 0,1)"
   echo " -r                    Output the PostgreSQL process host PID"
@@ -58,6 +59,7 @@ start_otel() {
 
   local cpuset_flag=""
   local cpus_flag=""
+  local networking_flags=""
 
   if [ -n "$OTEL_CPUS" ]; then
     cpus_flag="--cpus ${OTEL_CPUS}"
@@ -68,6 +70,12 @@ start_otel() {
     cpuset_flag="--cpuset-cpus ${OTEL_CPUSET_CPUS}"
   fi
 
+  if [ "${USE_HOST_NETWORKING}" = "true" ]; then
+    networking_flags="--network host"
+  else
+    networking_flags="-p 4317:4317 -p 4318:4318 -p 3000:3000 -p 4040:4040 -p 9090:9090"
+  fi
+
   local pid=$(run_with_cgroup_support ${engine} run \
     ${cpus_flag} \
     ${cpuset_flag} \
@@ -75,16 +83,13 @@ start_otel() {
     -d \
     --rm \
     --name ${OTEL_CONTAINER_NAME} \
-    -p 4317:4317 \
-    -p 4318:4318 \
-    -p 3000:3000 \
-    -p 4040:4040 \
-    -p 9090:9090 \
+    ${networking_flags} \
     docker.io/grafana/otel-lgtm@sha256:205bfb9b4907c9acac5b99a407ad5fc4bf528a73dc735fa39ffc2c3a9335cbe9)
   echo "Grafana Otel LGTM process: $pid"
 
   echo "Waiting for Grafana Otel LGTM to be ready..."
-  timeout 90s bash -c "until curl -sf http://localhost:3000/api/health > /dev/null; do sleep 5; done" || {
+#  timeout 90s bash -c "until curl -sf http://localhost:3000/api/health > /dev/null; do sleep 5; done" || {
+  timeout 90s bash -c "until ${engine} exec $OTEL_CONTAINER_NAME curl -sf http://localhost:3000/api/health > /dev/null; do sleep 5 ; done" || {
     echo "Error: Otel LGTM failed to become ready"
     exit 1
   }
@@ -95,6 +100,7 @@ start_postgres() {
 
   local cpuset_flag=""
   local cpus_flag=""
+  local networking_flags=""
 
   if [ -n "$DB_CPUS" ]; then
     cpus_flag="--cpus ${DB_CPUS}"
@@ -105,6 +111,12 @@ start_postgres() {
     cpuset_flag="--cpuset-cpus ${DB_CPUSET_CPUS}"
   fi
 
+  if [ "${USE_HOST_NETWORKING}" = "true" ]; then
+    networking_flags="--network host"
+  else
+    networking_flags="-p 5432:5432"
+  fi
+
   local pid=$(run_with_cgroup_support ${engine} run \
     ${cpus_flag} \
     ${cpuset_flag} \
@@ -112,7 +124,7 @@ start_postgres() {
     -d \
     --rm \
     --name ${DB_CONTAINER_NAME} \
-    -p 5432:5432 \
+    ${networking_flags} \
     ghcr.io/quarkusio/postgres-17-perf@sha256:25547aa2c1a44685066f552e1c262929cf629cbc2f3a82bd18fa791a03f7cd48 \
     -c fsync=off \
     -c synchronous_commit=off \
@@ -173,6 +185,7 @@ DB_CPUSET_CPUS=""
 DB_MEMORY="2g"
 engine=""
 IS_STARTING=true
+USE_HOST_NETWORKING=false
 
 if command -v podman >/dev/null 2>&1; then
   engine="podman"
@@ -184,7 +197,7 @@ else
 fi
 
 # Process the input options
-while getopts "c:dg:hl:m:op:rst:" option; do
+while getopts "c:dg:hl:m:nop:rst:" option; do
   case $option in
     c) DB_CPUS=$OPTARG
        ;;
@@ -203,6 +216,9 @@ while getopts "c:dg:hl:m:op:rst:" option; do
        ;;
 
     m) DB_MEMORY=$OPTARG
+       ;;
+
+    n) USE_HOST_NETWORKING=true
        ;;
 
     o) get_otel_host_pid
