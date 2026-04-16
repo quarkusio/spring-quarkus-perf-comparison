@@ -33,6 +33,7 @@ states:
   config.springboot4.native_build_options:
 
   config.run.dropOsFilesystemCaches: false
+  config.run.useContainerHostNetwork: false
 
   config.resources.cpu.app: 0-3
   config.resources.cpu.db: 4-6
@@ -342,7 +343,7 @@ scripts:
     - sh: ./mvnw versions:set-property -Dproperty=quarkus.platform.version -DnewVersion=${{VERSION}}
 
   start-test-services:
-    - sh: ${{PROJ_REPO_DIR}}/scripts/infra.sh -c 3 -p '${{config.resources.cpu.db}}' -s
+    - sh: "${{PROJ_REPO_DIR}}/scripts/infra.sh -c 3 -p '${{config.resources.cpu.db}}' -s ${{= ${{config.run.useContainerHostNetwork:false}} ? '-n' : ''}}"
       watch:
         - regex: "Error: PostgreSQL failed to become ready"
           then:

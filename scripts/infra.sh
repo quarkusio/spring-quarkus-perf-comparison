@@ -12,6 +12,7 @@ help() {
   echo " -h                    Prints this help message"
   echo " -m <MEMORY>           Memory to allocate"
   echo "                         Default: ${MEMORY}"
+  echo " -n                    Use host networking instead of port mapping on infra containers"
   echo " -p <CPUSET_CPUS>      CPUs in which to allow execution (0-3, 0,1)"
   echo " -r                    Output the PostgreSQL process host PID"
   echo " -s                    Start the services"
@@ -49,6 +50,7 @@ start_postgres() {
 
   local cpuset_flag=""
   local cpus_flag=""
+  local networking_flags=""
 
   if [ -n "$CPUS" ]; then
     cpus_flag="--cpus ${CPUS}"
@@ -59,6 +61,12 @@ start_postgres() {
     cpuset_flag="--cpuset-cpus ${CPUSET_CPUS}"
   fi
 
+  if [ "${USE_HOST_NETWORKING}" = "true" ]; then
+    networking_flags="--network host"
+  else
+    networking_flags="-p 5432:5432"
+  fi
+
   local pid=$(run_with_cgroup_support ${engine} run \
     ${cpus_flag} \
     ${cpuset_flag} \
@@ -66,7 +74,7 @@ start_postgres() {
     -d \
     --rm \
     --name ${DB_CONTAINER_NAME} \
-    -p 5432:5432 \
+    ${networking_flags} \
     ghcr.io/quarkusio/postgres-17-perf@sha256:25547aa2c1a44685066f552e1c262929cf629cbc2f3a82bd18fa791a03f7cd48 \
     -c fsync=off \
     -c synchronous_commit=off \
@@ -116,6 +124,7 @@ CPUSET_CPUS=""
 MEMORY="2g"
 engine=""
 IS_STARTING=true
+USE_HOST_NETWORKING=false
 
 if command -v podman >/dev/null 2>&1; then
   engine="podman"
@@ -140,6 +149,9 @@ while getopts "c:dhm:p:rs" option; do
        ;;
 
     m) MEMORY=$OPTARG
+       ;;
+
+    n) USE_HOST_NETWORKING=true
        ;;
 
     p) CPUSET_CPUS=$OPTARG
