@@ -79,7 +79,7 @@ states:
       dir: ${{QUARKUS3_DIR}}
       updateScript: update-quarkus-version
       updateVersion: ${{config.quarkus.version}}
-      buildRequiresTestServices: true
+      buildRequiresTestServices: false
       buildCmd: "${{APP_CMD_PREFIX}} ./mvnw ${{config.quarkus.build_config_args}} clean verify -Dquarkus.package.jar.aot.enabled=true -Dsurefire.excludes='**/*'"
       runCmd: "${{BASE_JAVA_CMD}} -XX:AOTCache=${{RUNTIME_BUILD_DIR}}/quarkus-app/app.aot -jar ${{RUNTIME_BUILD_DIR}}/quarkus-app/quarkus-run.jar"
       logFileStartedRegex: ".*quarkus3.+started in.*"
@@ -97,7 +97,7 @@ states:
       dir: ${{QUARKUS3_VIRTUAL_DIR}}
       updateScript: update-quarkus-version
       updateVersion: ${{config.quarkus.version}}
-      buildRequiresTestServices: true
+      buildRequiresTestServices: false
       buildCmd: "${{APP_CMD_PREFIX}} ./mvnw ${{config.quarkus.build_config_args}} clean verify -Dquarkus.package.jar.aot.enabled=true -Dsurefire.excludes='**/*'"
       runCmd: "${{BASE_JAVA_CMD}} -XX:AOTCache=${{RUNTIME_BUILD_DIR}}/quarkus-app/app.aot -jar ${{RUNTIME_BUILD_DIR}}/quarkus-app/quarkus-run.jar"
       logFileStartedRegex: ".*quarkus3.+started in.*"
