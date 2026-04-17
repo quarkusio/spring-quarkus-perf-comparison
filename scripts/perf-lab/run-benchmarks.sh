@@ -415,13 +415,14 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         elif [[ "$2" == "none" ]]; then
           : # both already disabled
         else
-          en=($(IFS=','; echo $2))
+          IFS=',' read -ra en <<< "$2"
 
           for item in "${en[@]}"; do
-            if [[ ! "${ALLOWED_ENERGY[@]}" =~ "${item}" ]]; then
-              echo "!! [ERROR] --energy option must be 'all', 'none', or 1 or more of [${ALLOWED_ENERGY[@]}]!!"
-              exit_abnormal
-            fi
+            case "$item" in
+              rapl|idrac) ;;
+              *) echo "!! [ERROR] --energy option must be 'all', 'none', or 1 or more of [${ALLOWED_ENERGY[@]}]!!"
+                 exit_abnormal ;;
+            esac
           done
 
           for item in "${en[@]}"; do
