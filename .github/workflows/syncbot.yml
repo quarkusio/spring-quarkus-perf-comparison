@@ -86,9 +86,18 @@ jobs:
             echo "Some commits were skipped due to conflicts:$SKIPPED_COMMITS"
           fi
 
+          # Check if the sync branch has any changes compared to the target branch
+          if git diff --quiet origin/$TARGET_BRANCH $SYNC_BRANCH; then
+            echo "::warning::All commits were skipped due to conflicts. No changes to sync."
+            echo "all_skipped=true" >> $GITHUB_OUTPUT
+          else
+            echo "all_skipped=false" >> $GITHUB_OUTPUT
+          fi
+
           echo "Cherry-pick complete"
 
       - name: Push sync branch and create PR
+        if: steps.cherry-pick.outputs.all_skipped != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -129,7 +138,7 @@ jobs:
           fi
 
       - name: Update PR comment on success
-        if: steps.cherry-pick.outputs.skipped_commits == ''
+        if: steps.cherry-pick.outputs.all_skipped != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
         uses: quarkusio/action-helpers@main
         with:
           action: maintain-one-comment
@@ -139,11 +148,21 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Update PR comment on partial sync
-        if: steps.cherry-pick.outputs.skipped_commits != ''
+        if: steps.cherry-pick.outputs.all_skipped != 'true' && steps.cherry-pick.outputs.skipped_commits != ''
         uses: quarkusio/action-helpers@main
         with:
           action: maintain-one-comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             🤖 This PR has been partially synchronized to the `${{ steps.cherry-pick.outputs.target_branch }}` branch. Some commits were skipped due to conflicts and may need manual syncing. 🔄
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - name: Update PR comment when all commits conflict
+        if: steps.cherry-pick.outputs.all_skipped == 'true'
+        uses: quarkusio/action-helpers@main
+        with:
+          action: maintain-one-comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            🤖 Sync to `${{ steps.cherry-pick.outputs.target_branch }}` was skipped — all commits had conflicts and could not be cherry-picked. This PR may need to be manually applied to the `${{ steps.cherry-pick.outputs.target_branch }}` branch, or it may not be relevant to that branch. 🔄
           pr-number: ${{ github.event.pull_request.number }}
