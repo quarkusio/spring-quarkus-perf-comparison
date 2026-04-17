@@ -1,0 +1,42 @@
+name: Energy-related scripts
+scripts:
+  capture-system-power:
+    - script: idrac-login
+      with:
+        idrac: ${{= ${{servers}}.filter( server => { return server.hostname == "${{env.HOST}}"})[0].idrac}}
+        password: ${{idrac_pwd}}
+    - set-state: RUN.svrPwr []
+    - repeat-until: ${{COMPLETE_SIGNAL}}
+      then:
+        - sleep: 1s
+        - sh: racadm get system.Power.Realtime.Power
+          then:
+            - regex: (?<watts>\\d+) W | (?<btu>\\d+) Btu/hr
+              then:
+                - script: state-array-push
+                  with:
+                    array: RUN.svrPwr
+                    value: ${{watts}}
+  install-rapl-plot:
+    - read-state: ${{config.energy.rapl}}
+      then:
+        - regex: "enabled"
+          then:
+            - sh: "[[ -d /sys/class/powercap/intel-rapl ]] && echo RAPL_SUPPORTED || echo RAPL_UNSUPPORTED"
+              then:
+                - regex: RAPL_SUPPORTED
+                  then:
+                    - sh: "[[ -f ${{RAPL_PATH:/tmp/rapl}}/${{RAPL_EXE:rapl-plot}} ]] || echo GETRAPL;"
+                      then:
+                        - regex: GET
+                          then:
+                            - sh: mkdir -p ${{RAPL_PATH:/tmp/rapl}}
+                            - sh: cd ${{RAPL_PATH:/tmp/rapl}}
+                            - sh: git clone https://github.com/deater/uarch-configure.git
+                            - sh: cd uarch-configure/rapl-read
+                            - sh: make all
+                            - sh: cp rapl-plot ${{RAPL_PATH:/tmp/rapl}}/${{RAPL_EXE:rapl-plot}}
+                    - set-state: RUN.RAPL_BIN ${{RAPL_PATH:/tmp/rapl}}/${{RAPL_EXE:rapl-plot}}
+                - regex: RAPL_UNSUPPORTED
+                  then:
+                    - log: RAPL not available on this system, skipping energy measurement via RAPL

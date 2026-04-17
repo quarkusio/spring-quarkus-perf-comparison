@@ -37,6 +37,10 @@ help() {
   echo "  --cpus-otel <CPUS_OTEL>                                 CPU list for the OpenTelemetry stack (e.g. 14,16,18)"
   echo "                                                              Default: ${CPUS_OTEL}"
   echo "  --description <DESCRIPTION>                             A human-readable description to be added to the run output"
+  echo "  --energy <ENERGY>                                       Energy measurement sources, separated by commas"
+  echo "                                                              Accepted values (1 or more of): rapl, idrac"
+  echo "                                                              Special values: all, none"
+  echo "                                                              Default: 'all'"
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                                              NOTE: This is an advanced option. Make sure you know what you are doing when using it."
@@ -149,6 +153,9 @@ print_values() {
   echo "  NATIVE_QUARKUS_BUILD_OPTIONS: $NATIVE_QUARKUS_BUILD_OPTIONS"
   echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
   echo "  NATIVE_SPRING4_BUILD_OPTIONS: $NATIVE_SPRING4_BUILD_OPTIONS"
+  echo "  ENERGY: $ENERGY"
+  echo "  ENERGY_IDRAC: $ENERGY_IDRAC"
+  echo "  ENERGY_RAPL: $ENERGY_RAPL"
   echo "  PROFILER: $PROFILER"
   echo "  QUARKUS_BUILD_CONFIG_ARGS: $QUARKUS_BUILD_CONFIG_ARGS"
   echo "  QUARKUS_VERSION: $QUARKUS_VERSION"
@@ -274,6 +281,8 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -S config.jvm.version=${JAVA_VERSION} \
     -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
     -S config.jvm.args="${JVM_ARGS}" \
+    -S config.energy.idrac=${ENERGY_IDRAC} \
+    -S config.energy.rapl=${ENERGY_RAPL} \
     -S config.profiler.name=${PROFILER} \
     -S config.resources.app_cpus="$(count_cpus "${CPUS_APP}")" \
     -S config.resources.cpu.app="${CPUS_APP}" \
@@ -332,6 +341,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NATIVE_QUARKUS_BUILD_OPTIONS=""
   NATIVE_SPRING3_BUILD_OPTIONS=""
   NATIVE_SPRING4_BUILD_OPTIONS=""
+  ENERGY="all"
+  ALLOWED_ENERGY=("rapl" "idrac")
+  ENERGY_IDRAC="enabled"
+  ENERGY_RAPL="enabled"
   PROFILER="none"
   QUARKUS_BUILD_CONFIG_ARGS=""
   QUARKUS_VERSION=""
@@ -388,6 +401,37 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       --use-container-host-network)
         USE_CONTAINER_HOST_NETWORK=true
         shift
+        ;;
+
+      --energy)
+        ENERGY_SET_BY_USER="true"
+        ENERGY="$2"
+        ENERGY_IDRAC="disabled"
+        ENERGY_RAPL="disabled"
+
+        if [[ "$2" == "all" ]]; then
+          ENERGY_IDRAC="enabled"
+          ENERGY_RAPL="enabled"
+        elif [[ "$2" == "none" ]]; then
+          : # both already disabled
+        else
+          en=($(IFS=','; echo $2))
+
+          for item in "${en[@]}"; do
+            if [[ ! "${ALLOWED_ENERGY[@]}" =~ "${item}" ]]; then
+              echo "!! [ERROR] --energy option must be 'all', 'none', or 1 or more of [${ALLOWED_ENERGY[@]}]!!"
+              exit_abnormal
+            fi
+          done
+
+          for item in "${en[@]}"; do
+            case "$item" in
+              rapl) ENERGY_RAPL="enabled" ;;
+              idrac) ENERGY_IDRAC="enabled" ;;
+            esac
+          done
+        fi
+        shift 2
         ;;
 
       --extra-qdup-args)
@@ -584,6 +628,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fi
   done
   TESTS_TO_RUN=${filtered_tests[@]}
+
+  # If user explicitly set --energy, ensure measure-rss is in the test list
+  if [[ -n "${ENERGY_SET_BY_USER:-}" && "$ENERGY" != "none" && ! "${TESTS_TO_RUN[@]}" =~ "measure-rss" ]]; then
+    TESTS_TO_RUN="$TESTS_TO_RUN measure-rss"
+  fi
 
   validate_values
   calculate_scenario
