@@ -543,6 +543,8 @@ scripts:
                           with:
                             command: ${{RUN.RAPL_BIN}} -p > ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl &
                         - sh: echo $!
+                          then:
+                            - set-state: RUN.RAPL_PID
         - read-state: ${{config.energy.idrac}}
           then:
             - regex: "enabled"
@@ -596,6 +598,10 @@ scripts:
                   then:
                     - regex: RAPL_READY
                       then:
+                        - script: sudo
+                          with:
+                            command: kill ${{RUN.RAPL_PID}}
+                        - sh: sleep 1
                         - sh: awk -F', ' '/^[^#]/{s+=$2; d+=$4; n++} END{if(n>0) printf "%.2f %.2f", s/n, d/n; else print "0 0"}' ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
                           then:
                             - regex: (?<pkg>\S+) (?<dram>\S+)
