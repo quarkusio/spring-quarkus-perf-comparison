@@ -14,9 +14,9 @@ states:
   config.units.load.throughputDensity: tps per MiB
   config.units.load.errors.connectionErrors: absolute number
   config.units.load.errors.requestTimeouts: absolute number
-  config.units.energy.idrac: W
-  config.units.energy.raplPkg: W
-  config.units.energy.raplDram: W
+  config.units.energy.idrac: J
+  config.units.energy.raplPkg: J
+  config.units.energy.raplDram: J
 
   config.jvm.home: #/path/to/java
   config.jvm.version: 25.0.2-tem
@@ -47,6 +47,7 @@ states:
 
   config.energy.rapl: enabled #disabled
   config.energy.idrac: enabled #disabled
+  config.energy.rss.duration: 150
   config.profiler.name: none #jfr syncjfr flamegraph
   config.profiler.events: cpu
 
@@ -575,17 +576,18 @@ scripts:
           with:
             array: RUN.output.results.${{RUNTIMECMD.name}}.rss.firstRequest
             value: ${{= ${{FIRST_REQUEST}}/1024 }}
+        - sh: sleep ${{config.energy.rss.duration}}
         - read-state: ${{RUN.IDRAC_AVAILABLE}}
           then:
             - regex: "true"
               then:
                 - signal: ${{COMPLETE_SIGNAL}}
                 - sh: echo "${{RUN.svrPwr}}" > ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.svrPwr
-                - set-state: IDRAC_AVG_WATTS ${{= (${{RUN.svrPwr}}.reduce((a, b) => a + b, 0) / ${{RUN.svrPwr}}.length) || 0 }}
+                - set-state: IDRAC_ENERGY ${{= ${{RUN.svrPwr}}.reduce((a, b) => a + b, 0) || 0 }}
                 - script: state-array-push
                   with:
                     array: RUN.output.results.${{RUNTIMECMD.name}}.energy.idrac
-                    value: ${{IDRAC_AVG_WATTS}}
+                    value: ${{IDRAC_ENERGY}}
         - read-state: ${{config.energy.rapl}}
           then:
             - regex: "enabled"
@@ -598,7 +600,7 @@ scripts:
                           with:
                             command: kill ${{RUN.RAPL_PID}}
                         - sh: sleep 1
-                        - sh: awk -F', ' '/^[^#]/{s+=$2; d+=$4; n++} END{if(n>0) printf "%.2f %.2f", s/n, d/n; else print "0 0"}' ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
+                        - sh: awk -F', ' '/^[^#]/{s+=$2; d+=$4} END{printf "%.2f %.2f", s, d}' ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
                           then:
                             - regex: (?<pkg>\S+) (?<dram>\S+)
                               then:
