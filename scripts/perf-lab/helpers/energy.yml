@@ -17,6 +17,35 @@ scripts:
                   with:
                     array: RUN.svrPwr
                     value: ${{watts}}
+  idrac-login:
+    - sh: IDRAC_HOST="${{idrac}}"
+    - sh: IDRAC_USER="${{idrac_user:root}}"
+    - sh: IDRAC_PWD="${{password}}"
+    - sh: REAL_RACADM=$(which racadm)
+    - sh: 'racadm() { "$REAL_RACADM" -r "$IDRAC_HOST" -u "$IDRAC_USER" -p "$IDRAC_PWD" --nocertwarn "$@"; }'
+    - sh: racadm getsysinfo
+      then:
+        - regex: "System Model"
+          then:
+            - log: Connected to iDRAC at ${{idrac}}
+          else:
+            - abort: "Failed to connect to iDRAC at ${{idrac}}. Verify hostname and credentials."
+
+  validate-idrac:
+    - read-state: ${{config.energy.idrac}}
+      then:
+        - regex: "enabled"
+          then:
+            - sh: "which racadm &>/dev/null && echo RACADM_FOUND || echo RACADM_MISSING"
+              then:
+                - regex: RACADM_FOUND
+                  then:
+                    - set-state: RUN.IDRAC_AVAILABLE true
+                - regex: RACADM_MISSING
+                  then:
+                    - set-state: RUN.IDRAC_AVAILABLE false
+                    - log: racadm not found on this system, skipping energy measurement via iDRAC
+
   install-rapl-plot:
     - read-state: ${{config.energy.rapl}}
       then:
