@@ -38,6 +38,8 @@ help() {
   echo "                                                              Accepted values (1 or more of): rapl, idrac"
   echo "                                                              Special values: all, none"
   echo "                                                              Default: 'all'"
+  echo "  --energy-duration <SECONDS>                             Duration (seconds) to sustain energy measurement after RSS is captured"
+  echo "                                                              Default: 150 (matches load test duration)"
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                                              NOTE: This is an advanced option. Make sure you know what you are doing when using it."
@@ -150,6 +152,7 @@ print_values() {
   echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
   echo "  NATIVE_SPRING4_BUILD_OPTIONS: $NATIVE_SPRING4_BUILD_OPTIONS"
   echo "  ENERGY: $ENERGY"
+  echo "  ENERGY_DURATION: $ENERGY_DURATION"
   echo "  ENERGY_IDRAC: $ENERGY_IDRAC"
   echo "  ENERGY_RAPL: $ENERGY_RAPL"
   echo "  PROFILER: $PROFILER"
@@ -279,6 +282,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -S config.jvm.args="${JVM_ARGS}" \
     -S config.energy.idrac=${ENERGY_IDRAC} \
     -S config.energy.rapl=${ENERGY_RAPL} \
+    -S config.energy.rss.duration=${ENERGY_DURATION} \
     -S config.profiler.name=${PROFILER} \
     -S config.resources.app_cpus="$(count_cpus "${CPUS_APP}")" \
     -S config.resources.cpu.app="${CPUS_APP}" \
@@ -337,6 +341,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NATIVE_SPRING4_BUILD_OPTIONS=""
   ENERGY="all"
   ALLOWED_ENERGY=("rapl" "idrac")
+  ENERGY_DURATION=150
   ENERGY_IDRAC="enabled"
   ENERGY_RAPL="enabled"
   PROFILER="none"
@@ -407,7 +412,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
           ENERGY_IDRAC="enabled"
           ENERGY_RAPL="enabled"
         elif [[ "$2" == "none" ]]; then
-          : # both already disabled
+          ENERGY_DURATION=0
         else
           IFS=',' read -ra en <<< "$2"
 
@@ -426,6 +431,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             esac
           done
         fi
+        shift 2
+        ;;
+
+      --energy-duration)
+        ENERGY_DURATION="$2"
         shift 2
         ;;
 
