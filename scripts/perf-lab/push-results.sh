@@ -51,6 +51,10 @@ sanitize_results() {
 }
 
 push_results() {
+  # Compute the results directory timestamp from the benchmark's actual stop time
+  currentDateTime=$(jq -r '.timing.stop' "${RUN_RESULTS_DIR}/metrics.json")
+  resultsDir="${jobResultsDir}/${currentDateTime}"
+
   # Setup GH cli
   gh auth login --with-token <<< "${GITHUB_TOKEN}"
 
@@ -69,6 +73,7 @@ push_results() {
   git checkout -b ${branchName}
 
   # Copy over the results into a new directory named with the current date/time
+  echo "Creating results directory ${resultsDir}"
   mkdir -p ${resultsDir}
 
   cp -R ${RUN_RESULTS_DIR}/* ${resultsDir}/
@@ -110,7 +115,9 @@ push_results() {
   gh pr create \
     -l perf-lab-run \
     -t "Adding results from perf lab run ${jobName}.${currentDateTime}" \
-    -b "This PR was automatically created to add the results from the perf lab run ${jobName}.${currentDateTime}.\n\n${DESCRIPTION}" \
+    -b "This PR was automatically created to add the results from the perf lab run ${jobName}.${currentDateTime}.
+
+    ${DESCRIPTION}" \
     -B main
 
   # Log out GH CLI
@@ -121,11 +128,9 @@ push_results() {
 RUN_RESULTS_DIR=""
 GITHUB_TOKEN=""
 DESCRIPTION=""
-currentDateTime=$(date +%Y-%m-%d_%H-%M-%S)
-branchName="upload-results-${currentDateTime}"
+branchName="upload-results-$(date +%Y-%m-%d_%H-%M-%S)"
 jobName="spring-quarkus-perf-comparison"
 jobResultsDir="results/${jobName}"
-resultsDir="${jobResultsDir}/${currentDateTime}"
 
 # Process the inputs
 while getopts "d:r:t:" option; do
