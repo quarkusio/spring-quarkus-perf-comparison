@@ -102,7 +102,7 @@ help() {
   echo "                                                              Default: Whatever version is set in pom.xml of the Spring Boot 4 app"
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
   echo "  --tests <TESTS_TO_RUN>                                  The tests to run, separated by commas"
-  echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test, measure-energy-max-throughput, measure-energy-fixed-throughput"
+  echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test, measure-energy-fixed-throughput"
   echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test'"
   echo "                                                              NOTE: Build times (measure-build-times) are always measured during the build phase"
   echo "  --user <USER>                                           The user on <HOST> to run the benchmark"
@@ -363,7 +363,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   RUNTIMES=${DEFAULT_RUNTIMES[@]}
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""
-  ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test" "measure-energy-max-throughput" "measure-energy-fixed-throughput")
+  ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test" "measure-energy-fixed-throughput")
   DEFAULT_TESTS_TO_RUN=("measure-time-to-first-request" "measure-rss" "run-load-test")
   TESTS_TO_RUN=${DEFAULT_TESTS_TO_RUN[@]}
   USER=""

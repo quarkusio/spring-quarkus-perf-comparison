@@ -525,20 +525,15 @@ scripts:
         var-name: RUN.output.results.${{RUNTIMECMD.name}}.startup.avStartTime
         array: RUN.output.results.${{RUNTIMECMD.name}}.startup.timings
 
-  measure-rss: # also measures energy
+  measure-rss:
     - log: Measuring RSS
     - sh: java -version
     - sh: cd ${{RUNTIMECMD.dir}}
     - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
       then:
-        - set-state: RUN.OUTPUT_DIR ${{REPO_DIR}}/logs
-        - set-state: RUN.COMPLETE_SIGNAL measure-rss-${{RUNTIMECMD.name}}-${{ITERATION}}
         - queue-download: ${{REPO_DIR}}/logs/measure-rss-${{RUNTIMECMD.name}}-${{ITERATION}}.log
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.svrPwr
         - script: start-test-services
         - script: sync-drop-fs-cache
-        - script: start-energy-capture
         - sh: ${{RUNTIMECMD.runCmd}} &>${{REPO_DIR}}/logs/measure-rss-${{RUNTIMECMD.name}}-${{ITERATION}}.log &
         - sh: APP_PID=$!
         - sh: sleep ${{PAUSE_TIME}}
@@ -557,9 +552,6 @@ scripts:
           with:
             array: RUN.output.results.${{RUNTIMECMD.name}}.rss.firstRequest
             value: ${{= ${{FIRST_REQUEST}}/1024 }}
-        - script: stop-energy-capture
-          with:
-            result_prefix: RUN.output.results.${{RUNTIMECMD.name}}.energy
         - sh: kill -15 $APP_PID
         - sh: sleep ${{PAUSE_TIME}}
         - script: stop-test-services
@@ -571,9 +563,6 @@ scripts:
       with:
         var-name: RUN.output.results.${{RUNTIMECMD.name}}.rss.avFirstRequestRss
         array: RUN.output.results.${{RUNTIMECMD.name}}.rss.firstRequest
-    - script: calc-energy-totals
-      with:
-        result_prefix: RUN.output.results.${{RUNTIMECMD.name}}.energy
 
   run-load-test:
     - log: Running workload
@@ -591,6 +580,10 @@ scripts:
         - queue-download: ${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
         - queue-download: ${{LOG_FILE}}
         - queue-download: ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log
+        - set-state: RUN.OUTPUT_DIR ${{REPO_DIR}}/logs
+        - set-state: RUN.COMPLETE_SIGNAL load-test-energy-${{RUNTIMECMD.name}}-${{ITERATION}}
+        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
+        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.svrPwr
         - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
@@ -647,6 +640,7 @@ scripts:
           then:
             - abort: unable to connect to target application
         - sleep: 30s # Wait for the app to complete warmup
+        - script: start-energy-capture
         - signal: LOAD_STEADY_STATE_START
         - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s --timeout 30s ${{TARGET_URL}} > ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1 &
         - sh: WRK_PID=$! && echo $WRK_PID
@@ -666,6 +660,9 @@ scripts:
           with:
             array: RUN.output.results.${{RUNTIMECMD.name}}.load.throughput
             value: ${{THROUGHPUT}}
+        - script: stop-energy-capture
+          with:
+            result_prefix: RUN.output.results.${{RUNTIMECMD.name}}.energyMaxLoad
         - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log | grep "Socket errors:" | sed -E 's/.*connectionErrors ([0-9]+).*/\1/'
           then:
             - regex: ^$
@@ -726,64 +723,6 @@ scripts:
       with:
         var-name: RUN.output.results.${{RUNTIMECMD.name}}.load.avRequestTimeouts
         array: RUN.output.results.${{RUNTIMECMD.name}}.load.requestTimeouts
-
-  measure-energy-max-throughput:
-    - log: Measuring energy at max throughput
-    - sh: cd ${{RUNTIMECMD.dir}}
-    - set-state:
-        key: APP_LOG_REGEX
-        value: ${{RUNTIMECMD.logFileStartedRegex}}
-    - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
-      then:
-        - set-state: RUN.OUTPUT_DIR ${{REPO_DIR}}/logs
-        - set-state: RUN.COMPLETE_SIGNAL energy-max-${{RUNTIMECMD.name}}-${{ITERATION}}
-        - set-state:
-            key: LOG_FILE
-            value: ${{REPO_DIR}}/logs/energy-max-${{RUNTIMECMD.name}}-${{ITERATION}}.log
-        - sh: touch ${{LOG_FILE}}
-        - queue-download: ${{LOG_FILE}}
-        - queue-download: ${{REPO_DIR}}/logs/wrk-energy-max-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
-        - queue-download: ${{REPO_DIR}}/logs/wrk-energy-max-${{RUNTIMECMD.name}}-${{ITERATION}}.log
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.svrPwr
-        - script: start-test-services
-        - script: sync-drop-fs-cache
-        - set-signal: LOG_REGEX_REACHED 1
-        - sh: ${{RUNTIMECMD.runCmd}} &>${{LOG_FILE}} &
-        - sh: PID=$!
-        - sh: echo $PID
-        - set-state: JVM_PID
-        - script:
-            name: watch-log
-            async: true
-          with:
-            log_file: ${{LOG_FILE}}
-            log_regex: ${{APP_LOG_REGEX}}
-        - wait-for: LOG_REGEX_REACHED
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 2m --timeout 2m ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-energy-max-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
-        - sleep: 30s
-        - script: start-energy-capture
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s --timeout 30s ${{TARGET_URL}} > ${{REPO_DIR}}/logs/wrk-energy-max-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1 &
-        - sh: WRK_PID=$! && echo $WRK_PID
-        - set-state: WRK_PID
-        - sh: wait ${{WRK_PID}}
-        - sh: cat ${{REPO_DIR}}/logs/wrk-energy-max-${{RUNTIMECMD.name}}-${{ITERATION}}.log | grep "Requests/sec" | awk '{print $2}'
-          then:
-            - set-state: THROUGHPUT
-        - script: state-array-push
-          with:
-            array: RUN.output.results.${{RUNTIMECMD.name}}.energyMaxLoad.throughput
-            value: ${{THROUGHPUT}}
-        - script: stop-energy-capture
-          with:
-            result_prefix: RUN.output.results.${{RUNTIMECMD.name}}.energyMaxLoad
-        - sh: kill -15 $PID
-        - sh: sleep ${{PAUSE_TIME}}
-        - script: stop-test-services
-    - script: state-array-calc-avg
-      with:
-        var-name: RUN.output.results.${{RUNTIMECMD.name}}.energyMaxLoad.avThroughput
-        array: RUN.output.results.${{RUNTIMECMD.name}}.energyMaxLoad.throughput
     - script: calc-energy-totals
       with:
         result_prefix: RUN.output.results.${{RUNTIMECMD.name}}.energyMaxLoad
