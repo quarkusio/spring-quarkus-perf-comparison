@@ -429,16 +429,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
           for item in "${en[@]}"; do
             case "$item" in
-              rapl|idrac) ;;
-              *) echo "!! [ERROR] --energy option must be 'all', 'none', or 1 or more of [${ALLOWED_ENERGY[@]}]!!"
-                 exit_abnormal ;;
-            esac
-          done
-
-          for item in "${en[@]}"; do
-            case "$item" in
               rapl) ENERGY_RAPL="enabled" ;;
               idrac) ENERGY_IDRAC="enabled" ;;
+              *) echo "!! [ERROR] --energy option must be 'all', 'none', or 1 or more of [${ALLOWED_ENERGY[@]}]!!"
+                 exit_abnormal ;;
             esac
           done
         fi
@@ -446,11 +440,19 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         ;;
 
       --fixed-throughput-duration)
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+          echo "!! [ERROR] --fixed-throughput-duration must be a positive integer!!"
+          exit_abnormal
+        fi
         FIXED_THROUGHPUT_DURATION="$2"
         shift 2
         ;;
 
       --fixed-throughput-rate)
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+          echo "!! [ERROR] --fixed-throughput-rate must be a positive integer!!"
+          exit_abnormal
+        fi
         FIXED_THROUGHPUT_RATE="$2"
         shift 2
         ;;
@@ -649,11 +651,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fi
   done
   TESTS_TO_RUN=${filtered_tests[@]}
-
-  # If user explicitly set --energy, ensure measure-rss is in the test list
-  if [[ -n "${ENERGY_SET_BY_USER:-}" && "$ENERGY" != "none" && ! "${TESTS_TO_RUN[@]}" =~ "measure-rss" ]]; then
-    TESTS_TO_RUN="$TESTS_TO_RUN measure-rss"
-  fi
 
   validate_values
   calculate_scenario

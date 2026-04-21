@@ -17,6 +17,8 @@ states:
   config.units.energy.idrac: J
   config.units.energy.raplPkg: J
   config.units.energy.raplDram: J
+  config.units.energy.energyPerRequestIdrac: J/req
+  config.units.energy.energyPerRequestRaplPkg: J/req
   config.units.energy.throughput: tps
 
   config.jvm.home: #/path/to/java
@@ -582,8 +584,8 @@ scripts:
         - queue-download: ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log
         - set-state: RUN.OUTPUT_DIR ${{REPO_DIR}}/logs
         - set-state: RUN.COMPLETE_SIGNAL load-test-energy-${{RUNTIMECMD.name}}-${{ITERATION}}
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.svrPwr
+        - queue-download: ${{RUN.OUTPUT_DIR}}/${{RUN.COMPLETE_SIGNAL}}.rapl
+        - queue-download: ${{RUN.OUTPUT_DIR}}/${{RUN.COMPLETE_SIGNAL}}.svrPwr
         - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
@@ -726,9 +728,13 @@ scripts:
     - script: calc-energy-totals
       with:
         result_prefix: RUN.output.results.${{RUNTIMECMD.name}}.energyMaxLoad
+        av_throughput: ${{RUN.output.results.${{RUNTIMECMD.name}}.load.avThroughput}}
+        duration: 30
+        num_iterations: ${{config.num_iterations}}
 
   measure-energy-fixed-throughput:
     - log: Measuring energy at fixed throughput (${{config.energy.fixed.rate}} tps)
+    - sh: java -version
     - sh: cd ${{RUNTIMECMD.dir}}
     - set-state:
         key: APP_LOG_REGEX
@@ -744,8 +750,8 @@ scripts:
         - queue-download: ${{LOG_FILE}}
         - queue-download: ${{REPO_DIR}}/logs/wrk-energy-fixed-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
         - queue-download: ${{REPO_DIR}}/logs/wrk-energy-fixed-${{RUNTIMECMD.name}}-${{ITERATION}}.log
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
-        - queue-download: ${{OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.svrPwr
+        - queue-download: ${{RUN.OUTPUT_DIR}}/${{RUN.COMPLETE_SIGNAL}}.rapl
+        - queue-download: ${{RUN.OUTPUT_DIR}}/${{RUN.COMPLETE_SIGNAL}}.svrPwr
         - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOG_REGEX_REACHED 1
@@ -753,6 +759,12 @@ scripts:
         - sh: PID=$!
         - sh: echo $PID
         - set-state: JVM_PID
+        - script: monitor-processes
+          with:
+            pid: ${{JVM_PID}}
+            log_dir: ${{REPO_DIR}}/logs
+            runtime_name: ${{RUNTIMECMD.name}}
+            iteration: ${{ITERATION}}
         - script:
             name: watch-log
             async: true
@@ -763,7 +775,7 @@ scripts:
         - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s -R ${{config.energy.fixed.rate}} --timeout 30s ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-energy-fixed-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
         - sleep: 10s
         - script: start-energy-capture
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d ${{config.energy.fixed.duration}}s -R ${{config.energy.fixed.rate}} --timeout ${{config.energy.fixed.duration}}s ${{TARGET_URL}} > ${{REPO_DIR}}/logs/wrk-energy-fixed-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1 &
+        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d ${{config.energy.fixed.duration}}s -R ${{config.energy.fixed.rate}} --timeout 30s ${{TARGET_URL}} > ${{REPO_DIR}}/logs/wrk-energy-fixed-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1 &
         - sh: WRK_PID=$! && echo $WRK_PID
         - set-state: WRK_PID
         - sh: wait ${{WRK_PID}}
@@ -787,6 +799,9 @@ scripts:
     - script: calc-energy-totals
       with:
         result_prefix: RUN.output.results.${{RUNTIMECMD.name}}.energyFixedLoad
+        av_throughput: ${{RUN.output.results.${{RUNTIMECMD.name}}.energyFixedLoad.avThroughput}}
+        duration: ${{config.energy.fixed.duration}}
+        num_iterations: ${{config.num_iterations}}
 
   watch-log:
     - sh: tail -f ${{log_file}}

@@ -107,6 +107,9 @@ scripts:
             - set-state:
                 key: ${{result_prefix}}.totalIdrac
                 value: ${{= ${{${{result_prefix}}.idrac}}.reduce((a, b) => a + b, 0) || 0 }}
+            - set-state:
+                key: ${{result_prefix}}.energyPerRequestIdrac
+                value: ${{= (${{${{result_prefix}}.idrac}}.reduce((a, b) => a + b, 0) || 0) / (${{av_throughput}} * ${{duration}} * ${{num_iterations}}) }}
     - read-state: ${{config.energy.rapl}}
       then:
         - regex: "enabled"
@@ -121,6 +124,9 @@ scripts:
                     - set-state:
                         key: ${{result_prefix}}.totalRaplDram
                         value: ${{= ${{${{result_prefix}}.raplDram}}.reduce((a, b) => a + b, 0) || 0 }}
+                    - set-state:
+                        key: ${{result_prefix}}.energyPerRequestRaplPkg
+                        value: ${{= (${{${{result_prefix}}.raplPkg}}.reduce((a, b) => a + b, 0) || 0) / (${{av_throughput}} * ${{duration}} * ${{num_iterations}}) }}
 
   install-rapl-plot:
     - read-state: ${{config.energy.rapl}}
