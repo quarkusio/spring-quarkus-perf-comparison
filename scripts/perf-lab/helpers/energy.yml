@@ -2,9 +2,6 @@ name: Energy-related scripts
 scripts:
   capture-system-power:
     - script: idrac-login
-      with:
-        idrac: ${{= ${{servers}}.filter( server => { return server.hostname == "${{env.HOST}}"})[0].idrac}}
-        password: ${{idrac_pwd}}
     - set-state: RUN.svrPwr []
     - repeat-until: ${{COMPLETE_SIGNAL}}
       then:
@@ -18,18 +15,13 @@ scripts:
                     array: RUN.svrPwr
                     value: ${{watts}}
   idrac-login:
-    - sh: IDRAC_HOST="${{idrac}}"
-    - sh: IDRAC_USER="${{idrac_user:root}}"
-    - sh: IDRAC_PWD="${{password}}"
-    - sh: REAL_RACADM=$(which racadm)
-    - sh: 'racadm() { "$REAL_RACADM" -r "$IDRAC_HOST" -u "$IDRAC_USER" -p "$IDRAC_PWD" --nocertwarn "$@"; }'
     - sh: racadm getsysinfo
       then:
         - regex: "System Model"
           then:
-            - log: Connected to iDRAC at ${{idrac}}
+            - log: Connected to local iDRAC
           else:
-            - abort: "Failed to connect to iDRAC at ${{idrac}}. Verify hostname and credentials."
+            - abort: "Failed to connect to local iDRAC. Is this a Dell server with racadm installed?"
 
   validate-idrac:
     - read-state: ${{config.energy.idrac}}
