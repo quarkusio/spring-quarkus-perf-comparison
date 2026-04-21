@@ -41,8 +41,10 @@ help() {
   echo "                                                              Accepted values (1 or more of): rapl, idrac"
   echo "                                                              Special values: all, none"
   echo "                                                              Default: 'all'"
-  echo "  --energy-duration <SECONDS>                             Duration (seconds) to sustain energy measurement after RSS is captured"
-  echo "                                                              Default: 150 (matches load test duration)"
+  echo "  --fixed-throughput-duration <SECONDS>                    Duration (seconds) for fixed throughput energy measurement"
+  echo "                                                              Default: 150"
+  echo "  --fixed-throughput-rate <RATE>                           Request rate (tps) for fixed throughput energy measurement"
+  echo "                                                              Default: 5000"
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                                              NOTE: This is an advanced option. Make sure you know what you are doing when using it."
@@ -100,7 +102,7 @@ help() {
   echo "                                                              Default: Whatever version is set in pom.xml of the Spring Boot 4 app"
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
   echo "  --tests <TESTS_TO_RUN>                                  The tests to run, separated by commas"
-  echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test"
+  echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test, measure-energy-max-throughput, measure-energy-fixed-throughput"
   echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test'"
   echo "                                                              NOTE: Build times (measure-build-times) are always measured during the build phase"
   echo "  --user <USER>                                           The user on <HOST> to run the benchmark"
@@ -156,7 +158,8 @@ print_values() {
   echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
   echo "  NATIVE_SPRING4_BUILD_OPTIONS: $NATIVE_SPRING4_BUILD_OPTIONS"
   echo "  ENERGY: $ENERGY"
-  echo "  ENERGY_DURATION: $ENERGY_DURATION"
+  echo "  FIXED_THROUGHPUT_DURATION: $FIXED_THROUGHPUT_DURATION"
+  echo "  FIXED_THROUGHPUT_RATE: $FIXED_THROUGHPUT_RATE"
   echo "  ENERGY_IDRAC: $ENERGY_IDRAC"
   echo "  ENERGY_RAPL: $ENERGY_RAPL"
   echo "  PROFILER: $PROFILER"
@@ -286,7 +289,8 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -S config.jvm.args="${JVM_ARGS}" \
     -S config.energy.idrac=${ENERGY_IDRAC} \
     -S config.energy.rapl=${ENERGY_RAPL} \
-    -S config.energy.rss.duration=${ENERGY_DURATION} \
+    -S config.energy.fixed.rate=${FIXED_THROUGHPUT_RATE} \
+    -S config.energy.fixed.duration=${FIXED_THROUGHPUT_DURATION} \
     -S config.profiler.name=${PROFILER} \
     -S config.resources.app_cpus="$(count_cpus "${CPUS_APP}")" \
     -S config.resources.cpu.app="${CPUS_APP}" \
@@ -347,7 +351,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NATIVE_SPRING4_BUILD_OPTIONS=""
   ENERGY="all"
   ALLOWED_ENERGY=("rapl" "idrac")
-  ENERGY_DURATION=150
+  FIXED_THROUGHPUT_DURATION=150
+  FIXED_THROUGHPUT_RATE=5000
   ENERGY_IDRAC="enabled"
   ENERGY_RAPL="enabled"
   PROFILER="none"
@@ -358,7 +363,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   RUNTIMES=${DEFAULT_RUNTIMES[@]}
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""
-  ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
+  ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test" "measure-energy-max-throughput" "measure-energy-fixed-throughput")
   DEFAULT_TESTS_TO_RUN=("measure-time-to-first-request" "measure-rss" "run-load-test")
   TESTS_TO_RUN=${DEFAULT_TESTS_TO_RUN[@]}
   USER=""
@@ -418,7 +423,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
           ENERGY_IDRAC="enabled"
           ENERGY_RAPL="enabled"
         elif [[ "$2" == "none" ]]; then
-          ENERGY_DURATION=0
+          FIXED_THROUGHPUT_DURATION=0
         else
           IFS=',' read -ra en <<< "$2"
 
@@ -440,8 +445,13 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         shift 2
         ;;
 
-      --energy-duration)
-        ENERGY_DURATION="$2"
+      --fixed-throughput-duration)
+        FIXED_THROUGHPUT_DURATION="$2"
+        shift 2
+        ;;
+
+      --fixed-throughput-rate)
+        FIXED_THROUGHPUT_RATE="$2"
         shift 2
         ;;
 
