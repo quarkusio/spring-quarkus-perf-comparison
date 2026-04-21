@@ -103,7 +103,7 @@ help() {
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
   echo "  --tests <TESTS_TO_RUN>                                  The tests to run, separated by commas"
   echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test, measure-energy-fixed-throughput"
-  echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test'"
+  echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test,measure-energy-fixed-throughput'"
   echo "                                                              NOTE: Build times (measure-build-times) are always measured during the build phase"
   echo "  --user <USER>                                           The user on <HOST> to run the benchmark"
   echo "  --use-container-host-network                            Use host networking instead of port mapping on infra containers"
@@ -364,7 +364,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""
   ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test" "measure-energy-fixed-throughput")
-  DEFAULT_TESTS_TO_RUN=("measure-time-to-first-request" "measure-rss" "run-load-test")
+  DEFAULT_TESTS_TO_RUN=("measure-time-to-first-request" "measure-rss" "run-load-test" "measure-energy-fixed-throughput")
   TESTS_TO_RUN=${DEFAULT_TESTS_TO_RUN[@]}
   USER=""
   JVM_MEMORY="-Xms512m -Xmx512m"
