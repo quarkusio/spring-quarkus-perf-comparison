@@ -68,6 +68,11 @@ help() {
   echo "                                                              Accepted values: none, jfr, syncjfr, flamegraph"
   echo "                                                              'jfr' and 'flamegraph' use async-profiler. 'syncjfr' uses the built-in JVM Java Flight Recorder (JFR)."
   echo "                                                              Default: ${PROFILER}"
+  echo "  --profiler-args <PROFILER_ARGS>                         Extra arguments to pass to async-profiler (only used with --profiler jfr|flamegraph)"
+  echo "                                                              Example: '--total --alloc 1m'"
+  echo "  --profiler-events <PROFILER_EVENTS>                     Events to pass to async-profiler -e (only used with --profiler jfr|flamegraph)"
+  echo "                                                              Default: ${PROFILER_EVENTS}"
+  echo "                                                              Example: 'wall', 'cpu', 'lock', 'alloc'"
   echo "  --quarkus-build-config-args <QUARKUS_BUILD_CONFIG_ARGS> Quarkus app configuration properties fixed at build time"
   echo "  --quarkus-version <QUARKUS_VERSION>                     The Quarkus version to use"
   echo "                                                              Default: Whatever version is set in pom.xml of the Quarkus app"
@@ -151,6 +156,8 @@ print_values() {
   echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
   echo "  NATIVE_SPRING4_BUILD_OPTIONS: $NATIVE_SPRING4_BUILD_OPTIONS"
   echo "  PROFILER: $PROFILER"
+  echo "  PROFILER_ARGS: $PROFILER_ARGS"
+  echo "  PROFILER_EVENTS: $PROFILER_EVENTS"
   echo "  QUARKUS_BUILD_CONFIG_ARGS: $QUARKUS_BUILD_CONFIG_ARGS"
   echo "  QUARKUS_VERSION: $QUARKUS_VERSION"
   echo "  RUNTIMES: ${RUNTIMES[@]}"
@@ -290,7 +297,8 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.2 \
     -S config.quarkus.version=${QUARKUS_VERSION} \
     -S config.springboot3.native_build_options="${NATIVE_SPRING3_BUILD_OPTIONS}" \
     -S config.springboot4.native_build_options="${NATIVE_SPRING4_BUILD_OPTIONS}" \
-    -S config.profiler.events=cpu \
+    -S config.profiler.events="${PROFILER_EVENTS}" \
+    -S config.profiler.args="${PROFILER_ARGS}" \
     -S config.repo.branch=${SCM_REPO_BRANCH} \
     -S config.repo.url=${SCM_REPO_URL} \
     -S config.repo.scenario=${SCENARIO} \
@@ -334,6 +342,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NATIVE_SPRING3_BUILD_OPTIONS=""
   NATIVE_SPRING4_BUILD_OPTIONS=""
   PROFILER="none"
+  PROFILER_ARGS=""
+  PROFILER_EVENTS="cpu"
   QUARKUS_BUILD_CONFIG_ARGS=""
   QUARKUS_VERSION=""
   ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-jvm-aot" "spring4-native")
@@ -458,6 +468,16 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
           echo "!! [ERROR] --profiler option must be one of (none, jfr, syncjfr, flamegraph)!!"
           exit_abnormal
         fi
+        shift 2
+        ;;
+
+      --profiler-args)
+        PROFILER_ARGS="$2"
+        shift 2
+        ;;
+
+      --profiler-events)
+        PROFILER_EVENTS="$2"
         shift 2
         ;;
 
