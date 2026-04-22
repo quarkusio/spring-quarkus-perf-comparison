@@ -40,12 +40,13 @@ scripts:
     - wait-for: ${{wait_start:}} # don't wait by default
     - sleep: ${{delay:0}}
     - sh: >
-        bin/asprof 
-        -d ${{duration:10}} 
-        -f ${{REPO_DIR}}/logs/${{format:flamegraph}}.${{suffix:html}} 
-        -o ${{format:flamegraph}} 
-        -e ${{events:cpu}} 
-        ${{="${{enableTotal : }}".toLowerCase() == "true" ? "--total" : ""}} 
-        --title ${{title:async-profiler}} 
+        bin/asprof
+        -d ${{duration:10}}
+        -f ${{REPO_DIR}}/logs/${{format:flamegraph}}.${{suffix:html}}
+        -o ${{format:flamegraph}}
+        -e ${{events:cpu}}
+        ${{="${{enableTotal : }}".toLowerCase() == "true" ? "--total" : ""}}
+        --title ${{title:async-profiler}}
+        ${{args:}}
         ${{pid}}
     - download: ${{REPO_DIR}}/logs/${{format:flamegraph}}.${{suffix:html}}

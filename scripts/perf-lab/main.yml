@@ -43,6 +43,7 @@ states:
 
   config.profiler.name: none #jfr syncjfr flamegraph
   config.profiler.events: cpu
+  config.profiler.args:
 
   config.repo.branch: ootb
   config.repo.url: https://github.com/quarkusio/spring-quarkus-perf-comparison.git
@@ -621,6 +622,7 @@ scripts:
                     suffix: ${{PROFILER_LOGFILE}}
                     format: ${{config.profiler.name}}
                     events: ${{config.profiler.events}}
+                    args: ${{config.profiler.args}}
                     delay: 10s
         - script:
             name: watch-log
