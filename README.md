@@ -38,6 +38,13 @@ To that end, we use different branches within this repository for separating the
 | OOTB (Out of the box) | - Simplicity<br/>- Measure performance characteristics each framework provides out of the box<br/>&nbsp;&nbsp;&nbsp;&nbsp;- Does one framework provide a more "production ready" experience? | - No tuning allowed, even to fix load-related errors<br/>&nbsp;&nbsp;&nbsp;&nbsp;- Since there's no tuning, pool sizes might be different between Quarkus and Spring applications (or even between Spring 3 and Spring 4)                                                                                                                                                                                                                                                                               | [`ootb`](https://github.com/quarkusio/spring-quarkus-perf-comparison/blob/ootb)                         |
 | Tuned                 | Performance                                                                                                                                                                                  | Reasonable improvements to help improve performance without changing the architecture of the application<br/>- Code and architectural equivalence are still important<br/>- Metrics and OpenTelemetry stack<br/><br/>**Acceptable**<br/>- Adjustments to HTTP/database thread/connection pool sizes<br/>- Removal of the [open session in view pattern](https://www.baeldung.com/spring-open-session-in-view)<br/><br/>**Unacceptable**<br/>- Changes specific to a fixed number of CPU cores or memory | [`main`](https://github.com/quarkusio/spring-quarkus-perf-comparison)<br/>The default repository branch |
 
+## Application specification
+
+To ensure fair like-for-like comparisons, all modules conform to a shared specification:
+
+- [**TCK.md**](TCK.md) — Defines the architectural requirements: package structure, domain model, REST API contract, service/repository contracts, configuration, testing, and what's allowed to vary between frameworks.
+- [**openapi.yml**](openapi.yml) — The OpenAPI specification for the REST API. All modules MUST produce responses conforming to this spec.
+
 ## What's in the repo
 This project contains the following modules:
 - [springboot3](springboot3)
