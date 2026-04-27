@@ -44,7 +44,16 @@ ts=$(_date)
 # On Spring with virtual threads, tomcat fully run it, and they handle blocking calls there too, meaning that the total number of platform threads honor -XX:ActiveProcessorCount
 #
 # When running in the lab environment (see perf-lab/run-benchmarks.sh & perf-lab/main.yml), this is taken care of by using taskset on Linux.
-java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m -jar ${callingdir}/$1 &
+if [[ "$1" != *.jar ]]; then
+  # .NET: use DOTNET_* env vars to approximate Java -Xmx and -XX:ActiveProcessorCount
+  export DOTNET_GCHeapHardLimit=0x20000000
+  export DOTNET_ProcessorCount=4
+  export DOTNET_gcServer=1
+  export Logging__LogLevel__Default=None
+  ${callingdir}/$1 &
+else
+  java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m -jar ${callingdir}/$1 &
+fi
 CURRENT_PID=$!
 
 # Wait and measure TTFR

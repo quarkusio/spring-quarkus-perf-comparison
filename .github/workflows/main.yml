@@ -186,3 +186,39 @@ jobs:
         run: |
           ../scripts/stress.sh "${{ matrix.app.app-jar }}"
           ../scripts/1strequest.sh "java -XX:ActiveProcessorCount=4 -Xms512m -Xmx512m ${{ matrix.app.run-args }} -jar ${{ matrix.app.app-jar }}" 3
+
+
+  dotnet-build-test:
+    runs-on: ubuntu-latest
+    name: "[dotnet-build-test]"
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.x'
+
+      - name: Build and test (unit tests only)
+        working-directory: dotnet10
+        # E2E tests require a running PostgreSQL instance with seed data.
+        # See DOTNET-PORTING.md for options to enable them in CI.
+        run: dotnet test --filter "FullyQualifiedName!~Dotnet10.Tests.E2e"
+
+      - name: Publish
+        working-directory: dotnet10
+        run: dotnet publish Dotnet10 -c Release -o publish
+
+      - name: Setup JBang
+        uses: jbangdev/setup-jbang@main
+
+      - name: Validate simple scripts
+        run: |
+          scripts/stress.sh dotnet10/publish/dotnet10
+          scripts/1strequest.sh "dotnet10/publish/dotnet10" 5

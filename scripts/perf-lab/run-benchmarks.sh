@@ -76,8 +76,8 @@ help() {
   echo "  --repo-url <SCM_REPO_URL>                               The SCM repo url"
   echo "                                                              Default: '${SCM_REPO_URL}'"
   echo "  --runtimes <RUNTIMES>                                   The runtimes to test, separated by commas"
-  echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-leyden, quarkus3-virtual, quarkus3-virtual-leyden, quarkus3-native, spring3-jvm, spring3-leyden, spring3-virtual, spring3-virtual-leyden, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-leyden, spring4-virtual, spring4-virtual-leyden, spring4-jvm-aot, spring4-native"
-  echo "                                                              Default: 'quarkus3-jvm,quarkus3-leyden,quarkus3-virtual,quarkus3-virtual-leyden,quarkus3-native,spring3-jvm,spring3-leyden,spring3-jvm-aot,spring3-virtual,spring3-virtual-leyden,spring3-native,spring4-jvm,spring4-leyden,spring4-virtual,spring4-virtual-leyden,spring4-jvm-aot,spring4-native'"
+  echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-leyden, quarkus3-virtual, quarkus3-virtual-leyden, quarkus3-native, spring3-jvm, spring3-leyden, spring3-virtual, spring3-virtual-leyden, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-leyden, spring4-virtual, spring4-virtual-leyden, spring4-jvm-aot, spring4-native, dotnet10"
+  echo "                                                              Default: 'quarkus3-jvm,quarkus3-leyden,quarkus3-virtual,quarkus3-virtual-leyden,quarkus3-native,spring3-jvm,spring3-leyden,spring3-jvm-aot,spring3-virtual,spring3-virtual-leyden,spring3-native,spring4-jvm,spring4-leyden,spring4-virtual,spring4-virtual-leyden,spring4-jvm-aot,spring4-native,dotnet10'"
   echo "  --run-identifier <RUN_IDENTIFIER>                       An optional identifier for this run to be added to the run output"
   echo "  --scenario <SCENARIO>                                   The scenario to run"
   echo "                                                              Accepted values: tuned, ootb"
@@ -219,6 +219,29 @@ count_cpus() {
   echo "$count"
 }
 
+# Converts the -Xmx value from a JVM memory string (e.g. "-Xms512m -Xmx512m") to the
+# hex byte count required by DOTNET_GCHeapHardLimit (e.g. 0x20000000).
+# Falls back to 512 MiB if no -Xmx is found.
+xmx_to_dotnet_gc_limit() {
+  local jvm_mem="$1"
+  local xmx
+  xmx=$(echo "$jvm_mem" | grep -oE '\-Xmx[0-9]+[mMgGkK]?' | sed 's/-Xmx//')
+  if [[ -z "$xmx" ]]; then
+    printf '0x%X\n' $(( 512 * 1024 * 1024 ))
+    return
+  fi
+  local num unit bytes
+  num=$(echo "$xmx" | grep -oE '^[0-9]+')
+  unit=$(echo "$xmx" | grep -oE '[mMgGkK]$' || true)
+  case "${unit,,}" in
+    m) bytes=$(( num * 1024 * 1024 )) ;;
+    g) bytes=$(( num * 1024 * 1024 * 1024 )) ;;
+    k) bytes=$(( num * 1024 )) ;;
+    *) bytes=$num ;;
+  esac
+  printf '0x%X\n' "$bytes"
+}
+
 setup_jbang() {
   if command -v jbang &> /dev/null; then
     echo "Using installed jbang ($(jbang --version))"
@@ -285,6 +308,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -S config.springboot3.version=${SPRING_BOOT3_VERSION} \
     -S config.springboot4.version=${SPRING_BOOT4_VERSION} \
     -S config.jvm.memory="${JVM_MEMORY}" \
+    -S config.dotnet.gcHeapHardLimit="$(xmx_to_dotnet_gc_limit "${JVM_MEMORY}")" \
     -S config.quarkus.build_config_args="${QUARKUS_BUILD_CONFIG_ARGS}" \
     -S config.quarkus.version=${QUARKUS_VERSION} \
     -S config.springboot3.native_build_options="${NATIVE_SPRING3_BUILD_OPTIONS}" \
@@ -335,8 +359,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   PROFILER="none"
   QUARKUS_BUILD_CONFIG_ARGS=""
   QUARKUS_VERSION=""
-  ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-jvm-aot" "spring4-native")
-  DEFAULT_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-native")
+  ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-jvm-aot" "spring4-native" "dotnet10")
+  DEFAULT_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-native" "dotnet10")
   RUNTIMES=${DEFAULT_RUNTIMES[@]}
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""

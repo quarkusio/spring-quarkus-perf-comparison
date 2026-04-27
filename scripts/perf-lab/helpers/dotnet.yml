@@ -1,0 +1,8 @@
+name: Dotnet related scripts
+scripts:
+  # Generic check — satisfied by any installed .NET SDK version.
+  # When adding a new dotnet version (e.g., dotnet11) no change is needed here
+  # unless you want to pin to a specific major version.
+  ensure-dotnet:
+    - log: Showing Dotnet version
+    - sh: dotnet --version

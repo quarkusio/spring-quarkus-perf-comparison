@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      xunit.v3 targets net8.0, which net10.0 resolves correctly.
+      xunit 2.x targets net6.0 and fails at runtime on net10.0.
+      Microsoft.NET.Test.Sdk is required for dotnet test / VSTest integration.
+    -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk"    Version="17.13.0" />
+    <PackageReference Include="xunit.v3"                  Version="3.2.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dotnet10\Dotnet10.csproj"
+                      ExcludeAssets="runtime" />
+  </ItemGroup>
+
+</Project>

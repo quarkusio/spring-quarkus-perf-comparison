@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
+
 # 1st argument is the command to execute
 # 2nd argument is the number of iterations. If not specified defaults to 1
-
+# --no-purge: skip OS page cache drop (useful for local dev without sudo)
+#
 # Example usage
 # 1) Run the Spring app 10 times
 # $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../springboot3/target/springboot3.jar" 10
@@ -12,6 +14,9 @@
 #
 # 3) Run the Quarkus with spring compatibility app 10 times
 # $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar" 10
+#
+# 4) Run the dotnet app 3 times without sudo (local dev)
+# $ ./1strequest.sh "dotnet10/publish/dotnet10" 3 --no-purge
 set -euo pipefail
 
 thisdir=`dirname "$0"`
@@ -20,6 +25,7 @@ COMMAND=$1
 NUM_ITERATIONS=1
 TOTAL_RSS=0
 TOTAL_TTFR=0
+NO_PURGE=false
 
 function _date() {
     current=$(date +%s%N)
@@ -29,24 +35,44 @@ function _date() {
     echo "$current"
 }
 
-if [ "$#" -eq 2 ]; then
+if [ "$#" -ge 2 ]; then
   NUM_ITERATIONS=$2
+fi
+for arg in "$@"; do
+  if [ "$arg" = "--no-purge" ]; then NO_PURGE=true; fi
+done
+
+LC_NUMERIC=C
+if [[ "$1" != *.jar ]]; then
+  # .NET Environment variables to mimic Java -Xmx and -XX:ActiveProcessorCount:
+  # DOTNET_GCHeapHardLimit: Hard memory limit in hex (0x20000000 = 512MB)
+  # DOTNET_ProcessorCount: Limits the CPU cores the runtime perceives
+  # DOTNET_gcServer: Enables Server GC for high-throughput
+  export DOTNET_GCHeapHardLimit=0x20000000
+  export DOTNET_ProcessorCount=4
+  export DOTNET_gcServer=1
+
+  # Suppress logging
+  export Logging__LogLevel__Default=None
 fi
 
 for (( i=0; i<$NUM_ITERATIONS; i++))
 do
   # drop OS page cache entries, inode etc etc
-  if [[ "$OSTYPE" == "darwin"* ]]; then
-    sync && sudo purge
-  else
-    # Linux: drop pagecache, dentries and inodes
-    sync && sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'
+  if [ "$NO_PURGE" = false ]; then
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+      sync && sudo purge
+    else
+      # Linux: drop pagecache, dentries and inodes
+      sync && sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'
+    fi
   fi
 
   # Start the infra
   ${thisdir}/infra.sh -s
 
   ts=$(_date)
+
   $COMMAND &
   CURRENT_PID=$!
 

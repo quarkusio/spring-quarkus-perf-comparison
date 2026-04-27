@@ -1,0 +1,25 @@
+## .NET
+bin/
+obj/
+publish/
+*.user
+.vs/
+.vscode/
+*.suo
+*.userprefs
+
+## Rider / JetBrains
+.idea/
+
+## Test results
+TestResults/
+coverage*/
+
+## NuGet
+*.nupkg
+.nuget/
+packages/
+
+## OS
+.DS_Store
+Thumbs.db

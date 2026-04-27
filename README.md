@@ -50,6 +50,8 @@ This project contains the following modules:
     - A Quarkus 3.x version of the application using Virtual Threads
 - [quarkus3-spring-compatibility](quarkus3-spring-compatibility)
     - A Quarkus 3.x version of the application using the Spring compatibility layer. You can also recreate this application from the spring application using [a few manual steps](spring-conversion.md).
+- [dotnet10](dotnet10)
+    - An ASP.NET Core 10 (.NET 10) version of the application, equivalent to the plain Quarkus implementation.
  
 ## Architecture & Workflow
 
@@ -95,6 +97,8 @@ cd scripts
 ## Scripts
 
 There are some [scripts](scripts) available to help you run the application:
+- [`remote-setup.sh`](scripts/remote-setup.sh)
+    - Prepares a remote Linux host for benchmark runs: installs your SSH key, configures passwordless sudo, and verifies the environment — without requiring you to log into the box directly. See [Running on a remote Linux box](#better-run-on-a-dedicated-remote-linux-box) for the full workflow.
 - [`run-requests.sh`](scripts/run-requests.sh)
     - Runs a set of requests against a running application.
 - [`infra.sh`](scripts/infra.sh)
@@ -135,6 +139,13 @@ scripts/stress.sh quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.j
 scripts/stress.sh springboot3/target/springboot3.jar
 ```
 
+For .NET, pass the path to the published binary directly (no `java` wrapper needed):
+
+```shell
+# First publish: cd dotnet10 && dotnet publish Dotnet10 -c Release -o publish
+scripts/stress.sh dotnet10/publish/dotnet10
+```
+
 For each test, you should see output like 
 
 ```shell
@@ -153,6 +164,12 @@ For example,
 scripts/1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar quarkus3/target/quarkus-app/quarkus-run.jar" 5
 scripts/1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar" 5
 scripts/1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar springboot3/target/springboot3.jar" 5
+```
+
+For .NET:
+
+```shell
+scripts/1strequest.sh "dotnet10/publish/dotnet10" 5
 ```
 
 You should see output like 
@@ -190,6 +207,73 @@ To explore all available options (including the full list of runtimes and tests)
 ```
 
 To produce charts from the output, you can use the scripts at https://github.com/quarkusio/benchmarks.
+
+### Better: Run on a dedicated remote Linux box
+
+Running on a separate Linux machine removes the biggest sources of noise from the "single machine" approach: your load generator no longer competes with the application under test, and you get a stable, server-class CPU without laptop power management interfering.
+
+All steps are driven from **your local machine** — you never need to log into the remote box and do some manual configuration.
+
+
+#### Step 1 — Have a Linux box ready
+
+The remote host must:
+- Run Linux
+- Be reachable by SSH from your machine
+- Have **outbound internet access** so qDup can download Java, GraalVM, jbang, and the repo during the benchmark setup phase
+- Have at least **14 CPU cores** for proper workload isolation — the benchmark pins each role to dedicated cores:
+
+  | Role | Default cores | Count |
+  |---|---|---|
+  | Application under test | `0-3` | 4 |
+  | PostgreSQL database | `4-6` | 3 |
+  | OpenTelemetry stack | `7-9` | 3 |
+  | Load generator | `10-12` | 3 |
+  | Monitoring | `13` | 1 |
+  | Time-to-first-request | `10` | (shared with load gen) |
+
+  Use `--cpus-app`, `--cpus-db`, `--cpus-otel`, `--cpus-load-gen`, `--cpus-monitoring`, and `--cpus-first-request` to override the defaults if your CPU layout differs (e.g. to stay within a single NUMA node).
+
+#### Step 2 — Run the remote setup script
+
+[`scripts/remote-setup.sh`](scripts/remote-setup.sh) configures the host in one command: it installs your SSH public key (prompts for the remote password once), sets up passwordless sudo (prompts for the sudo password once), and verifies the environment.
+
+```shell
+scripts/remote-setup.sh --host <HOST> --user <USER>
+```
+
+After this you will never need a password to reach the box again. Run with `--help` to see all options (custom SSH key, non-standard port, check-only mode, etc.).
+
+#### Step 3 — Run the benchmarks
+
+From the `scripts/perf-lab/` directory:
+
+```shell
+./run-benchmarks.sh \
+  --host <HOST> \
+  --user <USER> \
+  --quarkus-version 3.28.4 \
+  --springboot3-version 3.5.6
+```
+
+qDup will SSH into the box, install all required tooling (Java, GraalVM, jbang, .NET SDK, …), clone the repository, build each runtime, and run all tests — all without any manual intervention.
+
+> [!IMPORTANT]
+> `run-benchmarks.sh` always clones the repository from GitHub (the URL passed via `--repo-url`, defaulting to the upstream repo). **Local uncommitted changes are not picked up automatically.**
+>
+> If you have modified application code (e.g. `dotnet10/Dotnet10/Program.cs`) and want those changes benchmarked, commit and push them first, then point the script at your fork/branch:
+>
+> ```shell
+> git add dotnet10/Dotnet10/Program.cs && git commit -m "my changes" && git push origin my-branch
+>
+> ./run-benchmarks.sh \
+>   --host <HOST> \
+>   --user <USER> \
+>   --repo-url https://github.com/<YOUR_FORK>/spring-quarkus-perf-comparison.git \
+>   --repo-branch my-branch \
+>   --quarkus-version 3.28.4 \
+>   --springboot3-version 3.5.6
+> ```
 
 ### The best: Run tests in a controlled lab
 
