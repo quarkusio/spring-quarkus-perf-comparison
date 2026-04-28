@@ -37,6 +37,14 @@ help() {
   echo "  --cpus-otel <CPUS_OTEL>                                 CPU list for the OpenTelemetry stack (e.g. 14,16,18)"
   echo "                                                              Default: ${CPUS_OTEL}"
   echo "  --description <DESCRIPTION>                             A human-readable description to be added to the run output"
+  echo "  --energy <ENERGY>                                       Energy measurement sources, separated by commas"
+  echo "                                                              Accepted values (1 or more of): rapl, idrac"
+  echo "                                                              Special values: all, none"
+  echo "                                                              Default: 'all'"
+  echo "  --fixed-throughput-duration <SECONDS>                    Duration (seconds) for fixed throughput energy measurement"
+  echo "                                                              Default: 150"
+  echo "  --fixed-throughput-rate <RATE>                           Request rate (tps) for fixed throughput energy measurement"
+  echo "                                                              Default: 5000"
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                                              NOTE: This is an advanced option. Make sure you know what you are doing when using it."
@@ -94,8 +102,8 @@ help() {
   echo "                                                              Default: Whatever version is set in pom.xml of the Spring Boot 4 app"
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
   echo "  --tests <TESTS_TO_RUN>                                  The tests to run, separated by commas"
-  echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test"
-  echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test'"
+  echo "                                                              Accepted values (1 or more of): measure-build-times, measure-time-to-first-request, measure-rss, run-load-test, measure-energy-fixed-throughput"
+  echo "                                                              Default: 'measure-time-to-first-request,measure-rss,run-load-test,measure-energy-fixed-throughput'"
   echo "                                                              NOTE: Build times (measure-build-times) are always measured during the build phase"
   echo "  --user <USER>                                           The user on <HOST> to run the benchmark"
   echo "  --use-container-host-network                            Use host networking instead of port mapping on infra containers"
@@ -149,6 +157,11 @@ print_values() {
   echo "  NATIVE_QUARKUS_BUILD_OPTIONS: $NATIVE_QUARKUS_BUILD_OPTIONS"
   echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
   echo "  NATIVE_SPRING4_BUILD_OPTIONS: $NATIVE_SPRING4_BUILD_OPTIONS"
+  echo "  ENERGY: $ENERGY"
+  echo "  FIXED_THROUGHPUT_DURATION: $FIXED_THROUGHPUT_DURATION"
+  echo "  FIXED_THROUGHPUT_RATE: $FIXED_THROUGHPUT_RATE"
+  echo "  ENERGY_IDRAC: $ENERGY_IDRAC"
+  echo "  ENERGY_RAPL: $ENERGY_RAPL"
   echo "  PROFILER: $PROFILER"
   echo "  QUARKUS_BUILD_CONFIG_ARGS: $QUARKUS_BUILD_CONFIG_ARGS"
   echo "  QUARKUS_VERSION: $QUARKUS_VERSION"
@@ -274,6 +287,10 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -S config.jvm.version=${JAVA_VERSION} \
     -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
     -S config.jvm.args="${JVM_ARGS}" \
+    -S config.energy.idrac=${ENERGY_IDRAC} \
+    -S config.energy.rapl=${ENERGY_RAPL} \
+    -S config.energy.fixed.rate=${FIXED_THROUGHPUT_RATE} \
+    -S config.energy.fixed.duration=${FIXED_THROUGHPUT_DURATION} \
     -S config.profiler.name=${PROFILER} \
     -S config.resources.app_cpus="$(count_cpus "${CPUS_APP}")" \
     -S config.resources.cpu.app="${CPUS_APP}" \
@@ -332,6 +349,12 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NATIVE_QUARKUS_BUILD_OPTIONS=""
   NATIVE_SPRING3_BUILD_OPTIONS=""
   NATIVE_SPRING4_BUILD_OPTIONS=""
+  ENERGY="all"
+  ALLOWED_ENERGY=("rapl" "idrac")
+  FIXED_THROUGHPUT_DURATION=150
+  FIXED_THROUGHPUT_RATE=5000
+  ENERGY_IDRAC="enabled"
+  ENERGY_RAPL="enabled"
   PROFILER="none"
   QUARKUS_BUILD_CONFIG_ARGS=""
   QUARKUS_VERSION=""
@@ -340,8 +363,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   RUNTIMES=${DEFAULT_RUNTIMES[@]}
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""
-  ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test")
-  DEFAULT_TESTS_TO_RUN=("measure-time-to-first-request" "measure-rss" "run-load-test")
+  ALLOWED_TESTS_TO_RUN=("measure-build-times" "measure-time-to-first-request" "measure-rss" "run-load-test" "measure-energy-fixed-throughput")
+  DEFAULT_TESTS_TO_RUN=("measure-time-to-first-request" "measure-rss" "run-load-test" "measure-energy-fixed-throughput")
   TESTS_TO_RUN=${DEFAULT_TESTS_TO_RUN[@]}
   USER=""
   JVM_MEMORY="-Xms512m -Xmx512m"
@@ -388,6 +411,50 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       --use-container-host-network)
         USE_CONTAINER_HOST_NETWORK=true
         shift
+        ;;
+
+      --energy)
+        ENERGY_SET_BY_USER="true"
+        ENERGY="$2"
+        ENERGY_IDRAC="disabled"
+        ENERGY_RAPL="disabled"
+
+        if [[ "$2" == "all" ]]; then
+          ENERGY_IDRAC="enabled"
+          ENERGY_RAPL="enabled"
+        elif [[ "$2" == "none" ]]; then
+          FIXED_THROUGHPUT_DURATION=0
+        else
+          IFS=',' read -ra en <<< "$2"
+
+          for item in "${en[@]}"; do
+            case "$item" in
+              rapl) ENERGY_RAPL="enabled" ;;
+              idrac) ENERGY_IDRAC="enabled" ;;
+              *) echo "!! [ERROR] --energy option must be 'all', 'none', or 1 or more of [${ALLOWED_ENERGY[@]}]!!"
+                 exit_abnormal ;;
+            esac
+          done
+        fi
+        shift 2
+        ;;
+
+      --fixed-throughput-duration)
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+          echo "!! [ERROR] --fixed-throughput-duration must be a positive integer!!"
+          exit_abnormal
+        fi
+        FIXED_THROUGHPUT_DURATION="$2"
+        shift 2
+        ;;
+
+      --fixed-throughput-rate)
+        if ! [[ "$2" =~ ^[0-9]+$ ]]; then
+          echo "!! [ERROR] --fixed-throughput-rate must be a positive integer!!"
+          exit_abnormal
+        fi
+        FIXED_THROUGHPUT_RATE="$2"
+        shift 2
         ;;
 
       --extra-qdup-args)

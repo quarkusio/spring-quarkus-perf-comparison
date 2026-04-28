@@ -1,0 +1,153 @@
+name: Energy-related scripts
+scripts:
+  capture-system-power:
+    - script: idrac-login
+    - set-state: RUN.svrPwr []
+    - repeat-until: ${{COMPLETE_SIGNAL}}
+      then:
+        - sleep: 1s
+        - sh: racadm get system.Power.Realtime.Power
+          then:
+            - regex: (?<watts>\\d+) W | (?<btu>\\d+) Btu/hr
+              then:
+                - script: state-array-push
+                  with:
+                    array: RUN.svrPwr
+                    value: ${{watts}}
+  idrac-login:
+    - sh: racadm getsysinfo
+      then:
+        - regex: "System Model"
+          then:
+            - log: Connected to local iDRAC
+          else:
+            - abort: "Failed to connect to local iDRAC. Is this a Dell server with racadm installed?"
+
+  validate-idrac:
+    - read-state: ${{config.energy.idrac}}
+      then:
+        - regex: "enabled"
+          then:
+            - sh: "which racadm &>/dev/null && echo RACADM_FOUND || echo RACADM_MISSING"
+              then:
+                - regex: RACADM_FOUND
+                  then:
+                    - set-state: RUN.IDRAC_AVAILABLE true
+                - regex: RACADM_MISSING
+                  then:
+                    - set-state: RUN.IDRAC_AVAILABLE false
+                    - log: racadm not found on this system, skipping energy measurement via iDRAC
+
+  start-energy-capture:
+    - read-state: ${{config.energy.rapl}}
+      then:
+        - regex: "enabled"
+          then:
+            - sh: "[[ -x ${{RUN.RAPL_BIN:__NORAPL__}} ]] && echo RAPL_READY"
+              then:
+                - regex: RAPL_READY
+                  then:
+                    - script: sudo
+                      with:
+                        command: ${{RUN.RAPL_BIN}} -p > ${{RUN.OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl &
+                    - sh: echo $!
+                      then:
+                        - set-state: RUN.RAPL_PID
+    - read-state: ${{RUN.IDRAC_AVAILABLE}}
+      then:
+        - regex: "true"
+          then:
+            - set-signal: ${{COMPLETE_SIGNAL}} 1
+            - script:
+                name: capture-system-power
+                async: true
+
+  stop-energy-capture:
+    - read-state: ${{RUN.IDRAC_AVAILABLE}}
+      then:
+        - regex: "true"
+          then:
+            - signal: ${{COMPLETE_SIGNAL}}
+            - sh: echo "${{RUN.svrPwr}}" > ${{RUN.OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.svrPwr
+            - set-state: IDRAC_ENERGY ${{= ${{RUN.svrPwr}}.reduce((a, b) => a + b, 0) || 0 }}
+            - script: state-array-push
+              with:
+                array: ${{result_prefix}}.idrac
+                value: ${{IDRAC_ENERGY}}
+    - read-state: ${{config.energy.rapl}}
+      then:
+        - regex: "enabled"
+          then:
+            - sh: "[[ -x ${{RUN.RAPL_BIN:__NORAPL__}} ]] && echo RAPL_READY"
+              then:
+                - regex: RAPL_READY
+                  then:
+                    - script: sudo
+                      with:
+                        command: kill ${{RUN.RAPL_PID}}
+                    - sh: sleep 1
+                    - sh: awk -F', ' '/^[^#]/{s+=$2; d+=$4} END{printf "%.2f %.2f", s, d}' ${{RUN.OUTPUT_DIR}}/${{COMPLETE_SIGNAL}}.rapl
+                      then:
+                        - regex: (?<pkg>\S+) (?<dram>\S+)
+                          then:
+                            - script: state-array-push
+                              with:
+                                array: ${{result_prefix}}.raplPkg
+                                value: ${{pkg}}
+                            - script: state-array-push
+                              with:
+                                array: ${{result_prefix}}.raplDram
+                                value: ${{dram}}
+
+  calc-energy-totals:
+    - read-state: ${{RUN.IDRAC_AVAILABLE}}
+      then:
+        - regex: "true"
+          then:
+            - set-state:
+                key: ${{result_prefix}}.totalIdrac
+                value: ${{= ${{${{result_prefix}}.idrac}}.reduce((a, b) => a + b, 0) || 0 }}
+            - set-state:
+                key: ${{result_prefix}}.energyPerRequestIdrac
+                value: ${{= (${{${{result_prefix}}.idrac}}.reduce((a, b) => a + b, 0) || 0) / (${{av_throughput}} * ${{duration}} * ${{num_iterations}}) }}
+    - read-state: ${{config.energy.rapl}}
+      then:
+        - regex: "enabled"
+          then:
+            - sh: "[[ -x ${{RUN.RAPL_BIN:__NORAPL__}} ]] && echo RAPL_READY"
+              then:
+                - regex: RAPL_READY
+                  then:
+                    - set-state:
+                        key: ${{result_prefix}}.totalRaplPkg
+                        value: ${{= ${{${{result_prefix}}.raplPkg}}.reduce((a, b) => a + b, 0) || 0 }}
+                    - set-state:
+                        key: ${{result_prefix}}.totalRaplDram
+                        value: ${{= ${{${{result_prefix}}.raplDram}}.reduce((a, b) => a + b, 0) || 0 }}
+                    - set-state:
+                        key: ${{result_prefix}}.energyPerRequestRaplPkg
+                        value: ${{= (${{${{result_prefix}}.raplPkg}}.reduce((a, b) => a + b, 0) || 0) / (${{av_throughput}} * ${{duration}} * ${{num_iterations}}) }}
+
+  install-rapl-plot:
+    - read-state: ${{config.energy.rapl}}
+      then:
+        - regex: "enabled"
+          then:
+            - sh: "[[ -d /sys/class/powercap/intel-rapl ]] && echo RAPL_SUPPORTED || echo RAPL_UNSUPPORTED"
+              then:
+                - regex: RAPL_SUPPORTED
+                  then:
+                    - sh: "[[ -f ${{RAPL_PATH:/tmp/rapl}}/${{RAPL_EXE:rapl-plot}} ]] || echo GETRAPL;"
+                      then:
+                        - regex: GET
+                          then:
+                            - sh: mkdir -p ${{RAPL_PATH:/tmp/rapl}}
+                            - sh: cd ${{RAPL_PATH:/tmp/rapl}}
+                            - sh: git clone https://github.com/deater/uarch-configure.git
+                            - sh: cd uarch-configure/rapl-read
+                            - sh: make all
+                            - sh: cp rapl-plot ${{RAPL_PATH:/tmp/rapl}}/${{RAPL_EXE:rapl-plot}}
+                    - set-state: RUN.RAPL_BIN ${{RAPL_PATH:/tmp/rapl}}/${{RAPL_EXE:rapl-plot}}
+                - regex: RAPL_UNSUPPORTED
+                  then:
+                    - log: RAPL not available on this system, skipping energy measurement via RAPL
