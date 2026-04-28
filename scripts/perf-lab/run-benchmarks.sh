@@ -101,6 +101,10 @@ help() {
   echo "  --use-container-host-network                            Use host networking instead of port mapping on infra containers"
   echo "  --wait-time <WAIT_TIME>                                 Wait time (in seconds) to wait for things like application startup"
   echo "                                                              Default: ${WAIT_TIME}"
+  echo "  --wrk-connections <WRK_CONNECTIONS>                     Number of wrk connections"
+  echo "                                                              Default: ${WRK_CONNECTIONS}"
+  echo "  --wrk-threads <WRK_THREADS>                             Number of wrk threads"
+  echo "                                                              Default: ${WRK_THREADS}"
 }
 
 exit_abnormal() {
@@ -300,6 +304,8 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.0 \
     -S env.run.host.user=${USER} \
     -S env.run.host.target=${target} \
     -S env.run.host.name=${HOST} \
+    -S config.wrk.connections=${WRK_CONNECTIONS} \
+    -S config.wrk.threads=${WRK_THREADS} \
     -S config.num_iterations=${ITERATIONS} \
     -S PROJ_REPO_NAME="$(basename ${SCM_REPO_URL} .git)" \
     -S RUNTIMES="$(make_json_array $RUNTIMES)" \
@@ -349,6 +355,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   DROP_OS_FILESYSTEM_CACHES=false
   USE_CONTAINER_HOST_NETWORK=false
   JVM_ARGS=""
+  WRK_CONNECTIONS="100"
+  WRK_THREADS="2"
   EXTRA_QDUP_ARGS=""
   OUTPUT_DIR="/tmp"
 
@@ -531,6 +539,16 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
       --wait-time)
         WAIT_TIME="$2"
+        shift 2
+        ;;
+
+      --wrk-connections)
+        WRK_CONNECTIONS="$2"
+        shift 2
+        ;;
+
+      --wrk-threads)
+        WRK_THREADS="$2"
         shift 2
         ;;
 

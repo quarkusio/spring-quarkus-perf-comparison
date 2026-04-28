@@ -48,6 +48,9 @@ states:
   config.repo.branch: main
   config.repo.url: https://github.com/quarkusio/spring-quarkus-perf-comparison.git
 
+  config.wrk.connections: 100
+  config.wrk.threads: 2
+
   config.num_iterations: 3
 
   APP_CMD_PREFIX: taskset --cpu-list ${{config.resources.cpu.app}}
@@ -623,13 +626,13 @@ scripts:
             log_file: ${{LOG_FILE}}
             log_regex: ${{APP_LOG_REGEX}}
         - wait-for: LOG_REGEX_REACHED
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 2m --timeout 2m ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
+        - sh: ${{RUN.WRK_BIN}} -t ${{config.wrk.threads}} -c ${{config.wrk.connections}} -d 2m --timeout 2m ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
         - regex: unable to connect
           then:
             - abort: unable to connect to target application
         - sleep: 30s # Wait for the app to complete warmup
         - signal: LOAD_STEADY_STATE_START
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s --timeout 30s ${{TARGET_URL}} > ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1 &
+        - sh: ${{RUN.WRK_BIN}} -t ${{config.wrk.threads}} -c ${{config.wrk.connections}} -d 30s --timeout 30s ${{TARGET_URL}} > ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1 &
         - sh: WRK_PID=$! && echo $WRK_PID
         - set-state: WRK_PID
         - script:
