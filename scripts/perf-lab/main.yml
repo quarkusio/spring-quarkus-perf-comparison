@@ -44,7 +44,7 @@ states:
   config.profiler.name: none #jfr syncjfr flamegraph
   config.profiler.events: cpu
 
-  config.repo.branch: main
+  config.repo.branch: ootb
   config.repo.url: https://github.com/quarkusio/spring-quarkus-perf-comparison.git
 
   config.num_iterations: 3
