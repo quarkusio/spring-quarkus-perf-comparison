@@ -136,7 +136,7 @@ else
 fi
 
 # Process the input options
-while getopts "c:dhm:p:rs" option; do
+while getopts "c:dhnm:p:rs" option; do
   case $option in
     c) CPUS=$OPTARG
        ;;
