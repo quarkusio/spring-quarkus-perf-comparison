@@ -352,6 +352,11 @@ scripts:
         - regex: "Error: PostgreSQL failed to become ready"
           then:
             - abort: PostgreSQL failed to become ready
+    - sh: echo $?
+      then:
+        - regex: "^0$"
+          else:
+            - abort: start-test-services (infra.sh) failed with a non-zero exit code
 
   capture-otel-data:
     - sh: ${{PROJ_REPO_DIR}}/scripts/lookup_otel_service.sh > ${{REPO_DIR}}/logs/otel-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1
