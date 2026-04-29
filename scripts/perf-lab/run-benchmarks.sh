@@ -315,7 +315,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   RUN_IDENTIFIER=""
   SCM_REPO_URL="https://github.com/quarkusio/spring-quarkus-perf-comparison.git"
   SCM_REPO_BRANCH="ootb"
-  SCENARIO="tuned"
+  SCENARIO="ootb"
   SCENARIO_SET_BY_USER=""
   GRAALVM_HOME=""
   GRAALVM_VERSION="25.0.2-graalce"
