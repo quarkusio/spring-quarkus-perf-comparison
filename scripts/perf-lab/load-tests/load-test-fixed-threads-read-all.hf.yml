@@ -1,0 +1,112 @@
+# =============================================================================
+# Hyperfoil Load Test Configuration
+# =============================================================================
+#
+# This configuration file defines a load test scenario for the application's read-all
+# endpoint. It includes a warmup phase followed by a delay, then the main load test phase.
+#
+# All phases target the same HTTP endpoint.
+#
+# This is to replace how we did things exactly as before:
+# warmup
+# wrk -t 2 -c 100 -d 2m --timeout 2m http://localhost:8080/fruits
+#
+# cooldown
+# sleep 30s
+#
+# loadTest
+# wrk -t 2 -c 100 -d 30s --timeout 30s http://localhost:8080/fruits
+#
+# Configurable Parameters:
+# ----------------------------------
+# PROTOCOL               - HTTP protocol to use (default: http)
+#                           Options: http, https
+# HOST                   - Target server hostname (default: localhost)
+# PORT                   - Target server port (default: 8080)
+# CONNECTIONS            - Number of HTTP connections (-c wrk param) (default: 100)
+# HIDE_WARMUP_PHASE      - Hide the warmup phase details (default: false)
+# PATH                   - HTTP endpoint path to test (default: /fruits)
+# WARMUP_DURATION        - Duration of the warmup phase (-d wrk param) (default: 2m)
+# WARMUP_MAX_DURATION    - Maximum duration of the warmup phase (default: 4m)
+# WARMUP_PAUSE_DURATION  - Duration of the pause between warmup and main load test (default: 30s)
+# WARMUP_REQUEST_TIMEOUT - Timeout for warmup requests (--timeout wrk param) (default: 2m)
+# LOAD_REQUEST_TIMEOUT   - Timeout for main load test requests (--timeout wrk param) (default: 30s)
+# LOAD_DURATION          - Duration of the main load test phase (-d wrk param) (default: 30s)
+# LOAD_MAX_DURATION      - Maximum duration of the main load test phase (default: 1m)
+# THREADS                - Number of threads to use (-t wrk param) (default: 2)
+#
+# Usage:
+# ------
+# Override parameters using: -P PARAM_NAME=value
+# Example: jbang run@hyperfoil -PHOST=example.com -PPORT=443 -PPROTOCOL=https load-test-fixed-threads-read-all.hf.yml
+#
+# =============================================================================
+
+name: load-test-fixed-threads-read-all
+threads: !param THREADS 2
+http:
+  - protocol: !param PROTOCOL http
+    host: !param HOST localhost
+    port: !param PORT 8080
+    sharedConnections: !param CONNECTIONS 100
+    allowHttp2: false
+    useHttpCache: false
+ergonomics:
+  repeatCookies: false
+  userAgentFromSession: false
+
+phases:
+  - warmup:
+      always:
+        users: !param CONNECTIONS 100
+        duration: !param WARMUP_DURATION 2m
+        maxDuration: !param WARMUP_MAX_DURATION 4m
+        isWarmup: !param HIDE_WARMUP_PHASE false
+        scenario:
+          maxRequests: 1
+          maxSequences: 1
+          orderedSequences:
+            - getAllFruits:
+                - httpRequest:
+                      GET: !param PATH /fruits
+                      timeout: !param WARMUP_REQUEST_TIMEOUT 2m
+                      headers:
+                        accept: application/json
+
+  - cooldown:
+      noop:
+        startAfter: warmup
+        duration: !param WARMUP_PAUSE_DURATION 30s
+
+  - logStart:
+      atOnce:
+        users: 1
+        startAfterStrict:
+          - warmup
+          - cooldown
+        scenario:
+          maxRequests: 1
+          maxSequences: 1
+          orderedSequences:
+            - log:
+                - timestamp:
+                    toVar: now
+                    pattern: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                - log: "loadTest started at ${now}"
+
+  - loadTest:
+      always:
+        users: !param CONNECTIONS 100
+        duration: !param LOAD_DURATION 30s
+        maxDuration: !param LOAD_MAX_DURATION 1m
+        startAfterStrict: logStart
+        scenario:
+          maxRequests: 1
+          maxSequences: 1
+          orderedSequences:
+            - getAllFruits:
+                - httpRequest:
+                      GET: !param PATH /fruits
+                      timeout: !param LOAD_REQUEST_TIMEOUT 30s
+                      headers:
+                        accept: application/json

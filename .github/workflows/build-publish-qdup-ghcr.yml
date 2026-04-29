@@ -2,12 +2,12 @@ name: Build and publish orchestrator image
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - scripts/perf-lab/**
-      - .github/workflows/build-publish-qdup-ghcr.yml
+#  push:
+#    branches:
+#      - main
+#    paths:
+#      - scripts/perf-lab/**
+#      - .github/workflows/build-publish-qdup-ghcr.yml
 
 defaults:
   run:

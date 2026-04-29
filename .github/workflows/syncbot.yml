@@ -148,7 +148,6 @@ jobs:
 
       - name: Update PR comment on success
         if: steps.push-and-pr.outputs.push_failed_workflows != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
-        if: steps.cherry-pick.outputs.all_skipped != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
         uses: quarkusio/action-helpers@main
         with:
           action: maintain-one-comment
