@@ -56,6 +56,7 @@ help() {
   echo "                                                              Default: ${JAVA_VERSION}"
   echo "                                                              Ignored if --java-home is set"
   echo "  --jvm-args <JVM_ARGS>                                   Any runtime JVM args to be passed to the apps"
+  echo "                                                              Default: ${JVM_ARGS}"
   echo "  --jvm-memory <JVM_MEMORY>                               JVM Memory setting (i.e. -Xmx -Xmn -Xms)"
   echo "                                                              Default: ${JVM_MEMORY}"
   echo "  --native-quarkus-build-options <NATIVE_QUARKUS_OPTS>    Native build options to be passed to Quarkus native build process"
@@ -348,7 +349,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   WAIT_TIME="20"
   DROP_OS_FILESYSTEM_CACHES=false
   USE_CONTAINER_HOST_NETWORK=false
-  JVM_ARGS=""
+  JVM_ARGS="-XX:+UseParallelGC"
   EXTRA_QDUP_ARGS=""
   OUTPUT_DIR="/tmp"
 

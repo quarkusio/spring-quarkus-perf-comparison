@@ -365,6 +365,7 @@ Reference file: `quarkus3/src/main/resources/import.sql`
 | Hibernate L2 cache | Enabled for `Store` entity and `StoreFruitPrice.store` association | Cache behavior parity |
 | Hibernate batch fetch size | 16 | Query behavior parity |
 | Open Session in View | Disabled | Performance parity |
+| Garbage collector | ParallelGC (`-XX:+UseParallelGC`) | GC behavior and overhead parity |
 | Trace sampling ratio | 10% (`0.1`) | Observability overhead parity |
 | Health endpoint | Exposed | Operational parity |
 | Metrics endpoint | Prometheus-compatible, exposed | Observability parity |
