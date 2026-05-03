@@ -27,6 +27,20 @@ jobs:
           fi
           echo "Target branch for sync: $(cat $GITHUB_OUTPUT | grep branch | cut -d= -f2)"
 
+      - name: Check for tuning label and exit early if present
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name')
+          if echo "$LABELS" | grep -q "^tuning$"; then
+            echo "PR has 'tuning' label - sync will be skipped"
+            
+            # Add comment explaining why sync is skipped
+            gh pr comment ${{ github.event.pull_request.number }} --body "🤖 This PR has the \`tuning\` label and will not be automatically synchronized to the \`${{ steps.target-branch.outputs.branch }}\` branch. Tuning probably doesn't make sense for that branch. 🔄"
+            
+            exit 0
+          fi
+
       - name: Cherry-pick commits to target branch
         id: cherry-pick
         env:
@@ -97,6 +111,7 @@ jobs:
           echo "Cherry-pick complete"
 
       - name: Push sync branch and create PR
+        id: push-and-pr
         if: steps.cherry-pick.outputs.all_skipped != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -108,7 +123,15 @@ jobs:
           SKIPPED="${{ steps.cherry-pick.outputs.skipped_commits }}"
 
           # Push the sync branch
-          git push origin $SYNC_BRANCH --force
+          if ! PUSH_OUTPUT=$(git push origin $SYNC_BRANCH --force 2>&1); then
+            echo "$PUSH_OUTPUT"
+            if echo "$PUSH_OUTPUT" | grep -q "without \`workflows\` permission"; then
+              echo "::warning::Push failed because the PR includes workflow file changes. The GITHUB_TOKEN cannot push workflow changes. This PR needs to be synced manually."
+              echo "push_failed_workflows=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            exit 1
+          fi
           echo "Successfully pushed sync branch"
 
           # Create PR using GitHub CLI
@@ -138,7 +161,7 @@ jobs:
           fi
 
       - name: Update PR comment on success
-        if: steps.cherry-pick.outputs.all_skipped != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
+        if: steps.push-and-pr.outputs.push_failed_workflows != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
         uses: quarkusio/action-helpers@main
         with:
           action: maintain-one-comment
@@ -165,4 +188,19 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             🤖 Sync to `${{ steps.cherry-pick.outputs.target_branch }}` was skipped — all commits had conflicts and could not be cherry-picked. This PR may need to be manually applied to the `${{ steps.cherry-pick.outputs.target_branch }}` branch, or it may not be relevant to that branch. 🔄
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - name: Update PR comment on workflow push failure
+        if: steps.push-and-pr.outputs.push_failed_workflows == 'true'
+        uses: quarkusio/action-helpers@main
+        with:
+          action: maintain-one-comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            🤖 This PR could not be automatically synced to the `${{ steps.cherry-pick.outputs.target_branch }}` branch because it includes workflow file changes, which require permissions that are not available to the sync bot. To sync manually:
+            ```
+            UPSTREAM=$(git remote -v | grep -m1 '${{ github.repository }}' | awk '{print $1}') && git fetch $UPSTREAM && git checkout -b ${{ steps.cherry-pick.outputs.sync_branch }} $UPSTREAM/${{ steps.cherry-pick.outputs.target_branch }} && git cherry-pick $(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits -q '.[].sha') && git push origin ${{ steps.cherry-pick.outputs.sync_branch }} && gh pr create --repo ${{ github.repository }} --base ${{ steps.cherry-pick.outputs.target_branch }} --head ${{ github.actor }}:${{ steps.cherry-pick.outputs.sync_branch }} --title "[Sync -> ${{ steps.cherry-pick.outputs.target_branch }}] $(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json title -q .title)" --body "Semi-automated sync of PR #${{ github.event.pull_request.number }} from \`${{ steps.cherry-pick.outputs.source_branch }}\` to \`${{ steps.cherry-pick.outputs.target_branch }}\`
+
+            Original PR: #${{ github.event.pull_request.number }}"
+            ```
           pr-number: ${{ github.event.pull_request.number }}

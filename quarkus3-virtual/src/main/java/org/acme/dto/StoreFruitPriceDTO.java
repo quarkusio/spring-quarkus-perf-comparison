@@ -1,8 +1,10 @@
 package org.acme.dto;
 
-public record StoreFruitPriceDTO(StoreDTO store, float price) {
+import java.math.BigDecimal;
+
+public record StoreFruitPriceDTO(StoreDTO store, BigDecimal price) {
   public StoreFruitPriceDTO {
-    if (price < 0) {
+    if ((price != null) && (price.signum() < 0)) {
       throw new IllegalArgumentException("Price must be >= 0");
     }
   }

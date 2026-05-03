@@ -225,8 +225,10 @@ scripts:
     - sh: echo $(realpath ~)
     - set-state: RUN.BASE_DIR
     - set-state: RUN.REPO_DIR ${{BASE_DIR}}/spring-quarkus-perf-comparison
+    - set-state: RUN.HYPERFOIL_LOGS_DIR ${{REPO_DIR}}/logs/hyperfoil
     - set-state: RUN.PROJ_REPO_DIR ${{REPO_DIR}}/${{PROJ_REPO_NAME}}
     - set-state: RUN.SCRIPTS_DIR ${{PROJ_REPO_DIR}}/scripts/perf-lab
+    - set-state: RUN.LOAD_TESTS_SCRIPTS_DIR ${{SCRIPTS_DIR}}/load-tests
     - set-state: RUN.HELPER_SCRIPTS_DIR ${{SCRIPTS_DIR}}/scripts
     - set-state: RUN.SPRING3_BOOT_DIR ${{PROJ_REPO_DIR}}/springboot3
     - set-state: RUN.SPRING4_BOOT_DIR ${{PROJ_REPO_DIR}}/springboot4
@@ -241,6 +243,7 @@ scripts:
         "ENV: ${{env}}"
         "BASE_DIR: ${{BASE_DIR}}"
         "REPO_DIR: ${{REPO_DIR}}"
+        "HYPERFOIL_LOGS_DIR: ${{HYPERFOIL_LOGS_DIR}}"
         "SCRIPTS_DIR: ${{SCRIPTS_DIR}}"
         "SPRING3_BOOT_DIR: ${{SPRING3_BOOT_DIR}}"
         "SPRING4_BOOT_DIR: ${{SPRING4_BOOT_DIR}}"
@@ -278,6 +281,7 @@ scripts:
   config-env:
     - sh: rm -Rf ${{REPO_DIR}}/logs
     - sh: mkdir -p ${{REPO_DIR}}/logs
+    - sh: mkdir -p ${{HYPERFOIL_LOGS_DIR}}
 
   clone-repo:
     - sh: rm -Rf ${{REPO_DIR}}
@@ -352,6 +356,11 @@ scripts:
         - regex: "Error: Otel LGTM failed to become ready"
           then:
             - abort: Otel LGTM failed to become ready
+    - sh: echo $?
+      then:
+        - regex: "^0$"
+          else:
+            - abort: start-test-services (infra.sh) failed with a non-zero exit code
 
   capture-otel-data:
     - sh: ${{PROJ_REPO_DIR}}/scripts/lookup_otel_service.sh > ${{REPO_DIR}}/logs/otel-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1
@@ -560,6 +569,7 @@ scripts:
     - log: Running workload
     - sh: cd ${{RUNTIMECMD.dir}}
     - set-state: RUNTIME_NAME ${{RUNTIMECMD.name}}
+    - queue-download: ${{HYPERFOIL_LOGS_DIR}}
     - set-state:
         key: APP_LOG_REGEX
         value: ${{RUNTIMECMD.logFileStartedRegex}}
@@ -567,11 +577,11 @@ scripts:
       then:
         - set-state:
             key: LOG_FILE
-            value: ${{REPO_DIR}}/logs/load-test-${{RUNTIMECMD.name}}-${{ITERATION}}.log
+            value: ${{REPO_DIR}}/logs/load-test-${{RUNTIME_NAME}}-${{ITERATION}}.log
         - sh: touch ${{LOG_FILE}}
-        - queue-download: ${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
+        - sh: mkdir -p ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}
+        - queue-download: ${{REPO_DIR}}/logs/hf-${{RUNTIME_NAME}}-${{ITERATION}}.log
         - queue-download: ${{LOG_FILE}}
-        - queue-download: ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log
         - script: start-test-services
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
@@ -580,8 +590,8 @@ scripts:
           then:
             - regex: "^syncjfr$"
               then:
-                - queue-download: ${{REPO_DIR}}/logs/jfr.${{RUNTIMECMD.name}}-${{ITERATION}}.jfr
-                - sh: echo "${{RUNTIMECMD.runCmd}}" | sed 's#-jar#-XX:StartFlightRecording=filename=${{REPO_DIR}}/logs/jfr.${{RUNTIMECMD.name}}-${{ITERATION}}.jfr,settings=profile,dumponexit=true -jar#'
+                - queue-download: ${{REPO_DIR}}/logs/jfr.${{RUNTIME_NAME}}-${{ITERATION}}.jfr
+                - sh: echo "${{RUNTIMECMD.runCmd}}" | sed 's#-jar#-XX:StartFlightRecording=filename=${{REPO_DIR}}/logs/jfr.${{RUNTIME_NAME}}-${{ITERATION}}.jfr,settings=profile,dumponexit=true -jar#'
                   then:
                     - set-state: SYNCJFR_RUN_CMD
                 - sh: ${{SYNCJFR_RUN_CMD}} &>${{LOG_FILE}} &
@@ -594,7 +604,7 @@ scripts:
           with:
             pid: ${{JVM_PID}}
             log_dir: ${{REPO_DIR}}/logs
-            runtime_name: ${{RUNTIMECMD.name}}
+            runtime_name: ${{RUNTIME_NAME}}
             iteration: ${{ITERATION}}
         - log: JVM_PID = ${{JVM_PID}}
         - read-state: ${{config.profiler.name}}
@@ -605,7 +615,7 @@ scripts:
                 - script: async-profiler-configure
                 - set-state:
                     key: PROFILER_LOGFILE
-                    value: "${{RUNTIMECMD.name}}-${{ITERATION}}.${{= '${{config.profiler.name}}' == 'jfr' ? 'jfr' : 'html' }}"
+                    value: "${{RUNTIME_NAME}}-${{ITERATION}}.${{= '${{config.profiler.name}}' == 'jfr' ? 'jfr' : 'html' }}"
                 - script:
                     name: async-profiler-run
                     async: true
@@ -623,64 +633,117 @@ scripts:
             log_file: ${{LOG_FILE}}
             log_regex: ${{APP_LOG_REGEX}}
         - wait-for: LOG_REGEX_REACHED
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 2m --timeout 2m ${{TARGET_URL}} 2>&1 >${{REPO_DIR}}/logs/wrk-warmup-${{RUNTIMECMD.name}}-${{ITERATION}}.log
-        - regex: unable to connect
-          then:
-            - abort: unable to connect to target application
-        - sleep: 30s # Wait for the app to complete warmup
         - signal: LOAD_STEADY_STATE_START
-        - sh: ${{RUN.WRK_BIN}} -t 2 -c 100 -d 30s --timeout 30s ${{TARGET_URL}} > ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log 2>&1 &
-        - sh: WRK_PID=$! && echo $WRK_PID
-        - set-state: WRK_PID
+        - sh: |
+            ${{LOAD_GEN_CMD_PREFIX}} jbang \
+              -Dio.hyperfoil.rootdir=${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}} \
+              -Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0 \
+              -R \
+              -XX:+UseNUMA \
+              run@hyperfoil \
+                -d ${{RUNTIME_NAME}}-${{ITERATION}} \
+                -o ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}} \
+                ${{LOAD_TESTS_SCRIPTS_DIR}}/load-test-fixed-threads-read-all.hf.yml 2>&1 >${{REPO_DIR}}/logs/hf-${{RUNTIME_NAME}}-${{ITERATION}}.log &
+        - sh: HF_PID=$! && echo $HF_PID
+          then:
+            - set-state: HF_PID
         - script:
             name: monitor-process
             async: true
           with:
             name: pidstat
-            command: pidstat -u -w -t -p ${{WRK_PID}} 1
-            log_file: ${{REPO_DIR}}/logs/pidstat-wrk-${{RUNTIME_NAME}}-${{ITERATION}}.log
-        - sh: wait ${{WRK_PID}}
-        - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log | grep "Requests/sec" | awk '{print $2}'
+            command: pidstat -u -w -t -p ${{HF_PID}} 1
+            log_file: ${{REPO_DIR}}/logs/pidstat-hf-${{RUNTIME_NAME}}-${{ITERATION}}.log
+        - sh: wait ${{HF_PID}}
+        - sh: cat ${{REPO_DIR}}/logs/hf-${{RUNTIME_NAME}}-${{ITERATION}}.log | grep "Started run" | awk '{print $3}'
           then:
-            - set-state: THROUGHPUT
+            - set-state:
+                key: RUN_NUM
+                autoConvert: false
+        - sh: cat ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+          then:
+            - json: $.stats[?(@.phase == 'loadTest')].total.summary
+              then:
+                - json: $.startTime
+                  then:
+                    - set-state: START_TIME
+                  else:
+                    - abort: Unable to find startTime in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+                - json: $.endTime
+                  then:
+                    - set-state: END_TIME
+                  else:
+                    - abort: Unable to find endTime in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+                - json: $.requestCount
+                  then:
+                    - set-state: REQUEST_COUNT
+                  else:
+                    - abort: Unable to find request count in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+                - json: $.connectionErrors
+                  then:
+                    - set-state: CONNECTION_ERRORS
+                  else:
+                    - set-state: CONNECTION_ERRORS 0
+                - json: $.requestTimeouts
+                  then:
+                    - set-state: REQUEST_TIMEOUTS
+                  else:
+                    - set-state: REQUEST_TIMEOUTS 0
+                - json: $.invalid
+                  then:
+                    - set-state: TOTAL_APP_ERRORS
+                  else:
+                    - set-state: TOTAL_APP_ERRORS 0
+                - json: $.extensions.http.status_4xx
+                  then:
+                    - set-state: APP_4XX_ERRORS
+                  else:
+                    - set-state: APP_4XX_ERRORS 0
+                - json: $.extensions.http.status_5xx
+                  then:
+                    - set-state: APP_5XX_ERRORS
+                  else:
+                    - set-state: APP_5XX_ERRORS 0
+              else:
+                - abort: Unable to find summary in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+        - set-state:
+            key: THROUGHPUT
+            value: ${{= ${{REQUEST_COUNT}}/((${{END_TIME}}-${{START_TIME}})/1000) }}
         - script: state-array-push
           with:
-            array: RUN.output.results.${{RUNTIMECMD.name}}.load.throughput
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.throughput
             value: ${{THROUGHPUT}}
-        - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log | grep "Socket errors:" | sed -E 's/.*connectionErrors ([0-9]+).*/\1/'
-          then:
-            - regex: ^$
-              then:
-                - set-state: CONNECTION_ERRORS 0
-              else:
-                - set-state: CONNECTION_ERRORS
         - script: state-array-push
           with:
-            array: RUN.output.results.${{RUNTIMECMD.name}}.load.connectionErrors
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.connectionErrors
             value: ${{CONNECTION_ERRORS}}
-
-        - sh: cat ${{REPO_DIR}}/logs/wrk-${{RUNTIMECMD.name}}-${{ITERATION}}.log | grep "Socket errors:" | sed -E 's/.*requestTimeouts ([0-9]+)/\1/'
-          then:
-            - regex: ^$
-              then:
-                - set-state: REQUEST_TIMEOUTS 0
-              else:
-                - set-state: REQUEST_TIMEOUTS
         - script: state-array-push
           with:
-            array: RUN.output.results.${{RUNTIMECMD.name}}.load.requestTimeouts
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.requestTimeouts
             value: ${{REQUEST_TIMEOUTS}}
+        - script: state-array-push
+          with:
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.appErrors
+            value: ${{TOTAL_APP_ERRORS}}
+        - script: state-array-push
+          with:
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.app4xxErrors
+            value: ${{APP_4XX_ERRORS}}
+        - script: state-array-push
+          with:
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.app5xxErrors
+            value: ${{APP_5XX_ERRORS}}
 
         - sh: pmap -x $PID | grep total | awk '{print $4}'
           then:
             - set-state: RSS
         - script: state-array-push
           with:
-            array: RUN.output.results.${{RUNTIMECMD.name}}.load.rss
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.rss
             value: ${{= ${{RSS}}/1024 }}
         - script: state-array-push
           with:
-            array: RUN.output.results.${{RUNTIMECMD.name}}.load.throughputDensity
+            array: RUN.output.results.${{RUNTIME_NAME}}.load.throughputDensity
             value: ${{= ${{THROUGHPUT}}/${{RSS}}*1024 }}
         - signal: LOAD_TEST_COMPLETE
         - sh: kill -15 $PID
@@ -689,24 +752,36 @@ scripts:
         - script: stop-test-services
     - script: state-array-calc-avg
       with:
-        var-name: RUN.output.results.${{RUNTIMECMD.name}}.load.avThroughput
-        array: RUN.output.results.${{RUNTIMECMD.name}}.load.throughput
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avThroughput
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.throughput
     - script: state-array-calc-avg
       with:
-        var-name: RUN.output.results.${{RUNTIMECMD.name}}.load.avMaxRss
-        array: RUN.output.results.${{RUNTIMECMD.name}}.load.rss
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avMaxRss
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.rss
     - script: state-array-calc-max
       with:
-        var-name: RUN.output.results.${{RUNTIMECMD.name}}.load.maxThroughputDensity
-        array: RUN.output.results.${{RUNTIMECMD.name}}.load.throughputDensity
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.maxThroughputDensity
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.throughputDensity
     - script: state-array-calc-avg
       with:
-        var-name: RUN.output.results.${{RUNTIMECMD.name}}.load.avConnectionErrors
-        array: RUN.output.results.${{RUNTIMECMD.name}}.load.connectionErrors
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avConnectionErrors
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.connectionErrors
     - script: state-array-calc-avg
       with:
-        var-name: RUN.output.results.${{RUNTIMECMD.name}}.load.avRequestTimeouts
-        array: RUN.output.results.${{RUNTIMECMD.name}}.load.requestTimeouts
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avRequestTimeouts
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.requestTimeouts
+    - script: state-array-calc-avg
+      with:
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avAppErrors
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.appErrors
+    - script: state-array-calc-avg
+      with:
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avApp4xxErrors
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.app4xxErrors
+    - script: state-array-calc-avg
+      with:
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avApp5xxErrors
+        array: RUN.output.results.${{RUNTIME_NAME}}.load.app5xxErrors
 
   watch-log:
     - sh: tail -f ${{log_file}}
@@ -795,10 +870,10 @@ roles:
       - target-host
     setup-scripts:
       - update-state
-#      - output-vars
-      - detect-os
       - cleanup-env
       - config-env
+#      - output-vars
+      - detect-os
       - capture-system-info
       - ensure-requirements
       - clone-repo

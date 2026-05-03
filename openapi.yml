@@ -1,0 +1,139 @@
+openapi: 3.1.0
+info:
+  title: Fruit Store Benchmark API
+  description: >
+    Canonical REST API contract for the framework performance benchmarking suite.
+    All module implementations MUST conform to this specification.
+  version: "1.0"
+
+paths:
+  /fruits:
+    get:
+      operationId: getAll
+      summary: List all fruits
+      responses:
+        "200":
+          description: All fruits with their store prices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FruitDTO"
+
+    post:
+      operationId: addFruit
+      summary: Create a new fruit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FruitDTOCreate"
+      responses:
+        "200":
+          description: The created fruit
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FruitDTO"
+
+  /fruits/{name}:
+    get:
+      operationId: getFruit
+      summary: Get a fruit by name
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The fruit was found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FruitDTO"
+        "404":
+          description: No fruit with the given name exists
+
+components:
+  schemas:
+    FruitDTO:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+        storePrices:
+          type: array
+          items:
+            $ref: "#/components/schemas/StoreFruitPriceDTO"
+
+    FruitDTOCreate:
+      description: Request body for creating a fruit (no id or storePrices)
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: string
+
+    StoreFruitPriceDTO:
+      type: object
+      required:
+        - store
+        - price
+      properties:
+        store:
+          $ref: "#/components/schemas/StoreDTO"
+        price:
+          type: number
+          format: float
+          minimum: 0
+
+    StoreDTO:
+      type: object
+      required:
+        - name
+        - currency
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          minLength: 1
+        currency:
+          type: string
+          minLength: 1
+        address:
+          $ref: "#/components/schemas/AddressDTO"
+
+    AddressDTO:
+      type: object
+      required:
+        - address
+        - city
+        - country
+      properties:
+        address:
+          type: string
+          minLength: 1
+        city:
+          type: string
+          minLength: 1
+        country:
+          type: string
+          minLength: 1

@@ -13,7 +13,7 @@ public final class StoreFruitPriceMapper {
 
     return new StoreFruitPriceDTO(
         StoreMapper.map(storeFruitPrice.getStore()),
-        storeFruitPrice.getPrice().floatValue()
+        storeFruitPrice.getPrice()
     );
   }
 }
