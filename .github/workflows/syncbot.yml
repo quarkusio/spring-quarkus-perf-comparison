@@ -27,6 +27,20 @@ jobs:
           fi
           echo "Target branch for sync: $(cat $GITHUB_OUTPUT | grep branch | cut -d= -f2)"
 
+      - name: Check for tuning label and exit early if present
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name')
+          if echo "$LABELS" | grep -q "^tuning$"; then
+            echo "PR has 'tuning' label - sync will be skipped"
+            
+            # Add comment explaining why sync is skipped
+            gh pr comment ${{ github.event.pull_request.number }} --body "🤖 This PR has the \`tuning\` label and will not be automatically synchronized to the \`${{ steps.target-branch.outputs.branch }}\` branch. Tuning probably doesn't make sense for that branch. 🔄"
+            
+            exit 0
+          fi
+
       - name: Cherry-pick commits to target branch
         id: cherry-pick
         env:
