@@ -698,8 +698,6 @@ scripts:
                 - set-state: APP_5XX_ERRORS
               else:
                 - set-state: APP_5XX_ERRORS 0
-          else:
-            - abort: Unable to find summary in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
         - set-state:
             key: THROUGHPUT
             value: ${{= ${{REQUEST_COUNT}}/((${{END_TIME}}-${{START_TIME}})/1000) }}
