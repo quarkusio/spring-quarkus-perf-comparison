@@ -639,7 +639,7 @@ scripts:
               run@hyperfoil \
                 -d ${{RUNTIME_NAME}}-${{ITERATION}} \
                 -o ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}} \
-                ${{LOAD_TESTS_SCRIPTS_DIR}}/load-test-fixed-threads-read-all.hf.yml 2>&1 >${{REPO_DIR}}/logs/hf-${{RUNTIME_NAME}}-${{ITERATION}}.log &
+                ${{LOAD_TESTS_SCRIPTS_DIR}}/load-test-fixed-threads-read-all.hf.yml &>${{REPO_DIR}}/logs/hf-${{RUNTIME_NAME}}-${{ITERATION}}.log &
         - sh: HF_PID=$! && echo $HF_PID
           then:
             - set-state: HF_PID
