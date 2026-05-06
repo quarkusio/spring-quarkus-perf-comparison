@@ -660,52 +660,48 @@ scripts:
             - set-state:
                 key: RUN_NUM
                 autoConvert: false
-        - sh: cat ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+        - sh: jq '.stats[] | select(.phase == "loadTest") | .total.summary' ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
           then:
-            - json: $.stats[?(@.phase == 'loadTest')].total.summary
+            - json: $.startTime
               then:
-                - json: $.startTime
-                  then:
-                    - set-state: START_TIME
-                  else:
-                    - abort: Unable to find startTime in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
-                - json: $.endTime
-                  then:
-                    - set-state: END_TIME
-                  else:
-                    - abort: Unable to find endTime in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
-                - json: $.requestCount
-                  then:
-                    - set-state: REQUEST_COUNT
-                  else:
-                    - abort: Unable to find request count in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
-                - json: $.connectionErrors
-                  then:
-                    - set-state: CONNECTION_ERRORS
-                  else:
-                    - set-state: CONNECTION_ERRORS 0
-                - json: $.requestTimeouts
-                  then:
-                    - set-state: REQUEST_TIMEOUTS
-                  else:
-                    - set-state: REQUEST_TIMEOUTS 0
-                - json: $.invalid
-                  then:
-                    - set-state: TOTAL_APP_ERRORS
-                  else:
-                    - set-state: TOTAL_APP_ERRORS 0
-                - json: $.extensions.http.status_4xx
-                  then:
-                    - set-state: APP_4XX_ERRORS
-                  else:
-                    - set-state: APP_4XX_ERRORS 0
-                - json: $.extensions.http.status_5xx
-                  then:
-                    - set-state: APP_5XX_ERRORS
-                  else:
-                    - set-state: APP_5XX_ERRORS 0
+                - set-state: START_TIME
               else:
-                - abort: Unable to find summary in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+                - abort: Unable to find startTime in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+            - json: $.endTime
+              then:
+                - set-state: END_TIME
+              else:
+                - abort: Unable to find endTime in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+            - json: $.requestCount
+              then:
+                - set-state: REQUEST_COUNT
+              else:
+                - abort: Unable to find request count in ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+            - json: $.connectionErrors
+              then:
+                - set-state: CONNECTION_ERRORS
+              else:
+                - set-state: CONNECTION_ERRORS 0
+            - json: $.requestTimeouts
+              then:
+                - set-state: REQUEST_TIMEOUTS
+              else:
+                - set-state: REQUEST_TIMEOUTS 0
+            - json: $.invalid
+              then:
+                - set-state: TOTAL_APP_ERRORS
+              else:
+                - set-state: TOTAL_APP_ERRORS 0
+            - json: $.extensions.http.status_4xx
+              then:
+                - set-state: APP_4XX_ERRORS
+              else:
+                - set-state: APP_4XX_ERRORS 0
+            - json: $.extensions.http.status_5xx
+              then:
+                - set-state: APP_5XX_ERRORS
+              else:
+                - set-state: APP_5XX_ERRORS 0
         - set-state:
             key: THROUGHPUT
             value: ${{= ${{REQUEST_COUNT}}/((${{END_TIME}}-${{START_TIME}})/1000) }}
