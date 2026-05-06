@@ -34,6 +34,10 @@ scripts:
       then:
         - download: ${{REPO_DIR}}/logs/lscpu.txt
         - sh: cat ${{REPO_DIR}}/logs/lscpu.txt
+    - script: sudo
+      with:
+        command: systemctl status firewalld > ${{REPO_DIR}}/logs/firewalld-status.txt 2>&1
+    - download: ${{REPO_DIR}}/logs/firewalld-status.txt
 
   capture-system-info-macos:
     - script: check-and-install-package

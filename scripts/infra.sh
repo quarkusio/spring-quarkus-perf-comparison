@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -euxo pipefail
 thisdir="$(realpath $(dirname "$0"))"
 
 help() {
@@ -136,7 +136,7 @@ else
 fi
 
 # Process the input options
-while getopts "c:dhm:p:rs" option; do
+while getopts "c:dhnm:p:rs" option; do
   case $option in
     c) CPUS=$OPTARG
        ;;

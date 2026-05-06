@@ -57,12 +57,25 @@ done
 TTFR=$((($(_date) - ts)/1000000))
 RSS=`ps -o rss= -p $CURRENT_PID | sed 's/^ *//g'`
 
+tempdir=$(mktemp -d)
+
+jbang \
+  -Dio.hyperfoil.rootdir=${tempdir} \
+  -Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0 \
+  run@hyperfoil \
+    -o ${tempdir} \
+    -PLOAD_DURATION=20s \
+    -PWARMUP_DURATION=0s \
+    -PWARMUP_PAUSE_DURATION=0s \
+    ${thisdir}/perf-lab/load-tests/load-test-fixed-threads-read-all.hf.yml &> ${tempdir}/hf.log
+
+kill $(lsof -t -i:8080) &>/dev/null
+${thisdir}/infra.sh -d
+
 echo "-------------------------------------------------"
 printf "Time to first request: %.3f sec\n" $(echo "$TTFR / 1000" | bc -l)
 printf "RSS (after 1st request): %.1f MB\n" $(echo "$RSS / 1024" | bc -l)
 echo "-------------------------------------------------"
 
-jbang wrk@hyperfoil -t2 -c100 -d20s --timeout 1s --latency http://localhost:8080/fruits
-
-${thisdir}/infra.sh -d
-kill $(lsof -t -i:8080) &>/dev/null
+cat ${tempdir}/hf.log
+echo "Other information output by hyperfoil is available in ${tempdir}"
