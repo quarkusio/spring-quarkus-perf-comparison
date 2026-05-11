@@ -129,6 +129,12 @@ echo -e "${YELLOW}Step 10: Building the application...${NC}"
 echo -e "${GREEN}✓ Build complete${NC}"
 echo ""
 
+echo -e "${YELLOW}Step 11: Reinstating e2e tests from quarkus3...${NC}"
+mkdir -p "${OUTPUT_DIR}/src/test/java/org/acme/e2e"
+cp -r quarkus3/src/test/java/org/acme/e2e/* "${OUTPUT_DIR}/src/test/java/org/acme/e2e/"
+echo -e "${GREEN}✓ Copied e2e tests${NC}"
+echo ""
+
 echo -e "${GREEN}=== Conversion Complete ===${NC}"
 echo ""
 echo -e "${YELLOW}To run stress tests:${NC}"
