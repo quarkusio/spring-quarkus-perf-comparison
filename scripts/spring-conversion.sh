@@ -98,6 +98,20 @@ rm -rf "${OUTPUT_DIR}/src/main/java/org/acme/config"
 echo -e "${GREEN}✓ Deleted Spring-only config classes${NC}"
 echo ""
 
+echo -e "${YELLOW}Step 8: Replacing Spring @Transactional with Jakarta @Transactional...${NC}"
+# Quarkus doesn't support org.springframework.transaction.annotation.Transactional
+# (see https://github.com/quarkusio/quarkus/issues/54089).
+# Replace with jakarta.transaction.Transactional, which preserves the runtime behaviour.
+# The readOnly hint has no Jakarta equivalent but doesn't affect correctness.
+find "${OUTPUT_DIR}/src/main/java" -name "*.java" -exec sed -i.bak \
+  -e 's/import static org\.springframework\.transaction\.annotation\.Propagation\.SUPPORTS;/import static jakarta.transaction.Transactional.TxType.SUPPORTS;/' \
+  -e 's/import org\.springframework\.transaction\.annotation\.Transactional;/import jakarta.transaction.Transactional;/' \
+  -e 's/@Transactional(propagation = SUPPORTS, readOnly = true)/@Transactional(SUPPORTS)/' \
+  {} +
+find "${OUTPUT_DIR}/src/main/java" -name "*.java.bak" -delete
+echo -e "${GREEN}✓ Replaced Spring @Transactional with Jakarta @Transactional${NC}"
+echo ""
+
 echo -e "${GREEN}=== Dev Mode Conversion Complete ===${NC}"
 echo ""
 echo -e "${YELLOW}To test in dev mode, run:${NC}"
@@ -105,12 +119,12 @@ echo "  cd ${OUTPUT_DIR} && quarkus dev"
 echo ""
 
 # Section 2: Prod Mode Configuration
-echo -e "${YELLOW}Step 8: Copying Quarkus config for prod mode...${NC}"
+echo -e "${YELLOW}Step 9: Copying Quarkus config for prod mode...${NC}"
 cp ./quarkus3/src/main/resources/application.yml "${OUTPUT_DIR}/src/main/resources/application.yml"
 echo -e "${GREEN}✓ Copied application.yml${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 9: Building the application...${NC}"
+echo -e "${YELLOW}Step 10: Building the application...${NC}"
 (cd "${OUTPUT_DIR}" && ./mvnw clean package)
 echo -e "${GREEN}✓ Build complete${NC}"
 echo ""
