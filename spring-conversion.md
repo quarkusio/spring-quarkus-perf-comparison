@@ -3,7 +3,9 @@
 It is possible to recreate the application parts of the `quarkus3-spring-compatibility` project with a few steps.
 This is a great way of seeing that the Quarkus performance gains are because of the runtime, not the programming model or code of the application.
 
-## Doing the conversion for dev mode
+## Manual conversion
+
+### Doing the conversion for dev mode
 
 1. Save the `pom.xml`, which we don't want to write by hand: `cp quarkus3-spring-compatibility/pom.xml spring-pom.xml` 
 2. Delete the compatibility project (we're about to recreate it from scratch!): `rm -rf quarkus3-spring-compatibility`
@@ -13,7 +15,7 @@ This is a great way of seeing that the Quarkus performance gains are because of 
 6. What's the problem? The `SpringBootApplication` class doesn't compile. The good news is it's not even needed with Quarkus. Delete it.
 7. Try `quarkus dev` again, and everything should work. Visiting the endpoint in a browser should work.
 
-## Prod mode and stress testing
+### Prod mode and stress testing
 
 Although everything is working in dev mode, if you look at the `application.yml`, you can see it's filled with spring config.
 There's no Quarkus database configured. In dev mode, that's fine, because Quarkus auto-starts one as a dev service, but that won't work in prod mode.
@@ -24,3 +26,26 @@ So we need to fill in config.
 3. Run the stress tests: `./scripts/stress.sh springboot3/target/quarkus-app/quarkus-run.jar`
 
 You should see that the throughput almost identical to the throughput of the 'normal' Quarkus app, and more than double that of the Quarkus-free Spring app.
+
+## Automated conversion
+
+You can run the automated conversion script to perform all the manual steps above:
+
+```shell
+./scripts/spring-conversion.sh [output-directory]
+```
+
+The script accepts an optional output directory argument:
+- **Default** (no argument): Creates/recreates `quarkus3-spring-compatibility` directory
+- **`springboot3`**: Converts the Spring Boot application in place
+
+Examples:
+```shell
+# Convert to quarkus3-spring-compatibility (default)
+./scripts/spring-conversion.sh
+
+# Convert springboot3 in place
+./scripts/spring-conversion.sh springboot3
+```
+
+This script will automatically execute all the conversion steps, build the application, and provide instructions for running stress tests.

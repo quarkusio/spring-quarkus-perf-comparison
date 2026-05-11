@@ -56,7 +56,7 @@ This project contains the following modules:
 - [quarkus3-virtual](quarkus3-virtual)
     - A Quarkus 3.x version of the application using Virtual Threads
 - [quarkus3-spring-compatibility](quarkus3-spring-compatibility)
-    - A Quarkus 3.x version of the application using the Spring compatibility layer. You can also recreate this application from the spring application using [a few manual steps](spring-conversion.md).
+    - A Quarkus 3.x version of the application using the Spring compatibility layer. You can also recreate this application from the spring application using [a few manual steps](spring-conversion.md) or by running the automated [`spring-conversion.sh`](scripts/spring-conversion.sh) script.
  
 ## Architecture & Workflow
 
