@@ -88,6 +88,16 @@ find "${OUTPUT_DIR}/src/main/java" -name "*Application.java" -type f -delete
 echo -e "${GREEN}✓ Deleted SpringBootApplication class${NC}"
 echo ""
 
+echo -e "${YELLOW}Step 7: Deleting Spring-only config classes...${NC}"
+# The config/ package contains L2CacheConfiguration, GraalVMConfig, and L2CacheRuntimeHints.
+# These wire up Caffeine as a JCache provider for Hibernate L2 cache and register
+# GraalVM native-image reflection hints — all Spring-specific plumbing.
+# Quarkus handles Hibernate L2 cache automatically, so these classes are not needed
+# (and won't compile, since the Quarkus pom doesn't include the Caffeine/JCache dependencies).
+rm -rf "${OUTPUT_DIR}/src/main/java/org/acme/config"
+echo -e "${GREEN}✓ Deleted Spring-only config classes${NC}"
+echo ""
+
 echo -e "${GREEN}=== Dev Mode Conversion Complete ===${NC}"
 echo ""
 echo -e "${YELLOW}To test in dev mode, run:${NC}"
@@ -95,12 +105,12 @@ echo "  cd ${OUTPUT_DIR} && quarkus dev"
 echo ""
 
 # Section 2: Prod Mode Configuration
-echo -e "${YELLOW}Step 7: Copying Quarkus config for prod mode...${NC}"
+echo -e "${YELLOW}Step 8: Copying Quarkus config for prod mode...${NC}"
 cp ./quarkus3/src/main/resources/application.yml "${OUTPUT_DIR}/src/main/resources/application.yml"
 echo -e "${GREEN}✓ Copied application.yml${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 8: Building the application...${NC}"
+echo -e "${YELLOW}Step 9: Building the application...${NC}"
 (cd "${OUTPUT_DIR}" && ./mvnw clean package)
 echo -e "${GREEN}✓ Build complete${NC}"
 echo ""
