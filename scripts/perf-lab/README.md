@@ -285,6 +285,50 @@ If you examine the output directory:
 - All of the `target-host/*.log` files contain the output from the individual tests.
 - The `target-host/metrics.json` file contains all the recorded metrics.
 
+## Plotting Results
+
+After running benchmarks, you can generate charts from the results using the `plot-results.sh` script. This script uses the graphics generator from the [Quarkus benchmarks repository](https://github.com/quarkusio/benchmarks).
+
+### Usage
+
+```bash
+./plot-results.sh [-i <INPUT_DIR>] [-o <OUTPUT_DIR>] [-b <BENCHMARKS_REPO>] [-c]
+```
+
+### Options
+
+| Option | Description |
+|--------|-------------|
+| `-i <INPUT_DIR>` | The directory containing the benchmark results (must contain `metrics.json`). This is typically the `target-host` subdirectory from your benchmark run output. If not specified, the script will automatically use the most recent run found in `/tmp`. |
+| `-o <OUTPUT_DIR>` | The directory where charts will be generated. Default: `<INPUT_DIR>/charts` |
+| `-b <BENCHMARKS_REPO>` | Path to a local clone of the benchmarks repo. If not provided, the script will clone it to a temporary directory. |
+| `-c` | Force a clean build of the graphics generator. Default: false (reuses existing build if available) |
+| `-h` | Display help message |
+
+### Examples
+
+Generate charts from the most recent benchmark run (automatically finds it in `/tmp`):
+```bash
+./plot-results.sh
+```
+
+Generate charts from a specific benchmark run:
+```bash
+./plot-results.sh -i /tmp/20251021_090429/target-host
+```
+
+Specify a custom output directory:
+```bash
+./plot-results.sh -i /tmp/20251021_090429/target-host -o /tmp/my-charts
+```
+
+Use an existing local clone of the benchmarks repository:
+```bash
+./plot-results.sh -b /path/to/benchmarks
+```
+
+For full information about what charts are generated, see the [chart reference in the graphics repo](https://github.com/quarkusio/benchmarks#chart-reference).
+
 ## Examples
 ### Basic Local Benchmark
 
