@@ -1,0 +1,106 @@
+# =============================================================================
+# Hyperfoil Soak Test Configuration
+# =============================================================================
+#
+# This configuration file defines a soak test scenario that runs at a fixed
+# request rate for an extended duration. It includes a warmup phase followed
+# by the main soak test phase at the configured rate.
+#
+# All phases target the same HTTP endpoint.
+#
+# Configurable Parameters:
+# ----------------------------------
+# PROTOCOL               - HTTP protocol to use (default: http)
+#                           Options: http, https
+# HOST                   - Target server hostname (default: localhost)
+# PORT                   - Target server port (default: 8080)
+# CONNECTIONS            - Number of HTTP connections (default: 100)
+# HIDE_WARMUP_PHASE      - Hide the warmup phase details (default: false)
+# PATH                   - HTTP endpoint path to test (default: /fruits)
+# WARMUP_DURATION        - Duration of the warmup phase (default: 30s)
+# WARMUP_MAX_DURATION    - Maximum duration of the warmup phase (default: 1m)
+# WARMUP_PAUSE_DURATION  - Duration of the pause between warmup and soak test (default: 10s)
+# WARMUP_REQUEST_TIMEOUT - Timeout for warmup requests (default: 30s)
+# SOAK_REQUEST_TIMEOUT   - Timeout for soak test requests (default: 30s)
+# SOAK_DURATION          - Duration of the soak test phase (default: 150s)
+# SOAK_MAX_DURATION      - Maximum duration of the soak test phase (default: 5m)
+# SOAK_RATE              - Target request rate in requests/sec (default: 5000)
+# THREADS                - Number of threads to use (default: 2)
+#
+# Usage:
+# ------
+# Override parameters using: -P PARAM_NAME=value
+# Example: jbang run@hyperfoil -PSOAK_RATE=3000 -PSOAK_DURATION=300s soak-test-fixed-rate-read-all.hf.yml
+#
+# =============================================================================
+
+name: soak-test-fixed-rate-read-all
+threads: !param THREADS 2
+http:
+  - protocol: !param PROTOCOL http
+    host: !param HOST localhost
+    port: !param PORT 8080
+    sharedConnections: !param CONNECTIONS 100
+    allowHttp2: false
+    useHttpCache: false
+ergonomics:
+  repeatCookies: false
+  userAgentFromSession: false
+
+phases:
+  - warmup:
+      constantRate:
+        usersPerSec: !param SOAK_RATE 5000
+        duration: !param WARMUP_DURATION 30s
+        maxDuration: !param WARMUP_MAX_DURATION 1m
+        isWarmup: !param HIDE_WARMUP_PHASE false
+        maxSessions: !param CONNECTIONS 100
+        scenario:
+          maxRequests: 1
+          maxSequences: 1
+          orderedSequences:
+            - getAllFruits:
+                - httpRequest:
+                      GET: !param PATH /fruits
+                      timeout: !param WARMUP_REQUEST_TIMEOUT 30s
+                      headers:
+                        accept: application/json
+
+  - cooldown:
+      noop:
+        startAfter: warmup
+        duration: !param WARMUP_PAUSE_DURATION 10s
+
+  - logStart:
+      atOnce:
+        users: 1
+        startAfterStrict:
+          - warmup
+          - cooldown
+        scenario:
+          maxRequests: 1
+          maxSequences: 1
+          orderedSequences:
+            - log:
+                - timestamp:
+                    toVar: now
+                    pattern: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                - log: "soakTest started at ${now}"
+
+  - soakTest:
+      constantRate:
+        usersPerSec: !param SOAK_RATE 5000
+        duration: !param SOAK_DURATION 150s
+        maxDuration: !param SOAK_MAX_DURATION 5m
+        startAfterStrict: logStart
+        maxSessions: !param CONNECTIONS 100
+        scenario:
+          maxRequests: 1
+          maxSequences: 1
+          orderedSequences:
+            - getAllFruits:
+                - httpRequest:
+                      GET: !param PATH /fruits
+                      timeout: !param SOAK_REQUEST_TIMEOUT 30s
+                      headers:
+                        accept: application/json
