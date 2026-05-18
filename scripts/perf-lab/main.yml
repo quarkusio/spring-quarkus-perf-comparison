@@ -62,7 +62,7 @@ states:
   PAUSE_TIME: 5
   PROFILER_JVM_ARGS:
   BASE_JAVA_CMD: ${{APP_CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
-  TESTS : [measure-time-to-first-request, measure-rss, run-load-test, soak-test]
+  TESTS : [measure-time-to-first-request, measure-rss, run-load-test, load-test]
   RUNTIMES: [quarkus3-jvm, quarkus3-virtual, quarkus3-native, spring3-jvm, spring3-virtual, spring3-native, spring4-jvm, spring4-virtual, spring4-native]
   TARGET_URL: http://localhost:8080/fruits
   QUARKUS-PLATFORM-ARTIFACT-ID: quarkus-bom
@@ -783,7 +783,7 @@ scripts:
         var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avApp5xxErrors
         array: RUN.output.results.${{RUNTIME_NAME}}.load.app5xxErrors
 
-  soak-test:
+  load-test:
     - log: Running fixed-rate load test (${{config.soak.rate}} tps for ${{config.soak.duration}}s)
     - sh: cd ${{RUNTIMECMD.dir}}
     - set-state: RUNTIME_NAME ${{RUNTIMECMD.name}}
@@ -795,7 +795,7 @@ scripts:
       then:
         - set-state:
             key: LOG_FILE
-            value: ${{REPO_DIR}}/logs/soak-test-${{RUNTIME_NAME}}-${{ITERATION}}.log
+            value: ${{REPO_DIR}}/logs/load-test-${{RUNTIME_NAME}}-${{ITERATION}}.log
         - sh: touch ${{LOG_FILE}}
         - sh: mkdir -p ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}}
         - queue-download: ${{REPO_DIR}}/logs/hf-soak-${{RUNTIME_NAME}}-${{ITERATION}}.log
@@ -832,7 +832,7 @@ scripts:
                 -o ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}} \
                 -PLOAD_RATE=${{config.soak.rate}} \
                 -PLOAD_DURATION=${{config.soak.duration}}s \
-                ${{LOAD_TESTS_SCRIPTS_DIR}}/soak-test-fixed-rate-read-all.hf.yml &>${{REPO_DIR}}/logs/hf-soak-${{RUNTIME_NAME}}-${{ITERATION}}.log &
+                ${{LOAD_TESTS_SCRIPTS_DIR}}/load-test-fixed-rate-read-all.hf.yml &>${{REPO_DIR}}/logs/hf-soak-${{RUNTIME_NAME}}-${{ITERATION}}.log &
         - sh: HF_PID=$! && echo $HF_PID
           then:
             - set-state: HF_PID
