@@ -157,9 +157,9 @@ The [`1strequest.sh`](scripts/1strequest.sh) starts the infrastructure and runs 
 
 For example, 
 ```shell
-scripts/1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar quarkus3/target/quarkus-app/quarkus-run.jar" 5
-scripts/1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar" 5
-scripts/1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar springboot3/target/springboot3.jar" 5
+scripts/1strequest.sh "java -XX:+UseParallelGC -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar quarkus3/target/quarkus-app/quarkus-run.jar" 5
+scripts/1strequest.sh "java -XX:+UseParallelGC -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar" 5
+scripts/1strequest.sh "java -XX:+UseParallelGC -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar springboot3/target/springboot3.jar" 5
 ```
 
 You should see output like 
@@ -268,7 +268,7 @@ QDUP_USER=jenkins
   --host 127.0.0.1 --iterations 1 --java-version 25.0.2-tem --repo-url $REPO --profiler none \
   --quarkus-version 3.34.1 --springboot3-version 3.5.13 --springboot4-version 4.0.5 --user $QDUP_USER \
   --wait-time 30 --run-identifier local-1 --drop-fs-caches \
-  --jvm-args "-XX:+UseNUMA -Dserver.tomcat.threads.max=50 -Dserver.tomcat.threads.min-spare=50" \
+  --jvm-args "-XX:+UseParallelGC -XX:+UseNUMA -Dserver.tomcat.threads.max=50 -Dserver.tomcat.threads.min-spare=50" \
   --description "Local Test" --cpus-app 0,1,2,3 --cpus-db 4,5,6 --cpus-first-request 7 --cpus-load-gen 7,8,9 \
   --cpus-monitoring 16 --cpus-otel 10,11,12 --jvm-memory "-Xmx512m -Xms512m" --runtimes quarkus3-jvm,spring4-jvm \
   --tests run-load-test
