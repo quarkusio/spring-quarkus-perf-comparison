@@ -1,10 +1,10 @@
 # =============================================================================
-# Hyperfoil Soak Test Configuration
+# Hyperfoil Fixed-Rate Load Test Configuration
 # =============================================================================
 #
-# This configuration file defines a soak test scenario that runs at a fixed
-# request rate for an extended duration. It includes a warmup phase followed
-# by the main soak test phase at the configured rate.
+# This configuration file defines a sustained fixed-rate load test scenario.
+# It includes a warmup ramp followed by a steady-state measurement phase
+# at a constant request rate.
 #
 # All phases target the same HTTP endpoint.
 #
@@ -14,23 +14,24 @@
 #                           Options: http, https
 # HOST                   - Target server hostname (default: localhost)
 # PORT                   - Target server port (default: 8080)
-# CONNECTIONS            - Number of HTTP connections (default: 100)
+# CONNECTIONS            - Number of HTTP connections (default: 500)
+# MAX_SESSIONS           - Maximum concurrent sessions (default: 10000)
 # HIDE_WARMUP_PHASE      - Hide the warmup phase details (default: false)
 # PATH                   - HTTP endpoint path to test (default: /fruits)
-# WARMUP_DURATION        - Duration of the warmup phase (default: 30s)
+# WARMUP_DURATION        - Duration of the warmup ramp phase (default: 30s)
 # WARMUP_MAX_DURATION    - Maximum duration of the warmup phase (default: 1m)
-# WARMUP_PAUSE_DURATION  - Duration of the pause between warmup and soak test (default: 10s)
+# WARMUP_PAUSE_DURATION  - Duration of the pause between warmup and load test (default: 10s)
 # WARMUP_REQUEST_TIMEOUT - Timeout for warmup requests (default: 30s)
-# SOAK_REQUEST_TIMEOUT   - Timeout for soak test requests (default: 30s)
-# SOAK_DURATION          - Duration of the soak test phase (default: 150s)
-# SOAK_MAX_DURATION      - Maximum duration of the soak test phase (default: 5m)
-# SOAK_RATE              - Target request rate in requests/sec (default: 5000)
+# LOAD_REQUEST_TIMEOUT   - Timeout for load test requests (default: 30s)
+# LOAD_DURATION          - Duration of the load test phase (default: 150s)
+# LOAD_MAX_DURATION      - Maximum duration of the load test phase (default: 5m)
+# LOAD_RATE              - Target request rate in requests/sec (default: 5000)
 # THREADS                - Number of threads to use (default: 2)
 #
 # Usage:
 # ------
 # Override parameters using: -P PARAM_NAME=value
-# Example: jbang run@hyperfoil -PSOAK_RATE=3000 -PSOAK_DURATION=300s soak-test-fixed-rate-read-all.hf.yml
+# Example: jbang run@hyperfoil -PLOAD_RATE=3000 -PLOAD_DURATION=300s soak-test-fixed-rate-read-all.hf.yml
 #
 # =============================================================================
 
@@ -40,7 +41,7 @@ http:
   - protocol: !param PROTOCOL http
     host: !param HOST localhost
     port: !param PORT 8080
-    sharedConnections: !param CONNECTIONS 100
+    sharedConnections: !param CONNECTIONS 500
     allowHttp2: false
     useHttpCache: false
 ergonomics:
@@ -49,12 +50,14 @@ ergonomics:
 
 phases:
   - warmup:
-      constantRate:
-        usersPerSec: !param SOAK_RATE 5000
+      increasingRate:
+        initialUsersPerSec: 1
+        targetUsersPerSec: !param LOAD_RATE 5000
         duration: !param WARMUP_DURATION 30s
         maxDuration: !param WARMUP_MAX_DURATION 1m
         isWarmup: !param HIDE_WARMUP_PHASE false
-        maxSessions: !param CONNECTIONS 100
+        maxSessions: !param MAX_SESSIONS 10000
+        variance: false
         scenario:
           maxRequests: 1
           maxSequences: 1
@@ -85,15 +88,16 @@ phases:
                 - timestamp:
                     toVar: now
                     pattern: "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
-                - log: "soakTest started at ${now}"
+                - log: "loadTest started at ${now}"
 
-  - soakTest:
+  - loadTest:
       constantRate:
-        usersPerSec: !param SOAK_RATE 5000
-        duration: !param SOAK_DURATION 150s
-        maxDuration: !param SOAK_MAX_DURATION 5m
+        usersPerSec: !param LOAD_RATE 5000
+        duration: !param LOAD_DURATION 150s
+        maxDuration: !param LOAD_MAX_DURATION 5m
         startAfterStrict: logStart
-        maxSessions: !param CONNECTIONS 100
+        maxSessions: !param MAX_SESSIONS 10000
+        variance: false
         scenario:
           maxRequests: 1
           maxSequences: 1
@@ -101,6 +105,8 @@ phases:
             - getAllFruits:
                 - httpRequest:
                       GET: !param PATH /fruits
-                      timeout: !param SOAK_REQUEST_TIMEOUT 30s
+                      timeout: !param LOAD_REQUEST_TIMEOUT 30s
                       headers:
                         accept: application/json
+
+failurePolicy: CONTINUE
