@@ -3,17 +3,21 @@
 It is possible to recreate the application parts of the `quarkus3-spring-compatibility` project with a few steps.
 This is a great way of seeing that the Quarkus performance gains are because of the runtime, not the programming model or code of the application.
 
-## Doing the conversion for dev mode
+## Manual conversion
+
+### Doing the conversion for dev mode
 
 1. Save the `pom.xml`, which we don't want to write by hand: `cp quarkus3-spring-compatibility/pom.xml spring-pom.xml` 
 2. Delete the compatibility project (we're about to recreate it from scratch!): `rm -rf quarkus3-spring-compatibility`
 3. Replace the spring pom: `mv spring-pom.xml springboot3/pom.xml`
-4. Delete the tests, which are hard to convert ([for now](https://github.com/orgs/quarkusio/projects/60)): `rm -rf springboot3/src/test`
+4. Delete the tests, which are hard to convert ([for now](https://github.com/orgs/quarkusio/projects/60)): `rm -rf springboot3/src/test`. To keep some coverage, you can copy across `quarkus3/src/test/java/org/acme/e2e` end-to-end tests after deleting the Spring ones.
 5. Start the app, with `(cd springboot3; quarkus dev)`. You'll see a failure and a crash.
 6. What's the problem? The `SpringBootApplication` class doesn't compile. The good news is it's not even needed with Quarkus. Delete it.
-7. Try `quarkus dev` again, and everything should work. Visiting the endpoint in a browser should work.
+7. The `config/` package (`L2CacheConfiguration`, `GraalVMConfig`, `L2CacheRuntimeHints`) also won't compile. These classes wire up Caffeine as a JCache provider for Hibernate's L2 cache and register GraalVM native-image hints — all Spring-specific plumbing. Quarkus handles Hibernate L2 cache automatically, so delete the whole `config/` directory: `rm -rf springboot3/src/main/java/org/acme/config`
+8. Replace `org.springframework.transaction.annotation.Transactional` with `jakarta.transaction.Transactional`. Quarkus doesn't support Spring's `@Transactional` ([quarkusio/quarkus#54089](https://github.com/quarkusio/quarkus/issues/54089)), but Jakarta's `@Transactional` preserves the same runtime behaviour. Replace `@Transactional(propagation = SUPPORTS, readOnly = true)` with `@Transactional(SUPPORTS)` — the `readOnly` hint has no Jakarta equivalent but doesn't affect correctness.
+9. Try `quarkus dev` again, and everything should work. Visiting the endpoint in a browser should work.
 
-## Prod mode and stress testing
+### Prod mode and stress testing
 
 Although everything is working in dev mode, if you look at the `application.yml`, you can see it's filled with spring config.
 There's no Quarkus database configured. In dev mode, that's fine, because Quarkus auto-starts one as a dev service, but that won't work in prod mode.
@@ -24,3 +28,26 @@ So we need to fill in config.
 3. Run the stress tests: `./scripts/stress.sh springboot3/target/quarkus-app/quarkus-run.jar`
 
 You should see that the throughput almost identical to the throughput of the 'normal' Quarkus app, and more than double that of the Quarkus-free Spring app.
+
+## Automated conversion
+
+You can run the automated conversion script to perform all the manual steps above:
+
+```shell
+./scripts/spring-conversion.sh [output-directory]
+```
+
+The script accepts an optional output directory argument:
+- **Default** (no argument): Creates/recreates `quarkus3-spring-compatibility` directory
+- **`springboot3`**: Converts the Spring Boot application in place
+
+Examples:
+```shell
+# Convert to quarkus3-spring-compatibility (default)
+./scripts/spring-conversion.sh
+
+# Convert springboot3 in place
+./scripts/spring-conversion.sh springboot3
+```
+
+This script will automatically execute all the conversion steps, build the application, and provide instructions for running stress tests.

@@ -1,0 +1,73 @@
+name: Test Spring Conversion
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/spring-conversion.sh'
+      - 'spring-conversion.md'
+      - 'springboot3/**'
+      - 'quarkus3-spring-compatibility/**'
+      - '.github/workflows/test-spring-conversion.yml'
+  pull_request:
+    paths:
+      - 'scripts/spring-conversion.sh'
+      - 'spring-conversion.md'
+      - 'springboot3/**'
+      - 'quarkus3-spring-compatibility/**'
+      - '.github/workflows/test-spring-conversion.yml'
+  workflow_dispatch:
+
+jobs:
+  test-conversion-default:
+    name: Test conversion (default output)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run spring-conversion.sh script (default output)
+        run: |
+          chmod +x scripts/spring-conversion.sh
+          ./scripts/spring-conversion.sh
+
+      - name: Verify build with mvn install
+        run: |
+          cd quarkus3-spring-compatibility
+          ./mvnw install
+          echo "✅ Maven install completed successfully!"
+
+  test-conversion-springboot3:
+    name: Test conversion (in place output)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run spring-conversion.sh script (springboot3 output)
+        run: |
+          chmod +x scripts/spring-conversion.sh
+          ./scripts/spring-conversion.sh springboot3
+
+      - name: Verify build with mvn install
+        run: |
+          cd springboot3
+          ./mvnw install
+          echo "✅ Maven install completed successfully!"
