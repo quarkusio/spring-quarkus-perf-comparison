@@ -780,7 +780,7 @@ scripts:
         array: RUN.output.results.${{RUNTIME_NAME}}.load.app5xxErrors
 
   soak-test:
-    - log: Running soak test at fixed throughput (${{config.soak.rate}} tps for ${{config.soak.duration}}s)
+    - log: Running fixed-rate load test (${{config.soak.rate}} tps for ${{config.soak.duration}}s)
     - sh: cd ${{RUNTIMECMD.dir}}
     - set-state: RUNTIME_NAME ${{RUNTIMECMD.name}}
     - queue-download: ${{HYPERFOIL_LOGS_DIR}}
@@ -826,8 +826,8 @@ scripts:
               run@hyperfoil \
                 -d soak-${{RUNTIME_NAME}}-${{ITERATION}} \
                 -o ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}} \
-                -PSOAK_RATE=${{config.soak.rate}} \
-                -PSOAK_DURATION=${{config.soak.duration}}s \
+                -PLOAD_RATE=${{config.soak.rate}} \
+                -PLOAD_DURATION=${{config.soak.duration}}s \
                 ${{LOAD_TESTS_SCRIPTS_DIR}}/soak-test-fixed-rate-read-all.hf.yml &>${{REPO_DIR}}/logs/hf-soak-${{RUNTIME_NAME}}-${{ITERATION}}.log &
         - sh: HF_PID=$! && echo $HF_PID
           then:
@@ -838,7 +838,7 @@ scripts:
             - set-state:
                 key: RUN_NUM
                 autoConvert: false
-        - sh: jq '.stats[] | select(.phase == "soakTest") | .total.summary' ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+        - sh: jq '.stats[] | select(.phase == "loadTest") | .total.summary' ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
           then:
             - json: $.startTime
               then:
