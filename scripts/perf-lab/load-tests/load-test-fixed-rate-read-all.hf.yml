@@ -31,11 +31,11 @@
 # Usage:
 # ------
 # Override parameters using: -P PARAM_NAME=value
-# Example: jbang run@hyperfoil -PLOAD_RATE=3000 -PLOAD_DURATION=300s soak-test-fixed-rate-read-all.hf.yml
+# Example: jbang run@hyperfoil -PLOAD_RATE=3000 -PLOAD_DURATION=300s load-test-fixed-rate-read-all.hf.yml
 #
 # =============================================================================
 
-name: soak-test-fixed-rate-read-all
+name: load-test-fixed-rate-read-all
 threads: !param THREADS 2
 http:
   - protocol: !param PROTOCOL http
