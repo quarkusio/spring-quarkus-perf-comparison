@@ -42,7 +42,7 @@ states:
   config.resources.cpu.1st_request: 10
   config.resources.cpu.monitor: 11
 
-  config.soak.rate: 5000
+  config.soak.rate: 2000
   config.soak.duration: 150
 
   config.profiler.name: none #jfr syncjfr flamegraph
