@@ -43,7 +43,7 @@ states:
   config.resources.cpu.monitor: 11
   config.resources.cpu.otel: 12-14
 
-  config.soak.rate: 5000
+  config.soak.rate: 2000
   config.soak.duration: 150
 
   config.profiler.name: none #jfr syncjfr flamegraph

@@ -25,7 +25,7 @@
 # LOAD_REQUEST_TIMEOUT   - Timeout for load test requests (default: 30s)
 # LOAD_DURATION          - Duration of the load test phase (default: 150s)
 # LOAD_MAX_DURATION      - Maximum duration of the load test phase (default: 5m)
-# LOAD_RATE              - Target request rate in requests/sec (default: 5000)
+# LOAD_RATE              - Target request rate in requests/sec (default: 2000)
 # THREADS                - Number of threads to use (default: 2)
 #
 # Usage:
@@ -52,7 +52,7 @@ phases:
   - warmup:
       increasingRate:
         initialUsersPerSec: 1
-        targetUsersPerSec: !param LOAD_RATE 5000
+        targetUsersPerSec: !param LOAD_RATE 2000
         duration: !param WARMUP_DURATION 30s
         maxDuration: !param WARMUP_MAX_DURATION 1m
         isWarmup: !param HIDE_WARMUP_PHASE false
@@ -92,7 +92,7 @@ phases:
 
   - loadTest:
       constantRate:
-        usersPerSec: !param LOAD_RATE 5000
+        usersPerSec: !param LOAD_RATE 2000
         duration: !param LOAD_DURATION 150s
         maxDuration: !param LOAD_MAX_DURATION 5m
         startAfterStrict: logStart
