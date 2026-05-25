@@ -45,7 +45,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push images
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@v7.1.0
         with:
           file: scripts/perf-lab/benchmark-orchestrator.Dockerfile
           context: scripts/perf-lab
