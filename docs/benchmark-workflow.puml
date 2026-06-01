@@ -1,5 +1,5 @@
 @startuml
-!theme plain
+!theme quarkus from https://quarkus.io/assets/plantuml/themes
 autonumber
 
 ' --- Import Icons ---
@@ -9,13 +9,13 @@ autonumber
 title Performance Benchmarking Workflow
 
 ' --- Group: Non-public ---
-box "Non-public" #e1f5fe
+box "Non-public" #F0F0F0
     participant "<$jenkins>\nCI System" as CI
     database "Horreum" as Horreum
 end box
 
 ' --- Group: Perf comparison GH repo ---
-box "<$github>\nPerf comparison GH repo\ngithub.com/quarkusio/spring-quarkus-perf-comparison" #f1f8e9
+box "<$github>\nPerf comparison GH repo\ngithub.com/quarkusio/spring-quarkus-perf-comparison" #D1E4FA
     participant "Repo" as PerfRepo
     participant "run-benchmarks.sh\n(Hyperfoil)" as RunBench
     participant "main.yml\n(qDup)" as QDup
@@ -23,7 +23,7 @@ box "<$github>\nPerf comparison GH repo\ngithub.com/quarkusio/spring-quarkus-per
 end box
 
 ' --- Group: Benchmarks GH repo ---
-box "<$github>\nBenchmarks GH repo\ngithub.com/quarkusio/benchmarks" #fff3e0
+box "<$github>\nBenchmarks GH repo\ngithub.com/quarkusio/benchmarks" #E8F1FD
     participant "GitHub Actions\n& Repo" as BenchRepo
     participant "image-generator" as ImgGen
     ' New Participant added here
