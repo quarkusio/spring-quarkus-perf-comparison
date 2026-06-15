@@ -91,7 +91,7 @@ jobs:
     runs-on: ubuntu-latest
     name: "Script unit tests"
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - name: Run script tests
         working-directory: scripts/perf-lab/tests
@@ -142,7 +142,7 @@ jobs:
               name: springboot4-virtual-leyden
     name: "[jvm-build-test-java${{ matrix.java }}]: ${{ matrix.app.name }}"
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - name: Set up Java ${{ matrix.java }}
         uses: actions/setup-java@v5
