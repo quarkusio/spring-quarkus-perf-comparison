@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.6</version>
+		<version>4.1.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>org.acme</groupId>
@@ -15,7 +15,8 @@
 	<description>Spring Boot 4 example</description>
 	<properties>
 		<java.version>21</java.version>
-		<spring-boot.version>4.0.6</spring-boot.version>
+		<spring-boot.version>4.1.0</spring-boot.version>
+		<otel.version>2.28.1-alpha</otel.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -45,12 +46,12 @@
 		<dependency>
 			<groupId>io.opentelemetry.instrumentation</groupId>
 			<artifactId>opentelemetry-logback-appender-1.0</artifactId>
-			<version>2.23.0-alpha</version>
+			<version>${otel.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.opentelemetry.instrumentation</groupId>
 			<artifactId>opentelemetry-jdbc</artifactId>
-			<version>2.23.0-alpha</version>
+			<version>${otel.version}</version>
     </dependency>
     <dependency>
 			<groupId>io.micrometer</groupId>
