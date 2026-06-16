@@ -8,6 +8,7 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.Configuration;
 
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.instrumentation.jdbc.datasource.JdbcTelemetry;
 import io.opentelemetry.instrumentation.jdbc.datasource.OpenTelemetryDataSource;
 
 @Configuration
@@ -20,10 +21,14 @@ public class DataSourceConfig implements BeanPostProcessor {
 
     @Override
     public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-        if ((bean instanceof DataSource) && !(bean instanceof OpenTelemetryDataSource)) {
+        if ((bean instanceof DataSource ds) && !(bean instanceof OpenTelemetryDataSource)) {
             OpenTelemetry openTelemetry = openTelemetryProvider.getIfAvailable();
+
             if (openTelemetry != null) {
-                return new OpenTelemetryDataSource((DataSource) bean, openTelemetry);
+              return JdbcTelemetry.builder(openTelemetry)
+                .setDataSourceInstrumenterEnabled(true)
+                .build()
+                .wrap(ds);
             }
         }
 
