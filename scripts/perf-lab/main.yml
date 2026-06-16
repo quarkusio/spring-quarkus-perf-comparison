@@ -621,7 +621,7 @@ scripts:
                     suffix: ${{PROFILER_LOGFILE}}
                     format: ${{config.profiler.name}}
                     events: ${{config.profiler.events}}
-                    delay: 10s
+                    delay: 5s
         - script:
             name: watch-log
             async: true
@@ -629,7 +629,6 @@ scripts:
             log_file: ${{LOG_FILE}}
             log_regex: ${{APP_LOG_REGEX}}
         - wait-for: LOG_REGEX_REACHED
-        - signal: LOAD_STEADY_STATE_START
         - sh: |
             ${{LOAD_GEN_CMD_PREFIX}} jbang \
               -Dio.hyperfoil.rootdir=${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}} \
@@ -643,6 +642,11 @@ scripts:
         - sh: HF_PID=$! && echo $HF_PID
           then:
             - set-state: HF_PID
+        - script:
+            name: watch-hyperfoil-log
+            async: true
+          with:
+            log_file: ${{HYPERFOIL_LOGS_DIR}}/${{RUNTIME_NAME}}-${{ITERATION}}/hyperfoil.local.log
         - script:
             name: monitor-process
             async: true
@@ -785,7 +789,19 @@ scripts:
       timer:
         1m:
           - ctrlC
-          - abort: Log file ${{log_file}} didn't match regex ${{log_regex}} after 10 minutes
+          - abort: Log file ${{log_file}} didn't match regex ${{log_regex}} after 1 minute
+
+  watch-hyperfoil-log:
+    - sh: tail -F ${{log_file}}
+      watch:
+        - regex: "loadTest.*changing status.*RUNNING"
+          then:
+            - ctrlC
+            - signal: LOAD_STEADY_STATE_START
+      timer:
+        5m:
+          - ctrlC
+          - abort: Hyperfoil log ${{log_file}} didn't show loadTest RUNNING after 5 minutes
 
   monitor-processes:
     - set-signal: LOAD_TEST_COMPLETE 1
