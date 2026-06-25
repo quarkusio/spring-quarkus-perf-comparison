@@ -261,7 +261,7 @@ your environment:
 
 ```bash
 cd scripts/perf-lab
-BRANCH=main
+BRANCH=ootb
 REPO=https://github.com/quarkusio/spring-quarkus-perf-comparison.git
 QDUP_USER=jenkins
 ./run-benchmarks.sh --repo-branch $BRANCH --scenario tuned --output-dir run --graalvm-version 25.0.2-graalce \
@@ -270,7 +270,7 @@ QDUP_USER=jenkins
   --wait-time 30 --run-identifier local-1 --drop-fs-caches \
   --jvm-args "-XX:+UseParallelGC -XX:+UseNUMA -Dserver.tomcat.threads.max=50 -Dserver.tomcat.threads.min-spare=50" \
   --description "Local Test" --cpus-app 0,1,2,3 --cpus-db 4,5,6 --cpus-first-request 7 --cpus-load-gen 7,8,9 \
-  --cpus-monitoring 16 --cpus-otel 10,11,12 --jvm-memory "-Xmx512m -Xms512m" --runtimes quarkus3-jvm,spring4-jvm \
+  --cpus-monitoring 16 --jvm-memory "-Xmx512m -Xms512m" --runtimes quarkus3-jvm,spring4-jvm \
   --tests run-load-test
 ```
 
