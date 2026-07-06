@@ -230,6 +230,7 @@ Execute: `sudo visudo`
 jenkins ALL=(root) NOPASSWD: /usr/bin/tee /proc/sys/vm/drop_caches
 jenkins ALL=(root) NOPASSWD: /usr/bin/tee /proc/sys/kernel/perf_event_paranoid
 jenkins ALL=(root) NOPASSWD: /usr/bin/tee /proc/sys/kernel/kptr_restrict
+jenkins ALL=(root) NOPASSWD: /usr/bin/systemctl status firewalld
 ```
 
 ## Running a Benchmark Example
