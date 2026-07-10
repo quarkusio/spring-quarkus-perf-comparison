@@ -7,7 +7,6 @@ quarkus:
   rest:
     jackson:
       optimization:
-        # See https://quarkus.io/blog/quarkus-metaprogramming/
         enable-reflection-free-serializers: true
   otel:
     logs:
@@ -28,4 +27,3 @@ quarkus:
         url: jdbc:postgresql://localhost:5432/fruits
     hibernate-orm:
       sql-load-script: ""
-
