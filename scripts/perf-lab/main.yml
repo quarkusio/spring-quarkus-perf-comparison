@@ -586,17 +586,11 @@ scripts:
         - script: sync-drop-fs-cache
         - set-signal: LOAD_STEADY_STATE_START 1
         - set-signal: LOG_REGEX_REACHED 1
-        - read-state: ${{config.profiler.name}}
-          then:
-            - regex: "^syncjfr$"
-              then:
-                - queue-download: ${{REPO_DIR}}/logs/jfr.${{RUNTIME_NAME}}-${{ITERATION}}.jfr
-                - sh: echo "${{RUNTIMECMD.runCmd}}" | sed 's#-jar#-XX:StartFlightRecording=filename=${{REPO_DIR}}/logs/jfr.${{RUNTIME_NAME}}-${{ITERATION}}.jfr,settings=profile,dumponexit=true -jar#'
-                  then:
-                    - set-state: SYNCJFR_RUN_CMD
-                - sh: ${{SYNCJFR_RUN_CMD}} &>${{LOG_FILE}} &
-              else:
-                - sh: ${{RUNTIMECMD.runCmd}} &>${{LOG_FILE}} &
+        # CUSTOM_RUN_CMD allows you to change the startup script within the function
+        - set-state: CUSTOM_RUN_CMD ${{RUNTIMECMD.runCmd}}
+        - script: ${{config.profiler.name}}-install
+        - log: "Starting SUT with command: ${{CUSTOM_RUN_CMD}}"
+        - sh: ${{CUSTOM_RUN_CMD}} &>${{LOG_FILE}} &
         - sh: PID=$!
         - sh: echo $PID
         - set-state: JVM_PID
@@ -607,25 +601,11 @@ scripts:
             runtime_name: ${{RUNTIME_NAME}}
             iteration: ${{ITERATION}}
         - log: JVM_PID = ${{JVM_PID}}
-        - read-state: ${{config.profiler.name}}
-          then:
-            - regex: "^(jfr|flamegraph)$"
-              then:
-                - script: async-profiler-install
-                - script: async-profiler-configure
-                - set-state:
-                    key: PROFILER_LOGFILE
-                    value: "${{RUNTIME_NAME}}-${{ITERATION}}.${{= '${{config.profiler.name}}' == 'jfr' ? 'jfr' : 'html' }}"
-                - script:
-                    name: async-profiler-run
-                    async: true
-                  with:
-                    wait_start: LOAD_STEADY_STATE_START
-                    pid: ${{JVM_PID}}
-                    suffix: ${{PROFILER_LOGFILE}}
-                    format: ${{config.profiler.name}}
-                    events: ${{config.profiler.events}}
-                    delay: 5s
+        - script:
+            name: ${{config.profiler.name}}-run
+            async: true
+          with:
+            delay: 5s
         - script:
             name: watch-log
             async: true
