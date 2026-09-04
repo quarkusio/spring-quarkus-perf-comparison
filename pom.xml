@@ -10,9 +10,10 @@
 
     <modules>
         <module>quarkus3</module>
-	      <module>quarkus3-virtual</module>
+	    <module>quarkus3-virtual</module>
         <module>quarkus3-spring-compatibility</module>
         <module>springboot3</module>
         <module>springboot4</module>
+        <module>micronaut4</module>
     </modules>
 </project>

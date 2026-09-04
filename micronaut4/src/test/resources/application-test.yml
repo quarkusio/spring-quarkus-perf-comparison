@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    username: fruits
+    password: fruits
+    url: jdbc:postgresql://localhost:5432/fruits
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        cache:
+          # 1. Enable Hibernate's L2 Caching
+          use_second_level_cache: true
+          # 2. Configure the cache region factory (specifies the JCache/Caffeine provider)
+          region:
+            factory_class: jcache
+    open-in-view: false
+  jackson:
+    default-property-inclusion: non_empty
+  sql:
+    init:
+      mode: always
