@@ -187,7 +187,7 @@ To explore all available options (including the full list of runtimes and tests)
 ./run-benchmarks.sh --help
 ```
 
-To produce charts from the output, you can use the scripts at https://github.com/quarkusio/benchmarks.
+To produce charts from the output, you can use the scripts at https://github.com/quarkusio/benchmarks, or the [`scripts/perf-lab/plot-results.sh` convenience script](scripts/perf-lab/plot-results.sh).
 
 ### The best: Run tests in a controlled lab
 
