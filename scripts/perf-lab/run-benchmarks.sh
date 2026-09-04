@@ -34,6 +34,12 @@ help() {
   echo "  --cpus-monitoring <CPUS_MONITORING>                     CPU for monitoring (e.g. 7)"
   echo "                                                              Default: ${CPUS_MONITORING}"
   echo "  --description <DESCRIPTION>                             A human-readable description to be added to the run output"
+  echo "  --energy <ENERGY>                                       Energy measurement sources, separated by commas"
+  echo "                                                              Accepted values (1 or more of): rapl, idrac"
+  echo "                                                              Special values: all, none"
+  echo "                                                              Default: 'all'"
+  echo "  --energy-duration <SECONDS>                             Duration (seconds) to sustain energy measurement after RSS is captured"
+  echo "                                                              Default: 150 (matches load test duration)"
   echo "  --drop-fs-caches                                        Purge/drop OS filesystem caches between iterations"
   echo "  --extra-qdup-args <EXTRA_QDUP_ARGS>                     Any extra arguments that need to be passed to qDup ahead of the qDup scripts"
   echo "                                                              NOTE: This is an advanced option. Make sure you know what you are doing when using it."
@@ -145,6 +151,10 @@ print_values() {
   echo "  NATIVE_QUARKUS_BUILD_OPTIONS: $NATIVE_QUARKUS_BUILD_OPTIONS"
   echo "  NATIVE_SPRING3_BUILD_OPTIONS: $NATIVE_SPRING3_BUILD_OPTIONS"
   echo "  NATIVE_SPRING4_BUILD_OPTIONS: $NATIVE_SPRING4_BUILD_OPTIONS"
+  echo "  ENERGY: $ENERGY"
+  echo "  ENERGY_DURATION: $ENERGY_DURATION"
+  echo "  ENERGY_IDRAC: $ENERGY_IDRAC"
+  echo "  ENERGY_RAPL: $ENERGY_RAPL"
   echo "  PROFILER: $PROFILER"
   echo "  QUARKUS_BUILD_CONFIG_ARGS: $QUARKUS_BUILD_CONFIG_ARGS"
   echo "  QUARKUS_VERSION: $QUARKUS_VERSION"
@@ -270,6 +280,9 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.2 \
     -S config.jvm.version=${JAVA_VERSION} \
     -S config.quarkus.native_build_options="${NATIVE_QUARKUS_BUILD_OPTIONS}" \
     -S config.jvm.args="${JVM_ARGS}" \
+    -S config.energy.idrac=${ENERGY_IDRAC} \
+    -S config.energy.rapl=${ENERGY_RAPL} \
+    -S config.energy.rss.duration=${ENERGY_DURATION} \
     -S config.profiler.name=${PROFILER} \
     -S config.resources.app_cpus="$(count_cpus "${CPUS_APP}")" \
     -S config.resources.cpu.app="${CPUS_APP}" \
@@ -326,6 +339,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NATIVE_QUARKUS_BUILD_OPTIONS=""
   NATIVE_SPRING3_BUILD_OPTIONS=""
   NATIVE_SPRING4_BUILD_OPTIONS=""
+  ENERGY="all"
+  ALLOWED_ENERGY=("rapl" "idrac")
+  ENERGY_DURATION=150
+  ENERGY_IDRAC="enabled"
+  ENERGY_RAPL="enabled"
   PROFILER="none"
   QUARKUS_BUILD_CONFIG_ARGS=""
   QUARKUS_VERSION=""
@@ -382,6 +400,43 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
       --use-container-host-network)
         USE_CONTAINER_HOST_NETWORK=true
         shift
+        ;;
+
+      --energy)
+        ENERGY_SET_BY_USER="true"
+        ENERGY="$2"
+        ENERGY_IDRAC="disabled"
+        ENERGY_RAPL="disabled"
+
+        if [[ "$2" == "all" ]]; then
+          ENERGY_IDRAC="enabled"
+          ENERGY_RAPL="enabled"
+        elif [[ "$2" == "none" ]]; then
+          ENERGY_DURATION=0
+        else
+          IFS=',' read -ra en <<< "$2"
+
+          for item in "${en[@]}"; do
+            case "$item" in
+              rapl|idrac) ;;
+              *) echo "!! [ERROR] --energy option must be 'all', 'none', or 1 or more of [${ALLOWED_ENERGY[@]}]!!"
+                 exit_abnormal ;;
+            esac
+          done
+
+          for item in "${en[@]}"; do
+            case "$item" in
+              rapl) ENERGY_RAPL="enabled" ;;
+              idrac) ENERGY_IDRAC="enabled" ;;
+            esac
+          done
+        fi
+        shift 2
+        ;;
+
+      --energy-duration)
+        ENERGY_DURATION="$2"
+        shift 2
         ;;
 
       --extra-qdup-args)
@@ -573,6 +628,11 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     fi
   done
   TESTS_TO_RUN=${filtered_tests[@]}
+
+  # If user explicitly set --energy, ensure measure-rss is in the test list
+  if [[ -n "${ENERGY_SET_BY_USER:-}" && "$ENERGY" != "none" && ! "${TESTS_TO_RUN[@]}" =~ "measure-rss" ]]; then
+    TESTS_TO_RUN="$TESTS_TO_RUN measure-rss"
+  fi
 
   validate_values
   calculate_scenario
