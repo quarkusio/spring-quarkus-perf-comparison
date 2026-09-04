@@ -1,0 +1,7 @@
+quarkus:
+  jackson:
+    serialization-inclusion: non-empty
+  hibernate-orm:
+    schema-management:
+      strategy: drop-and-create
+    sql-load-script: import.sql
