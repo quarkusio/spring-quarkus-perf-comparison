@@ -803,9 +803,9 @@ scripts:
             - ctrlC
             - signal: LOAD_STEADY_STATE_START
       timer:
-        5m:
+        10m:
           - ctrlC
-          - abort: Hyperfoil log ${{log_file}} didn't show loadTest RUNNING after 5 minutes
+          - abort: Hyperfoil log ${{log_file}} didn't show loadTest RUNNING after 10 minutes
 
   monitor-processes:
     - set-signal: LOAD_TEST_COMPLETE 1
