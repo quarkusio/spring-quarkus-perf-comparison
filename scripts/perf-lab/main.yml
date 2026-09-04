@@ -14,6 +14,7 @@ states:
   config.units.load.throughputDensity: tps per MiB
   config.units.load.errors.connectionErrors: absolute number
   config.units.load.errors.requestTimeouts: absolute number
+  config.units.soak.throughput: tps
 
   config.jvm.home: #/path/to/java
   config.jvm.version: 25.0.2-tem
@@ -41,6 +42,9 @@ states:
   config.resources.cpu.1st_request: 10
   config.resources.cpu.monitor: 11
 
+  config.soak.rate: 2000
+  config.soak.duration: 150
+
   config.profiler.name: none #jfr syncjfr flamegraph
   config.profiler.events: cpu
 
@@ -57,7 +61,7 @@ states:
   PAUSE_TIME: 5
   PROFILER_JVM_ARGS:
   BASE_JAVA_CMD: ${{APP_CMD_PREFIX}} java ${{config.jvm.memory}} ${{config.jvm.args}} ${{PROFILER_JVM_ARGS}}
-  TESTS : [measure-time-to-first-request, measure-rss, run-load-test]
+  TESTS : [measure-time-to-first-request, measure-rss, run-load-test, load-test]
   RUNTIMES: [quarkus3-jvm, quarkus3-virtual, quarkus3-native, spring3-jvm, spring3-virtual, spring3-native, spring4-jvm, spring4-virtual, spring4-native]
   TARGET_URL: http://localhost:8080/fruits
   QUARKUS-PLATFORM-ARTIFACT-ID: quarkus-bom
@@ -773,6 +777,98 @@ scripts:
       with:
         var-name: RUN.output.results.${{RUNTIME_NAME}}.load.avApp5xxErrors
         array: RUN.output.results.${{RUNTIME_NAME}}.load.app5xxErrors
+
+  load-test:
+    - log: Running fixed-rate load test (${{config.soak.rate}} tps for ${{config.soak.duration}}s)
+    - sh: cd ${{RUNTIMECMD.dir}}
+    - set-state: RUNTIME_NAME ${{RUNTIMECMD.name}}
+    - queue-download: ${{HYPERFOIL_LOGS_DIR}}
+    - set-state:
+        key: APP_LOG_REGEX
+        value: ${{RUNTIMECMD.logFileStartedRegex}}
+    - for-each: ITERATION ${{=[...Array(${{config.num_iterations}}).keys()]}}
+      then:
+        - set-state:
+            key: LOG_FILE
+            value: ${{REPO_DIR}}/logs/load-test-${{RUNTIME_NAME}}-${{ITERATION}}.log
+        - sh: touch ${{LOG_FILE}}
+        - sh: mkdir -p ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}}
+        - queue-download: ${{REPO_DIR}}/logs/hf-soak-${{RUNTIME_NAME}}-${{ITERATION}}.log
+        - queue-download: ${{LOG_FILE}}
+        - script: start-test-services
+        - script: sync-drop-fs-cache
+        - set-signal: LOAD_TEST_COMPLETE 1
+        - set-signal: LOG_REGEX_REACHED 1
+        - sh: ${{RUNTIMECMD.runCmd}} &>${{LOG_FILE}} &
+        - sh: PID=$!
+        - sh: echo $PID
+        - set-state: JVM_PID
+        - script: monitor-processes
+          with:
+            pid: ${{JVM_PID}}
+            log_dir: ${{REPO_DIR}}/logs
+            runtime_name: ${{RUNTIME_NAME}}
+            iteration: ${{ITERATION}}
+        - script:
+            name: watch-log
+            async: true
+          with:
+            log_file: ${{LOG_FILE}}
+            log_regex: ${{APP_LOG_REGEX}}
+        - wait-for: LOG_REGEX_REACHED
+        - sh: |
+            ${{LOAD_GEN_CMD_PREFIX}} jbang \
+              -Dio.hyperfoil.rootdir=${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}} \
+              -Dio.hyperfoil.cpu.watchdog.idle.threshold=0.0 \
+              -R \
+              -XX:+UseNUMA \
+              run@hyperfoil \
+                -d soak-${{RUNTIME_NAME}}-${{ITERATION}} \
+                -o ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}} \
+                -PLOAD_RATE=${{config.soak.rate}} \
+                -PLOAD_DURATION=${{config.soak.duration}}s \
+                ${{LOAD_TESTS_SCRIPTS_DIR}}/load-test-fixed-rate-read-all.hf.yml &>${{REPO_DIR}}/logs/hf-soak-${{RUNTIME_NAME}}-${{ITERATION}}.log &
+        - sh: HF_PID=$! && echo $HF_PID
+          then:
+            - set-state: HF_PID
+        - sh: wait ${{HF_PID}}
+        - sh: cat ${{REPO_DIR}}/logs/hf-soak-${{RUNTIME_NAME}}-${{ITERATION}}.log | grep "Started run" | awk '{print $3}'
+          then:
+            - set-state:
+                key: RUN_NUM
+                autoConvert: false
+        - sh: jq '.stats[] | select(.phase == "loadTest") | .total.summary' ${{HYPERFOIL_LOGS_DIR}}/soak-${{RUNTIME_NAME}}-${{ITERATION}}/run/${{RUN_NUM}}/all.json
+          then:
+            - json: $.startTime
+              then:
+                - set-state: START_TIME
+              else:
+                - abort: Unable to find startTime in soak test results
+            - json: $.endTime
+              then:
+                - set-state: END_TIME
+              else:
+                - abort: Unable to find endTime in soak test results
+            - json: $.requestCount
+              then:
+                - set-state: REQUEST_COUNT
+              else:
+                - abort: Unable to find request count in soak test results
+        - set-state:
+            key: THROUGHPUT
+            value: ${{= ${{REQUEST_COUNT}}/((${{END_TIME}}-${{START_TIME}})/1000) }}
+        - script: state-array-push
+          with:
+            array: RUN.output.results.${{RUNTIME_NAME}}.soak.throughput
+            value: ${{THROUGHPUT}}
+        - signal: LOAD_TEST_COMPLETE
+        - sh: kill -15 $PID
+        - sh: sleep ${{PAUSE_TIME}}
+        - script: stop-test-services
+    - script: state-array-calc-avg
+      with:
+        var-name: RUN.output.results.${{RUNTIME_NAME}}.soak.avThroughput
+        array: RUN.output.results.${{RUNTIME_NAME}}.soak.throughput
 
   watch-log:
     - sh: tail -f ${{log_file}}
