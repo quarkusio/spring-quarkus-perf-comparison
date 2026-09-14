@@ -1,0 +1,20 @@
+name: perf-stat
+scripts:
+  perf-stat-install:
+    - log: "Preparing perf-stat profiler..."
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - sh: echo 1 | sudo tee /proc/sys/kernel/perf_event_paranoid > /dev/null
+            - sh: echo 0 | sudo tee /proc/sys/kernel/kptr_restrict > /dev/null
+    - set-state:
+        key: PROFILER_LOGFILE
+        value: "${{REPO_DIR}}/logs/perf-stat-${{RUNTIME_NAME}}-${{ITERATION}}.txt"
+    - queue-download: ${{PROFILER_LOGFILE}}
+
+  perf-stat-run:
+    - wait-for: LOAD_STEADY_STATE_START
+    - sleep: ${{delay:0}}
+    - log: "Running perf-stat profiler..."
+    - sh: perf stat -p ${{JVM_PID}} -- sleep ${{duration:10}} &> ${{PROFILER_LOGFILE}}

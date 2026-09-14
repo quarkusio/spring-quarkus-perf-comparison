@@ -1,14 +1,6 @@
-name: async-profiler #https://github.com/apangin/async-profiler.git
+# wrapper for profiler-flamegraph.yml and profiler-jfr.yml
+name: async-profiler
 scripts:
-  async-profiler-configure:
-    - read-state: ${{os}}
-      then:
-        - regex: linux
-          then:
-            - sh: echo 1 | sudo tee /proc/sys/kernel/perf_event_paranoid > /dev/null
-            - sh: echo 0 | sudo tee /proc/sys/kernel/kptr_restrict > /dev/null
-
-  # downloads the latest async-profiler release to ${{BASE_DIR}}/${{ASYNC_PROFILER}}
   download-unpack-async-profiler:
     - read-state: ${{os}}
       then:
@@ -29,23 +21,30 @@ scripts:
             - sh: mv ${{subDir}}/ ${{ASYNC_PROFILER}}
 
   async-profiler-install:
+    - read-state: ${{os}}
+      then:
+        - regex: linux
+          then:
+            - sh: echo 1 | sudo tee /proc/sys/kernel/perf_event_paranoid > /dev/null
+            - sh: echo 0 | sudo tee /proc/sys/kernel/kptr_restrict > /dev/null
     - sh: if test -d ${{ASYNC_PROFILER_DIR}} ; then rm -rf ${{ASYNC_PROFILER_DIR}}; fi
     - sh: cd ${{BASE_DIR}}
     - script: download-unpack-async-profiler
 
-  #waits for ${{WAIT_START}} then ${{DELAY}}, creates a profile using the configured parameters then downloads it immediately
-  #works with 3.x, not 2.x
   async-profiler-run:
+    - set-state:
+        key: PROFILER_LOGFILE
+        value: ${{REPO_DIR}}/logs/async-profiler-${{RUNTIME_NAME}}-${{ITERATION}}.${{extension}}
     - sh: cd ${{ASYNC_PROFILER_DIR}}
-    - wait-for: ${{wait_start:}} # don't wait by default
+    - wait-for: LOAD_STEADY_STATE_START
     - sleep: ${{delay:0}}
     - sh: >
         bin/asprof 
-        -d ${{duration:10}} 
-        -f ${{REPO_DIR}}/logs/${{format:flamegraph}}.${{suffix:html}} 
-        -o ${{format:flamegraph}} 
-        -e ${{events:cpu}} 
+        -d ${{duration:10}}
+        -f ${{PROFILER_LOGFILE}}
+        -o ${{config.profiler.name}}
+        -e ${{config.profiler.events}}
         ${{="${{enableTotal : }}".toLowerCase() == "true" ? "--total" : ""}} 
         --title ${{title:async-profiler}} 
-        ${{pid}}
-    - download: ${{REPO_DIR}}/logs/${{format:flamegraph}}.${{suffix:html}}
+        ${{JVM_PID}}
+    - download: ${{PROFILER_LOGFILE}}
