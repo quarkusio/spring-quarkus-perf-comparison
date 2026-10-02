@@ -1,0 +1,85 @@
+@startuml domain-model
+' Fruit Store domain model (package org.acme.domain)
+' Identical in all modules - see TCK.md section 3
+' Conceptual view: the composite-key class StoreFruitPriceId (@EmbeddedId) is folded
+' into StoreFruitPrice as PK (store_id, fruit_id), since it only mirrors the
+' store/fruit foreign keys via @MapsId and is never exposed in the API.
+
+title Fruit Store - Domain Model (org.acme.domain)
+
+set separator none
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 90
+skinparam class {
+  BackgroundColor<<Entity>> #E3F2FD
+  BorderColor<<Entity>> #1565C0
+  BackgroundColor<<Embeddable>> #FFF8E1
+  BorderColor<<Embeddable>> #F9A825
+}
+hide empty methods
+
+package "org.acme.domain" {
+
+  class Fruit <<Entity>> {
+    <i>table: fruits</i>
+    --
+    + <b>id</b> : Long  {PK, seq fruits_seq}
+    + name : String  {@NaturalId, unique, not null, @NotBlank}
+    + description : String
+    + storePrices : List<StoreFruitPrice>
+  }
+
+  class Store <<Entity>> {
+    <i>table: stores</i>
+    <i>@Cacheable (L2 cache)</i>
+    --
+    + <b>id</b> : Long  {PK, seq stores_seq}
+    + name : String  {@NaturalId, unique, not null, @NotBlank}
+    + currency : String  {not null, @NotBlank}
+    + address : Address  {@Embedded}
+  }
+
+  class StoreFruitPrice <<Entity>> {
+    <i>table: store_fruit_prices</i>
+    <i>PK: (store_id, fruit_id)</i>
+    --
+    + <b>store</b> : Store  {PK, FK store_id, EAGER, L2 cached}
+    + <b>fruit</b> : Fruit  {PK, FK fruit_id, LAZY}
+    + price : BigDecimal  {numeric(12,2), not null, >= 0.00}
+  }
+
+  class Address <<Embeddable>> <<record>> {
+    + address : String  {not null, @NotBlank}
+    + city : String  {not null, @NotBlank}
+    + country : String  {not null, @NotBlank}
+  }
+
+  ' Declared inside the package so the note stays within the package frame
+  note bottom of StoreFruitPrice
+    Association entity carrying the per-store
+    price of a fruit, identified by (store, fruit).
+    ----
+    Entities are never serialized directly: the
+    service layer maps them to DTOs (org.acme.dto),
+    which define the JSON shape.
+  end note
+}
+
+' Layout: Fruit and Store side by side on top, join entity StoreFruitPrice below them,
+' Address embedded to the right of Store.
+Fruit -[hidden]right- Store
+
+' Associations
+' Bidirectional: Fruit.storePrices is the inverse side (@OneToMany mappedBy = "fruit"),
+' StoreFruitPrice.fruit is the owning side (@ManyToOne LAZY, FK fruit_id, @JsonIgnore)
+Fruit "1" <-down-> "0..*" StoreFruitPrice : "  storePrices (mappedBy) /\n  fruit (LAZY, FK fruit_id)"
+' Unidirectional: StoreFruitPrice -> Store (@ManyToOne EAGER, FK store_id)
+StoreFruitPrice "0..*" -up-> "1" Store : "  store\n  (EAGER, FK store_id)"
+
+' Composition / embedding
+Store *-right- "1" Address : "<<embedded>>\n"
+
+@enduml
