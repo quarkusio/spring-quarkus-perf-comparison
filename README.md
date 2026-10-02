@@ -41,6 +41,9 @@ To ensure fair like-for-like comparisons, all modules conform to a shared specif
 
 - [**TCK.md**](TCK.md) — Defines the architectural requirements: package structure, domain model, REST API contract, repository contract, configuration, testing, and what's allowed to vary between frameworks.
 - [**openapi.yml**](openapi.yml) — The OpenAPI specification for the REST API. All modules MUST produce responses conforming to this spec.
+- **Diagrams** — Visual overviews of the specification:
+    - [Domain model](docs/diagrams/domain-model.png) ([source](docs/diagrams/domain-model.puml)) — the `org.acme.domain` entities shared by all modules.
+    - [Application architecture](docs/diagrams/architecture.png) ([source](docs/diagrams/architecture.puml)) — the request path through the REST, repository, and persistence layers, with a Quarkus vs Spring Boot mapping.
 
 ## What's in the repo
 This project contains the following modules:

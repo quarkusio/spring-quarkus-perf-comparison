@@ -16,6 +16,11 @@ The application is a simple "Fruit Store" domain: fruits sold at stores with per
 > [!NOTE]
 > For the **tuned** strategy TCK, see the [`main` branch](https://github.com/quarkusio/spring-quarkus-perf-comparison/blob/main/TCK.md).
 
+### Diagrams
+
+- [Domain model](docs/diagrams/domain-model.png) ([source](docs/diagrams/domain-model.puml)) — the entities described in [Section 3](#3-domain-model)
+- [Application architecture](docs/diagrams/architecture.png) ([source](docs/diagrams/architecture.puml)) — the request path through the packages described in Sections [4](#4-rest-api-contract)–[6](#6-repository), with a Quarkus vs Spring Boot mapping
+
 ### Compliance Levels
 
 - **MUST** — Required for a fair comparison. Violations invalidate benchmark results.
@@ -58,6 +63,10 @@ The following packages from the tuned strategy are **not used** in the OOTB stra
 ---
 
 ## 3. Domain Model
+
+![Domain model](docs/diagrams/domain-model.png)
+
+The diagram is a conceptual view: the composite key class `StoreFruitPriceId` (Section 3.4) is shown as `PK: (store_id, fruit_id)` on `StoreFruitPrice`. It is still a required class.
 
 All entity classes reside in `org.acme.domain`. They MUST be **copied verbatim** from the reference implementation. They use `jakarta.persistence.*`, `org.hibernate.annotations.*`, `jakarta.validation.*`, and `com.fasterxml.jackson.annotation.JsonIgnore` annotations.
 
