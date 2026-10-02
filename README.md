@@ -10,7 +10,7 @@ Here are the principles we used when making implementation choices:
 
 - **Parity**
     - The application code in the Spring and Quarkus versions of the application should be as equivalent as possible to perform the same function. This mean that the domain models should be identical, the underlying persistence mechanisms should be identical (i.e. JPA with Hibernate).
-    - Performance differences should come from architecture differences and library-integration optimizations in the frameworks themselves.
+    - Performance differences should come from architecture differences and library-integration optimisations in the frameworks themselves.
     - If a change is made that changes the architecture of an application (i.e. moving blocking to reactive, using virtual threads, etc), then these changes should be applied to all the versions of the applications.
 - **Normal-ness**
     - Realism is more important than squeezing out every last bit of performance.
@@ -19,7 +19,7 @@ Here are the principles we used when making implementation choices:
     - Although we want the application to represent a typical usage, someone who copies it shouldn't ever be copying 'wrong' or bad code. 
 - **Easy to try at home**
     - Running measurements should be easy for a non-expert to do with a minimum of infrastructure setup, and it should also be rigorous in terms of performance best practices.
-    - These two goals are contradictory, unfortunately! To try and achieve both, we have two versions of the scripts, one optimized for simplicity, and one for methodological soundness.
+    - These two goals are contradictory, unfortunately! To try and achieve both, we have two versions of the scripts, one optimised for simplicity, and one for methodological soundness.
 
 ## Goals
 
@@ -41,6 +41,9 @@ To ensure fair like-for-like comparisons, all modules conform to a shared specif
 
 - [**TCK.md**](TCK.md) — Defines the architectural requirements: package structure, domain model, REST API contract, repository contract, configuration, testing, and what's allowed to vary between frameworks.
 - [**openapi.yml**](openapi.yml) — The OpenAPI specification for the REST API. All modules MUST produce responses conforming to this spec.
+- **Diagrams** — Visual overviews of the specification:
+    - [Domain model](docs/diagrams/domain-model.png) ([source](docs/diagrams/domain-model.puml)) — the `org.acme.domain` entities shared by all modules.
+    - [Application architecture](docs/diagrams/architecture.png) ([source](docs/diagrams/architecture.puml)) — the request path through the REST, repository, and persistence layers, with a Quarkus vs Spring Boot mapping.
 
 ## What's in the repo
 This project contains the following modules:
