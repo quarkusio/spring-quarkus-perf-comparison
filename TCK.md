@@ -6,6 +6,11 @@ This document defines the requirements for implementing a new framework module i
 
 The application is a simple "Fruit Store" domain: fruits sold at stores with per-store pricing. Every module implements the same domain model, the same REST API, the same data access patterns, and seeds the same test data. The only things that differ are the framework-specific annotations, DI mechanisms, and configuration idioms.
 
+### Diagrams
+
+- [Domain model](docs/diagrams/domain-model.png) ([source](docs/diagrams/domain-model.puml)) — the entities described in [Section 3](#3-domain-model)
+- [Application architecture](docs/diagrams/architecture.png) ([source](docs/diagrams/architecture.puml)) — the request path through the packages described in Sections [6](#6-package-dependency-rules)–[9](#9-repository), plus [observability](#12-observability), with a Quarkus vs Spring Boot mapping
+
 ### Compliance Levels
 
 - **MUST** — Required for a fair comparison. Violations invalidate benchmark results.
@@ -43,6 +48,10 @@ Root package: `org.acme`
 ---
 
 ## 3. Domain Model
+
+![Domain model](docs/diagrams/domain-model.png)
+
+The diagram is a conceptual view: the composite key class `StoreFruitPriceId` (Section 3.4) is shown as `PK: (store_id, fruit_id)` on `StoreFruitPrice`. It is still a required class.
 
 All entity classes reside in `org.acme.domain`. They MUST be **copied verbatim** from the reference implementation — they use only `jakarta.persistence.*`, `org.hibernate.annotations.*`, and `jakarta.validation.*` annotations with no framework-specific imports.
 

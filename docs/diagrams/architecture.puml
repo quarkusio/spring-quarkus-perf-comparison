@@ -1,0 +1,160 @@
+@startuml architecture
+' Fruit Store application architecture (tuned strategy, main branch)
+' Identical across all modules - only framework idioms differ (see TCK.md sections 6-12, 14)
+
+!include <logos/postgresql>
+
+title Fruit Store - Application Architecture (Tuned)
+
+' Stereotypes only drive the colors (explained in the legend's color key):
+'   <<application>> = org.acme.* packages written/copied per module
+'   <<framework>>   = runtime provided by Quarkus / Spring
+' The optional, framework-specific org.acme.config package (e.g. Spring's
+' L2CacheConfiguration / GraalVMConfig) is intentionally omitted.
+hide stereotype
+
+skinparam shadowing false
+skinparam backgroundColor transparent
+skinparam defaultFontName Helvetica
+skinparam componentStyle rectangle
+skinparam ArrowColor #555555
+skinparam ArrowFontColor #555555
+skinparam ArrowFontSize 11
+skinparam rectangle {
+  BorderColor #566573
+  FontColor #2C3E50
+  BackgroundColor<<application>> #FFFFFF
+  BackgroundColor<<framework>> #D6EAF8
+}
+skinparam component {
+  BorderColor #1565C0
+  BackgroundColor #E3F2FD
+}
+skinparam legend {
+  BackgroundColor #F2F3F4
+  BorderColor #566573
+}
+skinparam database {
+  BorderColor #566573
+  BackgroundColor #D5F5E3
+}
+skinparam node {
+  BorderColor #566573
+}
+skinparam note {
+  BackgroundColor #FEF9E7
+  BorderColor #B7950B
+}
+
+actor "HTTP Client\n(load generator / curl)" as client
+
+node "Application (JVM or native)" as app {
+
+  rectangle "HTTP / REST runtime" <<framework>> as http {
+    component "JSON (de)serialization\n<b>Jackson</b>\ninclusion = NON_EMPTY" as jackson
+    component "Bean Validation\n<b>Hibernate Validator</b>\n(@Valid on POST body)" as validation
+  }
+
+  rectangle "org.acme.rest" <<application>> as restPkg {
+    component "<b>FruitController</b>\n/fruits\n----\nGET  /fruits\nGET  /fruits/{name}\nPOST /fruits" as controller
+  }
+
+  rectangle "org.acme.dto" <<application>> as dtoPkg {
+    component "DTO records\n----\nFruitDTO\nStoreDTO\nStoreFruitPriceDTO\nAddressDTO" as dto
+  }
+
+  rectangle "org.acme.service" <<application>> as servicePkg {
+    component "<b>FruitService</b>\n----\ngetAllFruits()  SUPPORTS\ngetFruitByName(name)  SUPPORTS\ncreateFruit(fruitDTO)  REQUIRED\n----\n@WithSpan on every method" as service
+  }
+
+  rectangle "org.acme.mapping" <<application>> as mappingPkg {
+    component "Entity <-> DTO mappers\n----\nFruitMapper\nStoreMapper\nStoreFruitPriceMapper\nAddressMapper" as mapping
+  }
+
+  rectangle "org.acme.repository" <<application>> as repoPkg {
+    component "<b>FruitRepository</b>\n----\nfindByName(name) : Optional<Fruit>\nlist all : List<Fruit>\npersist(fruit)" as repository
+  }
+
+  rectangle "org.acme.domain" <<application>> as domainPkg {
+    component "JPA entities\n----\nFruit\nStore (@Cacheable)\nStoreFruitPrice\nAddress" as domain
+  }
+
+  rectangle "Persistence runtime" <<framework>> as persistence {
+    component "<b>Hibernate ORM</b>\n(JPA provider)\nbatch fetch size = 16\nOpen Session in View off" as hibernate
+    component "L2 cache\n<b>Caffeine</b>\nStore entity +\nStoreFruitPrice.store" as l2cache
+    component "JDBC connection pool\n(~50 connections)\nJDBC tracing" as pool
+    component "Transaction manager" as tx
+  }
+
+  rectangle "Observability runtime" <<framework>> as observability {
+    component "Tracing\n<b>OpenTelemetry</b>\n10% sampling" as tracing
+    component "Metrics\n<b>Micrometer</b>\n(Prometheus-compatible)" as metrics
+    component "Health endpoint" as health
+  }
+}
+
+database "<$postgresql>\nPostgreSQL\nlocalhost:5432/fruits\n----\nfruits\nstores\nstore_fruit_prices\n(seeded by import.sql / data.sql)" as db
+
+node "Observability backend\n(e.g. grafana/otel-lgtm)" as otelBackend
+
+' Request flow
+client --> jackson : HTTP/JSON
+jackson --> controller : FruitDTO / List<FruitDTO>
+validation .> controller : validates\nPOST body
+controller --> service : delegates
+controller ..> dto
+service --> mapping : entity <-> DTO
+service --> repository
+service .> tx : @Transactional
+mapping ..> dto
+mapping ..> domain
+repository ..> domain
+repository --> hibernate : JPA
+hibernate --> l2cache : Store lookups
+hibernate --> pool
+tx .> hibernate
+pool --> db : JDBC
+
+' Observability
+service .> tracing : named spans
+pool .> tracing : JDBC spans
+tracing -[dotted]-> otelBackend : OTLP
+metrics -[dotted]-> otelBackend : metrics\n(OTLP push or\nPrometheus scrape)
+
+legend right
+  <b>Framework mapping</b>
+  |= Concern |= Quarkus |= Spring Boot |
+  | REST | Quarkus REST (JAX-RS)\n@Path, Response | Spring MVC\n@RestController, ResponseEntity |
+  | Service bean | @ApplicationScoped | @Service |
+  | Repository | PanacheRepository<Fruit>\n(class, @ApplicationScoped) | JpaRepository<Fruit, Long>\n(interface) |
+  | List all / persist | listAll() / persist() | findAll() / save() |
+  | Transactions | jakarta.transaction.Transactional\n(TxType.SUPPORTS) | Spring @Transactional\n(SUPPORTS, readOnly) |
+  | Tracing | quarkus-micrometer-opentelemetry\n@WithSpan / @SpanAttribute | opentelemetry-spring-boot-starter\n@WithSpan / @SpanAttribute |
+  | Metrics | quarkus-micrometer-opentelemetry | Actuator /actuator/prometheus |
+  | Health | SmallRye Health /q/health | Actuator /actuator/health |
+  | Connection pool | Agroal | HikariCP (max 50) |
+  | L2 cache setup | built-in (automatic) | JCache + Caffeine\n(programmatic setup) |
+  | Seed data | import.sql | data.sql |
+  | Entry point | (none needed) | @SpringBootApplication |
+  | Config | application.yml (quarkus.*) | application.yml (spring.*) |
+
+  <b>Color key</b>
+  |<#FFFFFF>        | Application code: org.acme.* packages in each module |
+  |<#D6EAF8>        | Framework runtime: provided by Quarkus / Spring |
+endlegend
+
+note bottom of restPkg
+  <b>Allowed package dependencies</b>
+  rest -> service, dto
+  service -> repository, dto, domain, mapping
+  repository -> domain
+  dto, domain -> (no org.acme.*)
+end note
+
+note top of app
+  <b>Tuned strategy:</b> DTOs + mapping layer, service layer owns
+  transactions, observability (tracing, metrics, health), plus tuning
+  (pool ~50, batch fetch size 16, OSIV off, ParallelGC)
+end note
+
+@enduml
