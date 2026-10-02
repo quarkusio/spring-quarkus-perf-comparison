@@ -14,7 +14,6 @@ title Fruit Store - Application Architecture (Tuned)
 hide stereotype
 
 skinparam shadowing false
-skinparam backgroundColor transparent
 skinparam defaultFontName Helvetica
 skinparam componentStyle rectangle
 skinparam ArrowColor #555555
