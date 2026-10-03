@@ -17,4 +17,8 @@ buildNumber.properties
 .classpath
 /.idea/
 /.profileconfig.json
+
+.agents/
 .claude
+.cursor/
+skills-lock.json
