@@ -1,0 +1,11 @@
+name: syncjfr
+scripts:
+  syncjfr-install:
+    - log: "Injecting JFR diagnostic flags into the JVM..."
+    - queue-download: ${{REPO_DIR}}/logs/jfr.${{RUNTIME_NAME}}-${{ITERATION}}.jfr
+    - sh: echo "${{RUNTIMECMD.runCmd}}" | sed 's#-jar#-XX:StartFlightRecording=filename=${{REPO_DIR}}/logs/jfr.${{RUNTIME_NAME}}-${{ITERATION}}.jfr,settings=profile,dumponexit=true -jar#'
+      then:
+        - set-state: CUSTOM_RUN_CMD
+
+  syncjfr-run:
+    - log: "JFR is native and was already started with the JVM. No action needed in the RUN step."

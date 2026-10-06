@@ -1,0 +1,7 @@
+name: none
+scripts:
+  none-install:
+    - log: "No profiler selected."
+
+  none-run:
+    - log: "No profiler to run."
