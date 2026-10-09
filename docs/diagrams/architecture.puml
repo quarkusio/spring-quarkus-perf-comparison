@@ -14,38 +14,6 @@ title Fruit Store - Application Architecture (Tuned)
 ' L2CacheConfiguration / GraalVMConfig) is intentionally omitted.
 hide stereotype
 
-skinparam shadowing false
-skinparam defaultFontName Helvetica
-skinparam componentStyle rectangle
-skinparam ArrowColor #555555
-skinparam ArrowFontColor #555555
-skinparam ArrowFontSize 11
-skinparam rectangle {
-  BorderColor #566573
-  FontColor #2C3E50
-  BackgroundColor<<application>> #FFFFFF
-  BackgroundColor<<framework>> #D6EAF8
-}
-skinparam component {
-  BorderColor #1565C0
-  BackgroundColor #E3F2FD
-}
-skinparam legend {
-  BackgroundColor #F2F3F4
-  BorderColor #566573
-}
-skinparam database {
-  BorderColor #566573
-  BackgroundColor #D5F5E3
-}
-skinparam node {
-  BorderColor #566573
-}
-skinparam note {
-  BackgroundColor #FEF9E7
-  BorderColor #B7950B
-}
-
 actor "HTTP Client\n(load generator / curl)" as client
 
 node "Application (JVM or native)" as app {
