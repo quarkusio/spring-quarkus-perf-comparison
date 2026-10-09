@@ -1,4 +1,5 @@
 @startuml architecture
+!theme quarkus from https://quarkus.io/assets/plantuml/themes
 ' Fruit Store application architecture (tuned strategy, main branch)
 ' Identical across all modules - only framework idioms differ (see TCK.md sections 6-12, 14)
 
