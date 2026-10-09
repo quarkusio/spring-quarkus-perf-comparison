@@ -1,4 +1,5 @@
 @startuml domain-model
+!theme quarkus from https://quarkus.io/assets/plantuml/themes
 ' Fruit Store domain model (package org.acme.domain)
 ' Identical in all modules - see TCK.md section 3
 ' Conceptual view: the composite-key class StoreFruitPriceId (@EmbeddedId) is folded
@@ -8,17 +9,6 @@
 title Fruit Store - Domain Model (org.acme.domain)
 
 set separator none
-skinparam classAttributeIconSize 0
-skinparam shadowing false
-skinparam linetype ortho
-skinparam nodesep 80
-skinparam ranksep 90
-skinparam class {
-  BackgroundColor<<Entity>> #E3F2FD
-  BorderColor<<Entity>> #1565C0
-  BackgroundColor<<Embeddable>> #FFF8E1
-  BorderColor<<Embeddable>> #F9A825
-}
 hide empty methods
 
 package "org.acme.domain" {
