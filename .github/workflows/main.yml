@@ -121,6 +121,7 @@ jobs:
           - { "name": "quarkus3-virtual", "dir": "quarkus3-virtual", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
           - { "name": "quarkus3-virtual-leyden", "dir": "quarkus3-virtual", "build-args": "-Dquarkus.package.jar.aot.enabled=true", "run-args": "-XX:AOTCache=target/quarkus-app/app.aot", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
           - { "name": "quarkus3-spring-compatibility", "dir": "quarkus3-spring-compatibility", "build-args": "", "run-args": "", "app-jar": "target/quarkus-app/quarkus-run.jar", "isSpringLeyden": false }
+          - { "name": "micronaut4", "dir": "micronaut4", "build-args": "", "run-args": "", "app-jar": "target/micronaut4.jar", "isSpringLeyden": false }
         exclude:
           - java: '21'
             app:
