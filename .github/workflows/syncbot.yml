@@ -80,7 +80,10 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@v7.0.1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The push of the sync branch needs the credentials persisted by checkout
+          persist-credentials: true
 
       - name: Update PR comment for tuning label
         if: needs.prepare.outputs.has_tuning_label == 'true'
