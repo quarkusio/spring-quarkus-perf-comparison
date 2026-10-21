@@ -111,18 +111,23 @@ jobs:
           fi
 
           # Check if the sync branch has any changes compared to the target branch
+          echo "all_skipped=false" >> $GITHUB_OUTPUT
+          echo "already_synced=false" >> $GITHUB_OUTPUT
           if git diff --quiet origin/$TARGET_BRANCH $SYNC_BRANCH; then
-            echo "::warning::All commits were skipped due to conflicts. No changes to sync."
-            echo "all_skipped=true" >> $GITHUB_OUTPUT
-          else
-            echo "all_skipped=false" >> $GITHUB_OUTPUT
+            if [ -n "$SKIPPED_COMMITS" ]; then
+              echo "::warning::All commits were skipped due to conflicts. No changes to sync."
+              echo "all_skipped=true" >> $GITHUB_OUTPUT
+            else
+              echo "::notice::All commits were already applied to $TARGET_BRANCH. No changes to sync."
+              echo "already_synced=true" >> $GITHUB_OUTPUT
+            fi
           fi
 
           echo "Cherry-pick complete"
 
       - name: Push sync branch and create PR
         id: push-and-pr
-        if: steps.cherry-pick.outputs.all_skipped != 'true'
+        if: steps.cherry-pick.outputs.all_skipped != 'true' && steps.cherry-pick.outputs.already_synced != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -171,7 +176,7 @@ jobs:
           fi
 
       - name: Update PR comment on success
-        if: steps.cherry-pick.outputs.target_branch != '' && steps.push-and-pr.outputs.push_failed_workflows != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
+        if: steps.cherry-pick.outputs.target_branch != '' && steps.push-and-pr.outputs.push_failed_workflows != 'true' && steps.cherry-pick.outputs.already_synced != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
         uses: quarkusio/action-helpers@main
         with:
           action: maintain-one-comment
@@ -188,6 +193,16 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
             🤖 This PR has been partially synchronized to the `${{ steps.cherry-pick.outputs.target_branch }}` branch. Some commits were skipped due to conflicts and may need manual syncing. 🔄
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - name: Update PR comment when changes are already on the target
+        if: steps.cherry-pick.outputs.target_branch != '' && steps.cherry-pick.outputs.already_synced == 'true'
+        uses: quarkusio/action-helpers@main
+        with:
+          action: maintain-one-comment
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          body: |
+            🤖 No sync to `${{ steps.cherry-pick.outputs.target_branch }}` was needed — all changes in this PR are already present on that branch. 🔄
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Update PR comment when all commits conflict
