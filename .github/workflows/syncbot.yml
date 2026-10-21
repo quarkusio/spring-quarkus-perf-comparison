@@ -6,93 +6,128 @@ on:
       - main
       - ootb
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
-  mirror-changes:
+  prepare:
+    name: Validate pull request metadata
     runs-on: ubuntu-latest
     if: github.actor != 'dependabot[bot]'
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      target_branch: ${{ steps.target-branch.outputs.branch }}
+      source_branch: ${{ steps.source-branch.outputs.source_branch }}
+      sync_branch: ${{ steps.source-branch.outputs.sync_branch }}
+      has_tuning_label: ${{ steps.check-tuning.outputs.has_tuning_label }}
     steps:
-      - uses: actions/checkout@v7.0.1
-
       - name: Get target branch
         id: target-branch
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "${{ github.base_ref }}" == "main" ]; then
-            echo "branch=ootb" >> $GITHUB_OUTPUT
+          if [ "$BASE_REF" = "main" ]; then
+            BRANCH=ootb
           else
-            echo "branch=main" >> $GITHUB_OUTPUT
+            BRANCH=main
           fi
-          echo "Target branch for sync: $(cat $GITHUB_OUTPUT | grep branch | cut -d= -f2)"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "Target branch for sync: $BRANCH"
+
+      - name: Validate source branch name
+        id: source-branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          TARGET_BRANCH: ${{ steps.target-branch.outputs.branch }}
+        run: |
+          # The head ref is untrusted for pull requests from forks
+          SOURCE_BRANCH=$(printf '%s' "$HEAD_REF" | tr -c 'A-Za-z0-9._/-' '-' | tr -s './-')
+          SOURCE_BRANCH=${SOURCE_BRANCH:0:100}
+          # Git refs may not start or end with these characters
+          SOURCE_BRANCH=$(printf '%s' "$SOURCE_BRANCH" | sed -E 's#^[-./]+##; s#[-./]+$##')
+          SYNC_BRANCH="sync-$SOURCE_BRANCH-to-$TARGET_BRANCH"
+
+          if [ -z "$SOURCE_BRANCH" ] || ! git check-ref-format "refs/heads/$SYNC_BRANCH"; then
+            echo "::error::Unable to derive a safe sync branch name from the pull request head ref. This pull request needs to be synced manually."
+            exit 1
+          fi
+
+          echo "source_branch=$SOURCE_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "sync_branch=$SYNC_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "Source branch: $SOURCE_BRANCH"
+          echo "Sync branch: $SYNC_BRANCH"
 
       - name: Check for tuning label and exit early if present
         id: check-tuning
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name')
+          LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name')
           if echo "$LABELS" | grep -q "^tuning$"; then
             echo "PR has 'tuning' label - sync will be skipped"
-            echo "has_tuning_label=true" >> $GITHUB_OUTPUT
+            echo "has_tuning_label=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_tuning_label=false" >> $GITHUB_OUTPUT
+            echo "has_tuning_label=false" >> "$GITHUB_OUTPUT"
           fi
 
+  mirror-changes:
+    name: Mirror changes to the other branch
+    runs-on: ubuntu-latest
+    needs: prepare
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The push of the sync branch needs the credentials persisted by checkout
+          persist-credentials: true
+
       - name: Update PR comment for tuning label
-        if: steps.check-tuning.outputs.has_tuning_label == 'true'
-        uses: quarkusio/action-helpers@main
+        if: needs.prepare.outputs.has_tuning_label == 'true'
+        uses: quarkusio/action-helpers@4f05abc46fce576bd83fe6d61df45506783f60d1 # main
         with:
           action: maintain-one-comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            🤖 This PR has the `tuning` label and will not be automatically synchronized to the `${{ steps.target-branch.outputs.branch }}` branch. Tuning probably doesn't make sense for that branch. 🔄
+            🤖 This PR has the `tuning` label and will not be automatically synchronized to the `${{ needs.prepare.outputs.target_branch }}` branch. Tuning probably doesn't make sense for that branch. 🔄
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Cherry-pick commits to target branch
         id: cherry-pick
-        if: steps.check-tuning.outputs.has_tuning_label != 'true'
+        if: needs.prepare.outputs.has_tuning_label != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET_BRANCH: ${{ needs.prepare.outputs.target_branch }}
+          SYNC_BRANCH: ${{ needs.prepare.outputs.sync_branch }}
         run: |
           git config user.name syncbot
           git config user.email github-actions@github.com
-          
+
           # Fetch all branches and the PR head (which may be from a fork)
           git fetch origin
-          git fetch origin pull/${{ github.event.pull_request.number }}/head
-          
-          # Get the source branch name and target branch
-          SOURCE_BRANCH="${{ github.head_ref }}"
-          TARGET_BRANCH="${{ steps.target-branch.outputs.branch }}"
-          SYNC_BRANCH="sync-${SOURCE_BRANCH}-to-${TARGET_BRANCH}"
-          
-          echo "Source branch: $SOURCE_BRANCH"
-          echo "Target branch: $TARGET_BRANCH"
-          echo "Sync branch: $SYNC_BRANCH"
-          
-          # Store branch names for next step
-          echo "source_branch=$SOURCE_BRANCH" >> $GITHUB_OUTPUT
-          echo "target_branch=$TARGET_BRANCH" >> $GITHUB_OUTPUT
-          echo "sync_branch=$SYNC_BRANCH" >> $GITHUB_OUTPUT
-          
+          git fetch origin "pull/$PR_NUMBER/head"
+
           # Delete local sync branch if it exists
-          git branch -D $SYNC_BRANCH 2>/dev/null || true
-          
+          git branch -D "$SYNC_BRANCH" 2>/dev/null || true
+
           # Create sync branch from target branch (will reset if remote exists)
-          git checkout -b $SYNC_BRANCH origin/$TARGET_BRANCH
-          
+          git checkout -b "$SYNC_BRANCH" "origin/$TARGET_BRANCH"
+
           # Get only the commits that are part of the PR
-          COMMITS=$(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits --jq '.[].sha')
-          
+          COMMITS=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER/commits" --jq '.[].sha')
+
           # Cherry-pick each commit
           echo "Cherry-picking commits..."
           SKIPPED_COMMITS=""
           for commit in $COMMITS; do
             echo "Cherry-picking $commit"
-            git cherry-pick $commit || {
+            git cherry-pick "$commit" || {
               # If the cherry-pick is empty (change already exists on target), skip it
               if git diff --cached --quiet; then
                 echo "Cherry-pick of $commit is empty (already applied), skipping"
@@ -106,38 +141,38 @@ jobs:
           done
 
           if [ -n "$SKIPPED_COMMITS" ]; then
-            echo "skipped_commits=$SKIPPED_COMMITS" >> $GITHUB_OUTPUT
+            echo "skipped_commits=$SKIPPED_COMMITS" >> "$GITHUB_OUTPUT"
             echo "Some commits were skipped due to conflicts:$SKIPPED_COMMITS"
           fi
 
           # Check if the sync branch has any changes compared to the target branch
-          if git diff --quiet origin/$TARGET_BRANCH $SYNC_BRANCH; then
+          if git diff --quiet "origin/$TARGET_BRANCH" "$SYNC_BRANCH"; then
             echo "::warning::All commits were skipped due to conflicts. No changes to sync."
-            echo "all_skipped=true" >> $GITHUB_OUTPUT
+            echo "all_skipped=true" >> "$GITHUB_OUTPUT"
           else
-            echo "all_skipped=false" >> $GITHUB_OUTPUT
+            echo "all_skipped=false" >> "$GITHUB_OUTPUT"
           fi
 
           echo "Cherry-pick complete"
 
       - name: Push sync branch and create PR
         id: push-and-pr
-        if: steps.cherry-pick.outputs.all_skipped != 'true'
+        if: needs.prepare.outputs.has_tuning_label != 'true' && steps.cherry-pick.outputs.all_skipped != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SOURCE_BRANCH: ${{ needs.prepare.outputs.source_branch }}
+          TARGET_BRANCH: ${{ needs.prepare.outputs.target_branch }}
+          SYNC_BRANCH: ${{ needs.prepare.outputs.sync_branch }}
+          SKIPPED: ${{ steps.cherry-pick.outputs.skipped_commits }}
         run: |
-          SOURCE_BRANCH="${{ steps.cherry-pick.outputs.source_branch }}"
-          TARGET_BRANCH="${{ steps.cherry-pick.outputs.target_branch }}"
-          SYNC_BRANCH="${{ steps.cherry-pick.outputs.sync_branch }}"
-          SKIPPED="${{ steps.cherry-pick.outputs.skipped_commits }}"
-
           # Push the sync branch
-          if ! PUSH_OUTPUT=$(git push origin $SYNC_BRANCH --force 2>&1); then
+          if ! PUSH_OUTPUT=$(git push origin "$SYNC_BRANCH" --force 2>&1); then
             echo "$PUSH_OUTPUT"
             if echo "$PUSH_OUTPUT" | grep -q "without \`workflows\` permission"; then
               echo "::warning::Push failed because the PR includes workflow file changes. The GITHUB_TOKEN cannot push workflow changes. This PR needs to be synced manually."
-              echo "push_failed_workflows=true" >> $GITHUB_OUTPUT
+              echo "push_failed_workflows=true" >> "$GITHUB_OUTPUT"
               exit 0
             fi
             exit 1
@@ -145,12 +180,12 @@ jobs:
           echo "Successfully pushed sync branch"
 
           # Create PR using GitHub CLI
-          PR_TITLE="[Sync -> ${TARGET_BRANCH}] $(gh pr view ${{ github.event.pull_request.number }} --json title --jq .title)"
-          PR_BODY="Automated sync of PR #${{ github.event.pull_request.number }} from \`$SOURCE_BRANCH\` to \`$TARGET_BRANCH\`
+          PR_TITLE="[Sync -> ${TARGET_BRANCH}] $(gh pr view "$PR_NUMBER" --json title --jq .title)"
+          PR_BODY="Automated sync of PR #${PR_NUMBER} from \`$SOURCE_BRANCH\` to \`$TARGET_BRANCH\`
 
           Syncbot will not be offended if the sync isn't appropriate and you close this PR.
 
-          Original PR: #${{ github.event.pull_request.number }}"
+          Original PR: #${PR_NUMBER}"
 
           if [ -n "$SKIPPED" ]; then
             PR_BODY="$PR_BODY
@@ -160,56 +195,56 @@ jobs:
           fi
 
           # Check if PR already exists
-          EXISTING_PR=$(gh pr list --head $SYNC_BRANCH --base $TARGET_BRANCH --json number --jq '.[0].number' || echo "")
+          EXISTING_PR=$(gh pr list --head "$SYNC_BRANCH" --base "$TARGET_BRANCH" --json number --jq '.[0].number' || echo "")
 
           if [ -n "$EXISTING_PR" ]; then
             echo "PR already exists: #$EXISTING_PR"
-            gh pr edit $EXISTING_PR --body "$PR_BODY"
+            gh pr edit "$EXISTING_PR" --body "$PR_BODY"
           else
-            NEW_PR=$(gh pr create --base $TARGET_BRANCH --head $SYNC_BRANCH --title "$PR_TITLE" --body "$PR_BODY" --label "sync")
+            NEW_PR=$(gh pr create --base "$TARGET_BRANCH" --head "$SYNC_BRANCH" --title "$PR_TITLE" --body "$PR_BODY" --label "sync")
             echo "Created new PR: $NEW_PR"
           fi
 
       - name: Update PR comment on success
-        if: steps.cherry-pick.outputs.target_branch != '' && steps.push-and-pr.outputs.push_failed_workflows != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
-        uses: quarkusio/action-helpers@main
+        if: needs.prepare.outputs.has_tuning_label != 'true' && steps.push-and-pr.outputs.push_failed_workflows != 'true' && steps.cherry-pick.outputs.skipped_commits == ''
+        uses: quarkusio/action-helpers@4f05abc46fce576bd83fe6d61df45506783f60d1 # main
         with:
           action: maintain-one-comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            🤖 This PR has been synchronized to the `${{ steps.cherry-pick.outputs.target_branch }}` branch. 🔄
+            🤖 This PR has been synchronized to the `${{ needs.prepare.outputs.target_branch }}` branch. 🔄
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Update PR comment on partial sync
-        if: steps.cherry-pick.outputs.target_branch != '' && steps.cherry-pick.outputs.all_skipped != 'true' && steps.cherry-pick.outputs.skipped_commits != ''
-        uses: quarkusio/action-helpers@main
+        if: needs.prepare.outputs.has_tuning_label != 'true' && steps.cherry-pick.outputs.all_skipped != 'true' && steps.cherry-pick.outputs.skipped_commits != ''
+        uses: quarkusio/action-helpers@4f05abc46fce576bd83fe6d61df45506783f60d1 # main
         with:
           action: maintain-one-comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            🤖 This PR has been partially synchronized to the `${{ steps.cherry-pick.outputs.target_branch }}` branch. Some commits were skipped due to conflicts and may need manual syncing. 🔄
+            🤖 This PR has been partially synchronized to the `${{ needs.prepare.outputs.target_branch }}` branch. Some commits were skipped due to conflicts and may need manual syncing. 🔄
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Update PR comment when all commits conflict
-        if: steps.cherry-pick.outputs.target_branch != '' && steps.cherry-pick.outputs.all_skipped == 'true'
-        uses: quarkusio/action-helpers@main
+        if: needs.prepare.outputs.has_tuning_label != 'true' && steps.cherry-pick.outputs.all_skipped == 'true'
+        uses: quarkusio/action-helpers@4f05abc46fce576bd83fe6d61df45506783f60d1 # main
         with:
           action: maintain-one-comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            🤖 Sync to `${{ steps.cherry-pick.outputs.target_branch }}` was skipped — all commits had conflicts and could not be cherry-picked. This PR may need to be manually applied to the `${{ steps.cherry-pick.outputs.target_branch }}` branch, or it may not be relevant to that branch. 🔄
+            🤖 Sync to `${{ needs.prepare.outputs.target_branch }}` was skipped — all commits had conflicts and could not be cherry-picked. This PR may need to be manually applied to the `${{ needs.prepare.outputs.target_branch }}` branch, or it may not be relevant to that branch. 🔄
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Update PR comment on workflow push failure
-        if: steps.cherry-pick.outputs.target_branch != '' && steps.push-and-pr.outputs.push_failed_workflows == 'true'
-        uses: quarkusio/action-helpers@main
+        if: needs.prepare.outputs.has_tuning_label != 'true' && steps.push-and-pr.outputs.push_failed_workflows == 'true'
+        uses: quarkusio/action-helpers@4f05abc46fce576bd83fe6d61df45506783f60d1 # main
         with:
           action: maintain-one-comment
           github-token: ${{ secrets.GITHUB_TOKEN }}
           body: |
-            🤖 This PR could not be automatically synced to the `${{ steps.cherry-pick.outputs.target_branch }}` branch because it includes workflow file changes, which require permissions that are not available to the sync bot. To sync manually:
+            🤖 This PR could not be automatically synced to the `${{ needs.prepare.outputs.target_branch }}` branch because it includes workflow file changes, which require permissions that are not available to the sync bot. To sync manually:
             ```
-            UPSTREAM=$(git remote -v | grep -m1 '${{ github.repository }}' | awk '{print $1}') && git fetch $UPSTREAM && git checkout -b ${{ steps.cherry-pick.outputs.sync_branch }} $UPSTREAM/${{ steps.cherry-pick.outputs.target_branch }} && git cherry-pick $(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits -q '.[].sha') && git push origin ${{ steps.cherry-pick.outputs.sync_branch }} && gh pr create --repo ${{ github.repository }} --base ${{ steps.cherry-pick.outputs.target_branch }} --head ${{ github.actor }}:${{ steps.cherry-pick.outputs.sync_branch }} --title "[Sync -> ${{ steps.cherry-pick.outputs.target_branch }}] $(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json title -q .title)" --body "Semi-automated sync of PR #${{ github.event.pull_request.number }} from \`${{ steps.cherry-pick.outputs.source_branch }}\` to \`${{ steps.cherry-pick.outputs.target_branch }}\`
+            UPSTREAM=$(git remote -v | grep -m1 '${{ github.repository }}' | awk '{print $1}') && git fetch $UPSTREAM && git checkout -b ${{ needs.prepare.outputs.sync_branch }} $UPSTREAM/${{ needs.prepare.outputs.target_branch }} && git cherry-pick $(gh api repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/commits -q '.[].sha') && git push origin ${{ needs.prepare.outputs.sync_branch }} && gh pr create --repo ${{ github.repository }} --base ${{ needs.prepare.outputs.target_branch }} --head ${{ github.actor }}:${{ needs.prepare.outputs.sync_branch }} --title "[Sync -> ${{ needs.prepare.outputs.target_branch }}] $(gh pr view ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --json title -q .title)" --body "Semi-automated sync of PR #${{ github.event.pull_request.number }} from \`${{ needs.prepare.outputs.source_branch }}\` to \`${{ needs.prepare.outputs.target_branch }}\`
 
             Original PR: #${{ github.event.pull_request.number }}"
             ```
