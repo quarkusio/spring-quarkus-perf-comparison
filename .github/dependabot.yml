@@ -9,8 +9,17 @@ updates:
     cooldown:
       default-days: 7
 
+  # All Maven modules, plus the root aggregator (which owns the root Maven
+  # wrapper). `group-by: dependency-name` collapses a bump that spans several
+  # modules into a single pull request instead of one per directory.
   - package-ecosystem: maven
-    directory: /quarkus3
+    directories:
+      - /
+      - /quarkus3
+      - /quarkus3-spring-compatibility
+      - /quarkus3-virtual
+      - /springboot3
+      - /springboot4
     schedule:
       interval: weekly
     labels:
@@ -19,42 +28,6 @@ updates:
       - dependency-name: "io.quarkus.platform:*"
         update-types:
           - "version-update:semver-major"
-    cooldown:
-      default-days: 3
-
-  - package-ecosystem: maven
-    directory: /quarkus3-spring-compatibility
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
-      - dependency-name: "io.quarkus.platform:*"
-        update-types:
-          - "version-update:semver-major"
-    cooldown:
-      default-days: 3
-
-  - package-ecosystem: maven
-    directory: /quarkus3-virtual
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
-      - dependency-name: "io.quarkus.platform:*"
-        update-types:
-          - "version-update:semver-major"
-    cooldown:
-      default-days: 3
-
-  - package-ecosystem: maven
-    directory: /springboot3
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
       - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
         update-types:
           - "version-update:semver-major"
@@ -64,23 +37,9 @@ updates:
           - "version-update:semver-minor"
     cooldown:
       default-days: 3
-
-  - package-ecosystem: maven
-    directory: /springboot4
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
-      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
-        update-types:
-          - "version-update:semver-major"
-      - dependency-name: "io.opentelemetry.instrumentation:*"
-        update-types:
-          - "version-update:semver-major"
-          - "version-update:semver-minor"
-    cooldown:
-      default-days: 3
+    groups:
+      all-modules:
+        group-by: dependency-name
 
   # OOTB branch
   - package-ecosystem: github-actions
@@ -93,8 +52,15 @@ updates:
     cooldown:
       default-days: 7
 
+  # No OpenTelemetry on the ootb branch, so no OpenTelemetry ignore rule here.
   - package-ecosystem: maven
-    directory: /quarkus3
+    directories:
+      - /
+      - /quarkus3
+      - /quarkus3-spring-compatibility
+      - /quarkus3-virtual
+      - /springboot3
+      - /springboot4
     target-branch: ootb
     schedule:
       interval: weekly
@@ -104,61 +70,11 @@ updates:
       - dependency-name: "io.quarkus.platform:*"
         update-types:
           - "version-update:semver-major"
-    cooldown:
-      default-days: 3
-
-  - package-ecosystem: maven
-    directory: /quarkus3-spring-compatibility
-    target-branch: ootb
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
-      - dependency-name: "io.quarkus.platform:*"
-        update-types:
-          - "version-update:semver-major"
-    cooldown:
-      default-days: 3
-
-  - package-ecosystem: maven
-    directory: /quarkus3-virtual
-    target-branch: ootb
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
-      - dependency-name: "io.quarkus.platform:*"
-        update-types:
-          - "version-update:semver-major"
-    cooldown:
-      default-days: 3
-
-  - package-ecosystem: maven
-    directory: /springboot3
-    target-branch: ootb
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
       - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
         update-types:
           - "version-update:semver-major"
     cooldown:
       default-days: 3
-
-  - package-ecosystem: maven
-    directory: /springboot4
-    target-branch: ootb
-    schedule:
-      interval: weekly
-    labels:
-      - "version-upgrade"
-    ignore:
-      - dependency-name: "org.springframework.boot:spring-boot-starter-parent"
-        update-types:
-          - "version-update:semver-major"
-    cooldown:
-      default-days: 3
+    groups:
+      all-modules:
+        group-by: dependency-name
