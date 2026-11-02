@@ -1,0 +1,14 @@
+name: flamegraph
+scripts:
+
+  flamegraph-install:
+    - script: async-profiler-install
+
+  flamegraph-run:
+    - script:
+        name: async-profiler-run
+        async: true
+      with:
+        extension: html
+        delay: ${{delay}}
+        duration: ${{duration}}

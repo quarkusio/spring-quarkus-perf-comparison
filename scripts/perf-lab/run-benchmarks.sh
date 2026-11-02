@@ -269,6 +269,7 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.2 \
     ${EXTRA_QDUP_ARGS} \
     ./main.yml \
     ./helpers/ \
+    ./profilers/ \
     -S config.jvm.graalvm.home="${GRAALVM_HOME}" \
     -S config.jvm.graalvm.version=${GRAALVM_VERSION} \
     -S config.jvm.home="${JAVA_HOME}" \
@@ -452,10 +453,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         ;;
 
       --profiler)
-        if [[ "$2" =~ ^(none|jfr|syncjfr|flamegraph)$ ]]; then
+        if [[ "$2" =~ ^(none|jfr|syncjfr|flamegraph|perf-stat)$ ]]; then
           PROFILER="$2"
         else
-          echo "!! [ERROR] --profiler option must be one of (none, jfr, syncjfr, flamegraph)!!"
+          echo "!! [ERROR] --profiler option must be one of (none, jfr, syncjfr, flamegraph, perf-stat)!!"
           exit_abnormal
         fi
         shift 2
