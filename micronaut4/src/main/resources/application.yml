@@ -1,0 +1,46 @@
+micronaut:
+  application:
+    name: micronaut4
+  server:
+    thread-selection: AUTO
+  metrics:
+    enabled: true
+    binders:
+      jdbc:
+        enabled: true
+jackson:
+  serialization-inclusion: NON_EMPTY
+datasources:
+  default:
+    url: jdbc:postgresql://localhost:5432/fruits
+    username: fruits
+    password: fruits
+    driverClassName: org.postgresql.Driver
+    maximum-pool-size: 50
+    schema-generate: CREATE_DROP
+    dialect: POSTGRES
+jpa:
+  default:
+    entity-scan:
+      packages:
+        - org.acme.domain
+    properties:
+      hibernate:
+        hbm2ddl:
+          auto: create-drop
+        default_batch_fetch_size: 16
+        cache:
+          use_second_level_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
+endpoints:
+  all:
+    enabled: true
+    sensitive: false
+  health:
+    enabled: true
+    sensitive: false
+otel:
+  traces:
+    sampler: traceidratio
+    sampler.arg: 0.1
