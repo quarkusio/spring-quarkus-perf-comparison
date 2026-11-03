@@ -18,3 +18,4 @@ buildNumber.properties
 /.idea/
 /.profileconfig.json
 .claude
+**/.DS_Store
