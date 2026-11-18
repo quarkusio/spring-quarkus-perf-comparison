@@ -36,9 +36,10 @@ You can run the automated conversion script to perform all the manual steps abov
 ./scripts/spring-conversion.sh [output-directory]
 ```
 
-The script accepts an optional output directory argument:
-- **Default** (no argument): Creates/recreates `quarkus3-spring-compatibility` directory
-- **`springboot3`**: Converts the Spring Boot application in place
+The script accepts an optional output directory argument. The Spring Boot source and the Quarkus app providing the config and e2e tests are derived from the directory name:
+- **Default** (no argument): Creates/recreates `quarkus3-spring-compatibility` (from `springboot3`, using `quarkus3`)
+- **`quarkus4-spring4-compatibility`**: Creates/recreates that directory (from `springboot4`, using `quarkus4`)
+- **`springboot3`** / **`springboot4`**: Converts that Spring Boot application in place (using `quarkus3` / `quarkus4` respectively)
 
 Examples:
 ```shell
@@ -47,6 +48,16 @@ Examples:
 
 # Convert springboot3 in place
 ./scripts/spring-conversion.sh springboot3
+
+# Convert to quarkus4-spring4-compatibility (from springboot4, using quarkus4)
+./scripts/spring-conversion.sh quarkus4-spring4-compatibility
+
+# Convert springboot4 in place
+./scripts/spring-conversion.sh springboot4
 ```
+
+The manual steps above are written for the Quarkus 3 / Spring Boot 3 pair. For Quarkus 4, substitute `quarkus4`, `springboot4` and `quarkus4-spring4-compatibility`.
+
+**Quarkus 4 note:** `springboot4`'s `FruitService` uses Micrometer `@Observed`/`@ObservationKeyValue` instead of OpenTelemetry `@WithSpan`. These compile in the converted app (Micrometer observation is on the classpath via the Quarkus Micrometer extension), but have not been verified to emit spans there, a possible observability difference from the Quarkus-native apps.
 
 This script will automatically execute all the conversion steps, build the application, and provide instructions for running stress tests.

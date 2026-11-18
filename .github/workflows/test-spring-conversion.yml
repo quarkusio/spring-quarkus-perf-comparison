@@ -8,14 +8,22 @@ on:
       - 'scripts/spring-conversion.sh'
       - 'spring-conversion.md'
       - 'springboot3/**'
+      - 'springboot4/**'
+      - 'quarkus3/**'
+      - 'quarkus4/**'
       - 'quarkus3-spring-compatibility/**'
+      - 'quarkus4-spring4-compatibility/**'
       - '.github/workflows/test-spring-conversion.yml'
   pull_request:
     paths:
       - 'scripts/spring-conversion.sh'
       - 'spring-conversion.md'
       - 'springboot3/**'
+      - 'springboot4/**'
+      - 'quarkus3/**'
+      - 'quarkus4/**'
       - 'quarkus3-spring-compatibility/**'
+      - 'quarkus4-spring4-compatibility/**'
       - '.github/workflows/test-spring-conversion.yml'
   workflow_dispatch:
 
@@ -46,6 +54,32 @@ jobs:
           ./mvnw install
           echo "✅ Maven install completed successfully!"
 
+  test-conversion-quarkus4-default:
+    name: Test conversion (quarkus4-spring4-compatibility output)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6.2.0
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run spring-conversion.sh script (quarkus4-spring4-compatibility output)
+        run: |
+          chmod +x scripts/spring-conversion.sh
+          ./scripts/spring-conversion.sh quarkus4-spring4-compatibility
+
+      - name: Verify build with mvn install
+        run: |
+          cd quarkus4-spring4-compatibility
+          ./mvnw install
+          echo "✅ Maven install completed successfully!"
+
   test-conversion-springboot3:
     name: Test conversion (in place output)
     runs-on: ubuntu-latest
@@ -69,5 +103,31 @@ jobs:
       - name: Verify build with mvn install
         run: |
           cd springboot3
+          ./mvnw install
+          echo "✅ Maven install completed successfully!"
+
+  test-conversion-springboot4:
+    name: Test conversion (in place output)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v6.2.0
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run spring-conversion.sh script (springboot4 output)
+        run: |
+          chmod +x scripts/spring-conversion.sh
+          ./scripts/spring-conversion.sh springboot4
+
+      - name: Verify build with mvn install
+        run: |
+          cd springboot4
           ./mvnw install
           echo "✅ Maven install completed successfully!"

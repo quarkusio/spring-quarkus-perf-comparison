@@ -69,16 +69,19 @@ help() {
   echo "                                                              'jfr' and 'flamegraph' use async-profiler. 'syncjfr' uses the built-in JVM Java Flight Recorder (JFR)."
   echo "                                                              Default: ${PROFILER}"
   echo "  --quarkus-build-config-args <QUARKUS_BUILD_CONFIG_ARGS> Quarkus app configuration properties fixed at build time"
-  echo "  --quarkus-version <QUARKUS_VERSION>                     The Quarkus version to use"
-  echo "                                                              Default: Whatever version is set in pom.xml of the Quarkus app"
+  echo "  --quarkus3-version <QUARKUS3_VERSION>                   The Quarkus 3 version to use"
+  echo "                                                              Default: Whatever version is set in pom.xml of the Quarkus 3 apps"
+  echo "  --quarkus-version <QUARKUS3_VERSION>                    Deprecated alias for --quarkus3-version (will be removed in a future release)"
+  echo "  --quarkus4-version <QUARKUS4_VERSION>                   The Quarkus 4 version to use"
+  echo "                                                              Default: Whatever version is set in pom.xml of the Quarkus 4 apps"
   echo "                                                              NOTE: Its a good practice to set this manually to ensure proper version"
   echo "  --repo-branch <SCM_REPO_BRANCH>                         The branch in the SCM repo"
   echo "                                                              Default: '${SCM_REPO_BRANCH}'"
   echo "  --repo-url <SCM_REPO_URL>                               The SCM repo url"
   echo "                                                              Default: '${SCM_REPO_URL}'"
   echo "  --runtimes <RUNTIMES>                                   The runtimes to test, separated by commas"
-  echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-leyden, quarkus3-virtual, quarkus3-virtual-leyden, quarkus3-native, spring3-jvm, spring3-leyden, spring3-virtual, spring3-virtual-leyden, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-leyden, spring4-virtual, spring4-virtual-leyden, spring4-jvm-aot, spring4-native"
-  echo "                                                              Default: 'quarkus3-jvm,quarkus3-leyden,quarkus3-virtual,quarkus3-virtual-leyden,quarkus3-native,spring3-jvm,spring3-leyden,spring3-jvm-aot,spring3-virtual,spring3-virtual-leyden,spring3-native,spring4-jvm,spring4-leyden,spring4-virtual,spring4-virtual-leyden,spring4-jvm-aot,spring4-native'"
+  echo "                                                              Accepted values (1 or more of): quarkus3-jvm, quarkus3-leyden, quarkus3-virtual, quarkus3-virtual-leyden, quarkus3-native, quarkus4-jvm, quarkus4-leyden, quarkus4-virtual, quarkus4-virtual-leyden, quarkus4-native, spring3-jvm, spring3-leyden, spring3-virtual, spring3-virtual-leyden, spring3-jvm-aot, spring3-native, spring4-jvm, spring4-leyden, spring4-virtual, spring4-virtual-leyden, spring4-jvm-aot, spring4-native"
+  echo "                                                              Default: 'quarkus3-jvm,quarkus3-leyden,quarkus3-virtual,quarkus3-virtual-leyden,quarkus3-native,quarkus4-jvm,quarkus4-leyden,quarkus4-virtual,quarkus4-virtual-leyden,quarkus4-native,spring3-jvm,spring3-leyden,spring3-jvm-aot,spring3-virtual,spring3-virtual-leyden,spring3-native,spring4-jvm,spring4-leyden,spring4-virtual,spring4-virtual-leyden,spring4-jvm-aot,spring4-native'"
   echo "  --run-identifier <RUN_IDENTIFIER>                       An optional identifier for this run to be added to the run output"
   echo "  --scenario <SCENARIO>                                   The scenario to run"
   echo "                                                              Accepted values: tuned, ootb"
@@ -152,7 +155,8 @@ print_values() {
   echo "  NATIVE_SPRING4_BUILD_OPTIONS: $NATIVE_SPRING4_BUILD_OPTIONS"
   echo "  PROFILER: $PROFILER"
   echo "  QUARKUS_BUILD_CONFIG_ARGS: $QUARKUS_BUILD_CONFIG_ARGS"
-  echo "  QUARKUS_VERSION: $QUARKUS_VERSION"
+  echo "  QUARKUS3_VERSION: $QUARKUS3_VERSION"
+  echo "  QUARKUS4_VERSION: $QUARKUS4_VERSION"
   echo "  RUNTIMES: ${RUNTIMES[@]}"
   echo "  SCENARIO: ${SCENARIO}"
   echo "  SPRING_BOOT3_VERSION: $SPRING_BOOT3_VERSION"
@@ -287,7 +291,8 @@ ${JBANG_CMD} io.hyperfoil.tools:qDup:0.11.2 \
     -S config.springboot4.version=${SPRING_BOOT4_VERSION} \
     -S config.jvm.memory="${JVM_MEMORY}" \
     -S config.quarkus.build_config_args="${QUARKUS_BUILD_CONFIG_ARGS}" \
-    -S config.quarkus.version=${QUARKUS_VERSION} \
+    -S config.quarkus3.version=${QUARKUS3_VERSION} \
+    -S config.quarkus4.version=${QUARKUS4_VERSION} \
     -S config.springboot3.native_build_options="${NATIVE_SPRING3_BUILD_OPTIONS}" \
     -S config.springboot4.native_build_options="${NATIVE_SPRING4_BUILD_OPTIONS}" \
     -S config.profiler.events=cpu \
@@ -335,9 +340,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   NATIVE_SPRING4_BUILD_OPTIONS=""
   PROFILER="none"
   QUARKUS_BUILD_CONFIG_ARGS=""
-  QUARKUS_VERSION=""
-  ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-jvm-aot" "spring4-native")
-  DEFAULT_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-native")
+  QUARKUS3_VERSION=""
+  QUARKUS4_VERSION=""
+  ALLOWED_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "quarkus4-jvm" "quarkus4-leyden" "quarkus4-virtual" "quarkus4-virtual-leyden" "quarkus4-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-jvm-aot" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-jvm-aot" "spring4-native")
+  DEFAULT_RUNTIMES=("quarkus3-jvm" "quarkus3-leyden" "quarkus3-virtual" "quarkus3-virtual-leyden" "quarkus3-native" "quarkus4-jvm" "quarkus4-leyden" "quarkus4-virtual" "quarkus4-virtual-leyden" "quarkus4-native" "spring3-jvm" "spring3-leyden" "spring3-virtual" "spring3-virtual-leyden" "spring3-native" "spring4-jvm" "spring4-leyden" "spring4-virtual" "spring4-virtual-leyden" "spring4-native")
   RUNTIMES=${DEFAULT_RUNTIMES[@]}
   SPRING_BOOT3_VERSION=""
   SPRING_BOOT4_VERSION=""
@@ -466,8 +472,19 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         shift 2
         ;;
 
+      --quarkus3-version)
+        QUARKUS3_VERSION="$2"
+        shift 2
+        ;;
+
       --quarkus-version)
-        QUARKUS_VERSION="$2"
+        echo "WARNING: --quarkus-version is deprecated and will be removed in a future release. Use --quarkus3-version instead." >&2
+        QUARKUS3_VERSION="$2"
+        shift 2
+        ;;
+
+      --quarkus4-version)
+        QUARKUS4_VERSION="$2"
         shift 2
         ;;
 
