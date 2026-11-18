@@ -1,0 +1,14 @@
+quarkus:
+  datasource:
+    devservices:
+      image-name: ghcr.io/quarkusio/postgres-17-perf:main
+  jackson:
+    serialization-inclusion: non-empty
+
+"%prod":
+  quarkus:
+    datasource:
+      username: fruits
+      password: fruits
+      jdbc:
+        url: jdbc:postgresql://localhost:5432/fruits

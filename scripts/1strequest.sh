@@ -10,6 +10,9 @@
 # 2) Run the Quarkus app 10 times
 # $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus3/target/quarkus-app/quarkus-run.jar" 10
 #
+# Quarkus 4:
+# $ ./1strequest.sh "java -XX:+UseParallelGC -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus4/target/quarkus-app/quarkus-run.jar" 10
+#
 # 3) Run the Quarkus with spring compatibility app 10 times
 # $ ./1strequest.sh "java -XX:ActiveProcessorCount=8 -Xms512m -Xmx512m -jar ../quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar" 10
 set -euo pipefail

@@ -281,7 +281,7 @@ Contents:
 - **34 store-fruit-price records** with specific (store_id, fruit_id, price) triples
 - Sequence restarts: `fruits_seq RESTART WITH 11`, `stores_seq RESTART WITH 9`
 
-Reference file: `quarkus3/src/main/resources/import.sql`
+Reference file: `quarkus3/src/main/resources/import.sql` (Quarkus 4 modules use the equivalent `data.sql`, since `import.sql` is deprecated)
 
 ---
 
