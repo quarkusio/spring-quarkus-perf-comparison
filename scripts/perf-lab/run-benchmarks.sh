@@ -177,6 +177,21 @@ print_values() {
   echo
 }
 
+# Succeeds only if the first argument exactly equals one of the remaining arguments
+is_allowed_value() {
+  local item="$1"
+  shift
+  local allowed
+
+  for allowed in "$@"; do
+    if [[ "$allowed" == "$item" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
 make_json_array() {
   local items=($@)  # Split on whitespace into array
   local json="["
@@ -492,7 +507,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         rt=($(IFS=','; echo $2))
 
         for item in "${rt[@]}"; do
-          if [[ ! "${ALLOWED_RUNTIMES[@]}" =~ "${item}" ]]; then
+          if ! is_allowed_value "${item}" "${ALLOWED_RUNTIMES[@]}"; then
             echo "!! [ERROR] --runtimes option must contain 1 or more of [${ALLOWED_RUNTIMES[@]}]!!"
             exit_abnormal
           fi
@@ -527,7 +542,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         ttr=($(IFS=','; echo $2))
 
         for item in "${ttr[@]}"; do
-          if [[ ! "${ALLOWED_TESTS_TO_RUN[@]}" =~ "${item}" ]]; then
+          if ! is_allowed_value "${item}" "${ALLOWED_TESTS_TO_RUN[@]}"; then
             echo "!! [ERROR] --tests option must contain 1 or more of [${ALLOWED_TESTS_TO_RUN[@]}]!!"
             exit_abnormal
           fi
