@@ -62,6 +62,9 @@ updates:
       - /quarkus3
       - /quarkus3-spring-compatibility
       - /quarkus3-virtual
+      - /quarkus4
+      - /quarkus4-spring4-compatibility
+      - /quarkus4-virtual
       - /springboot3
       - /springboot4
     target-branch: ootb
