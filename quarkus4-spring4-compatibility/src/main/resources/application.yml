@@ -1,0 +1,30 @@
+quarkus:
+  datasource:
+    jdbc:
+      telemetry: true
+    devservices:
+      image-name: ghcr.io/quarkusio/postgres-17-perf:main
+  jackson:
+    serialization-inclusion: non-empty
+  rest:
+    jackson:
+      optimization:
+        # See https://quarkus.io/blog/quarkus-metaprogramming/
+        enable-reflection-free-serializers: true
+  otel:
+    logs:
+      enabled: true
+    metrics:
+      enabled: true
+    traces:
+      sampler:
+        ~: traceidratio
+        arg: 0.1
+
+"%prod":
+  quarkus:
+    datasource:
+      username: fruits
+      password: fruits
+      jdbc:
+        url: jdbc:postgresql://localhost:5432/fruits

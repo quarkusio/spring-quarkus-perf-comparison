@@ -12,7 +12,10 @@ Performance benchmarking suite comparing Spring Boot and Quarkus frameworks. The
 | `springboot4/` | Spring Boot 4.x | |
 | `quarkus3/` | Quarkus 3.x (3.32.x) | RESTEasy, Hibernate ORM Panache |
 | `quarkus3-virtual/` | Quarkus 3.x | Virtual threads variant |
-| `quarkus3-spring-compatibility/` | Quarkus 3.x | Uses Quarkus Spring compatibility layer |
+| `quarkus3-spring-compatibility/` | Quarkus 3.x | Uses Quarkus Spring compatibility layer (converted from `springboot3`) |
+| `quarkus4/` | Quarkus 4.x (4.0.x) | RESTEasy, Hibernate ORM Panache (ORM 8) |
+| `quarkus4-virtual/` | Quarkus 4.x | Virtual threads variant |
+| `quarkus4-spring4-compatibility/` | Quarkus 4.x | Uses Quarkus Spring compatibility layer (converted from `springboot4`) |
 
 All modules share the same domain: `org.acme` package with Fruit/Store/Address entities, DTOs, mappers, and a REST controller.
 

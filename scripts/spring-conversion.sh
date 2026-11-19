@@ -4,7 +4,11 @@
 # Based on steps from spring-conversion.md
 #
 # Usage: ./spring-conversion.sh [output-directory]
-#   output-directory: Target directory for the converted application (default: quarkus3-spring-compatibility, but you can use springboot3 to convert in place and see the diff)
+#   output-directory: Target directory for the converted application. Supported values:
+#     quarkus<N>-spring[<M>]-compatibility Converts springboot<M> into that directory, using quarkus<N>'s config and e2e tests
+#                                         (<M> defaults to <N>; default: quarkus3-spring-compatibility)
+#     springboot<M>                       Converts springboot<M> in place (see the diff), using quarkus<M>'s config and e2e tests
+#   Examples: quarkus3-spring-compatibility, quarkus4-spring4-compatibility, springboot3, springboot4
 
 set -e  # Exit on error
 
@@ -17,6 +21,20 @@ NC='\033[0m' # No Color
 # Parse arguments
 OUTPUT_DIR="${1:-quarkus3-spring-compatibility}"
 
+# Derive the Spring and Quarkus source directories from the output directory name
+if [[ "$OUTPUT_DIR" =~ ^quarkus([0-9]+)-spring([0-9]*)-compatibility$ ]]; then
+    QUARKUS_DIR="quarkus${BASH_REMATCH[1]}"
+    SPRING_DIR="springboot${BASH_REMATCH[2]:-${BASH_REMATCH[1]}}"
+    COMPAT_DIR="$OUTPUT_DIR"
+elif [[ "$OUTPUT_DIR" =~ ^springboot([0-9]+)$ ]]; then
+    QUARKUS_DIR="quarkus${BASH_REMATCH[1]}"
+    SPRING_DIR="$OUTPUT_DIR"
+    COMPAT_DIR="quarkus${BASH_REMATCH[1]}-spring${BASH_REMATCH[1]}-compatibility"
+else
+    echo "Error: Unsupported output directory '${OUTPUT_DIR}'. Use quarkus<N>-spring<M>-compatibility or springboot<M>" >&2
+    exit 1
+fi
+
 echo -e "${GREEN}=== Spring to Quarkus Conversion Script ===${NC}"
 echo -e "${YELLOW}Output directory: ${OUTPUT_DIR}${NC}"
 echo ""
@@ -28,21 +46,21 @@ if [ ! -f "spring-conversion.md" ]; then
 fi
 
 # Check if source directory exists
-if [ ! -d "springboot3" ]; then
-    echo -e "${RED}Error: springboot3 directory not found${NC}"
+if [ ! -d "$SPRING_DIR" ]; then
+    echo -e "${RED}Error: ${SPRING_DIR} directory not found${NC}"
     exit 1
 fi
 
 # Determine source pom location based on output directory
-if [ "$OUTPUT_DIR" = "springboot3" ]; then
+if [ "$OUTPUT_DIR" = "$SPRING_DIR" ]; then
     # If converting in place, we need to preserve the original Spring pom first
-    if [ ! -f "springboot3/pom.xml.spring-original" ]; then
+    if [ ! -f "${SPRING_DIR}/pom.xml.spring-original" ]; then
         echo -e "${YELLOW}Preserving original Spring pom.xml...${NC}"
-        cp springboot3/pom.xml springboot3/pom.xml.spring-original
+        cp "${SPRING_DIR}/pom.xml" "${SPRING_DIR}/pom.xml.spring-original"
         echo -e "${GREEN}✓ Saved original pom.xml${NC}"
         echo ""
     fi
-    SOURCE_POM="quarkus3-spring-compatibility/pom.xml"
+    SOURCE_POM="${COMPAT_DIR}/pom.xml"
 else
     SOURCE_POM="${OUTPUT_DIR}/pom.xml"
 fi
@@ -60,15 +78,15 @@ cp "$SOURCE_POM" target/spring-pom.xml
 echo -e "${GREEN}✓ Saved pom.xml${NC}"
 echo ""
 
-if [ "$OUTPUT_DIR" != "springboot3" ]; then
+if [ "$OUTPUT_DIR" != "$SPRING_DIR" ]; then
     echo -e "${YELLOW}Step 2: Deleting the compatibility project...${NC}"
     rm -rf "$OUTPUT_DIR"
     echo -e "${GREEN}✓ Deleted ${OUTPUT_DIR}${NC}"
     echo ""
 
-    echo -e "${YELLOW}Step 3: Copying springboot3 to ${OUTPUT_DIR}...${NC}"
-    cp -r springboot3 "$OUTPUT_DIR"
-    echo -e "${GREEN}✓ Copied springboot3 to ${OUTPUT_DIR}${NC}"
+    echo -e "${YELLOW}Step 3: Copying ${SPRING_DIR} to ${OUTPUT_DIR}...${NC}"
+    cp -r "$SPRING_DIR" "$OUTPUT_DIR"
+    echo -e "${GREEN}✓ Copied ${SPRING_DIR} to ${OUTPUT_DIR}${NC}"
     echo ""
 fi
 
@@ -106,7 +124,7 @@ echo ""
 
 # Section 2: Prod Mode Configuration
 echo -e "${YELLOW}Step 9: Copying Quarkus config for prod mode...${NC}"
-cp ./quarkus3/src/main/resources/application.yml "${OUTPUT_DIR}/src/main/resources/application.yml"
+cp "./${QUARKUS_DIR}/src/main/resources/application.yml" "${OUTPUT_DIR}/src/main/resources/application.yml"
 echo -e "${GREEN}✓ Copied application.yml${NC}"
 echo ""
 
@@ -115,9 +133,9 @@ echo -e "${YELLOW}Step 10: Building the application...${NC}"
 echo -e "${GREEN}✓ Build complete${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 11: Reinstating e2e tests from quarkus3...${NC}"
+echo -e "${YELLOW}Step 11: Reinstating e2e tests from ${QUARKUS_DIR}...${NC}"
 mkdir -p "${OUTPUT_DIR}/src/test/java/org/acme/e2e"
-cp -r quarkus3/src/test/java/org/acme/e2e/* "${OUTPUT_DIR}/src/test/java/org/acme/e2e/"
+cp -r "${QUARKUS_DIR}"/src/test/java/org/acme/e2e/* "${OUTPUT_DIR}/src/test/java/org/acme/e2e/"
 echo -e "${GREEN}✓ Copied e2e tests${NC}"
 echo ""
 

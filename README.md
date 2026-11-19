@@ -60,6 +60,12 @@ This project contains the following modules:
     - A Quarkus 3.x version of the application using Virtual Threads
 - [quarkus3-spring-compatibility](quarkus3-spring-compatibility)
     - A Quarkus 3.x version of the application using the Spring compatibility layer. You can also recreate this application from the spring application using [a few manual steps](spring-conversion.md) or by running the automated [`spring-conversion.sh`](scripts/spring-conversion.sh) script.
+- [quarkus4](quarkus4)
+    - A Quarkus 4.x version of the application
+- [quarkus4-virtual](quarkus4-virtual)
+    - A Quarkus 4.x version of the application using Virtual Threads
+- [quarkus4-spring4-compatibility](quarkus4-spring4-compatibility)
+    - A Quarkus 4.x version of the application (derived from [springboot4](springboot4)) using the Spring compatibility layer. It is recreated with `scripts/spring-conversion.sh quarkus4-spring4-compatibility` (see [spring-conversion.md](spring-conversion.md)).
  
 ## Architecture & Workflow
 
@@ -142,6 +148,8 @@ how many requests the applications can handle over a short period of time.
 ```shell
 scripts/stress.sh quarkus3/target/quarkus-app/quarkus-run.jar
 scripts/stress.sh quarkus3-spring-compatibility/target/quarkus-app/quarkus-run.jar
+scripts/stress.sh quarkus4/target/quarkus-app/quarkus-run.jar
+scripts/stress.sh quarkus4-spring4-compatibility/target/quarkus-app/quarkus-run.jar
 scripts/stress.sh springboot3/target/springboot3.jar
 ```
 
@@ -185,7 +193,8 @@ For instance, from the `scripts/perf-lab/` directory:
   --host LOCAL \
   --drop-fs-caches \
   --runtimes quarkus3-jvm,quarkus3-virtual \
-  --quarkus-version "3.32.2" \
+  --quarkus3-version "3.40.1.2" \
+  --quarkus4-version "4.0.0.CR1" \
   --output-dir ./results \
   --tests measure-time-to-first-request
 ```
@@ -270,7 +279,7 @@ REPO=https://github.com/quarkusio/spring-quarkus-perf-comparison.git
 QDUP_USER=jenkins
 ./run-benchmarks.sh --repo-branch $BRANCH --scenario tuned --output-dir run --graalvm-version 25.0.2-graalce \
   --host 127.0.0.1 --iterations 1 --java-version 25.0.2-tem --repo-url $REPO --profiler none \
-  --quarkus-version 3.34.1 --springboot3-version 3.5.13 --springboot4-version 4.0.5 --user $QDUP_USER \
+  --quarkus3-version 3.40.1.2 --quarkus4-version 4.0.0.CR1 --springboot3-version 3.5.16 --springboot4-version 4.1.2 --user $QDUP_USER \
   --wait-time 30 --run-identifier local-1 --drop-fs-caches \
   --jvm-args "-XX:+UseParallelGC -XX:+UseNUMA -Dserver.tomcat.threads.max=50 -Dserver.tomcat.threads.min-spare=50" \
   --description "Local Test" --cpus-app 0,1,2,3 --cpus-db 4,5,6 --cpus-first-request 7 --cpus-load-gen 7,8,9 \
@@ -282,7 +291,7 @@ QDUP_USER=jenkins
 
 - **CPU Allocation**: Adjust all `--cpus-*` parameters to match your system's available cores.
 - **Memory Settings**: The `--jvm-memory` parameter sets both min and max heap to 512MB.
-- **Versions**: Update `--graalvm-version`, `--java-version`, `--quarkus-version`, and Spring Boot versions to match 
+- **Versions**: Update `--graalvm-version`, `--java-version`, `--quarkus3-version`, `--quarkus4-version`, and Spring Boot versions to match 
 your desired test configuration.
 - **REPO**: For local development, point `REPO` to your local repository path. When using a local path, the `BRANCH` 
 parameter is ignored.
