@@ -1,4 +1,7 @@
 quarkus:
+  datasource:
+    devservices:
+      image-name: ghcr.io/quarkusio/postgres-17-perf:main
   jackson:
     serialization-inclusion: non-empty
 

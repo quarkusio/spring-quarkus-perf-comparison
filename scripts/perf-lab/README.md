@@ -77,10 +77,11 @@ The script also has 3 dependencies that need to be resolved before it can be run
 | `--output-dir` | `<OUTPUT_DIR>` | The directory containing the run output | `/tmp` |
 | `--profiler` | `<PROFILER>` | Enable profiling<br/>Accepted values: `none`, `jfr`, `syncjfr`, `flamegraph`<br/>`jfr` and `flamegraph` use async-profiler. `syncjfr` uses the built-in JVM Java Flight Recorder (JFR). | `none` |
 | `--quarkus-build-config-args` | `<QUARKUS_BUILD_CONFIG_ARGS>` | Quarkus app configuration properties fixed at build time | |
-| `--quarkus-version` | `<QUARKUS_VERSION>` | The Quarkus version to use<br/>**NOTE:** Its a good practice to set this manually to ensure proper version | Whatever version is set in pom.xml of the Quarkus app |
+| `--quarkus3-version` | `<QUARKUS3_VERSION>` | The Quarkus 3.x version to use (`--quarkus-version` is a deprecated alias that prints a warning and will be removed in a future release)<br/>**NOTE:** Its a good practice to set this manually to ensure proper version | Whatever version is set in pom.xml of the Quarkus 3 apps |
+| `--quarkus4-version` | `<QUARKUS4_VERSION>` | The Quarkus 4.x version to use<br/>**NOTE:** Its a good practice to set this manually to ensure proper version | Whatever version is set in pom.xml of the Quarkus 4 apps |
 | `--repo-branch` | `<SCM_REPO_BRANCH>` | The branch in the SCM repo | `ootb` |
 | `--repo-url` | `<SCM_REPO_URL>` | The SCM repo url | `https://github.com/quarkusio/spring-quarkus-perf-comparison.git` |
-| `--runtimes` | `<RUNTIMES>` | The runtimes to test, separated by commas<br/>Accepted values (1 or more of): `quarkus3-jvm`, `quarkus3-leyden`, `quarkus3-virtual`, `quarkus3-virtual-leyden`, `quarkus3-native`, `spring3-jvm`, `spring3-leyden`, `spring3-virtual`, `spring3-virtual-leyden`, `spring3-jvm-aot`, `spring3-native`, `spring4-jvm`, `spring4-leyden`, `spring4-virtual`, `spring4-virtual-leyden`, `spring4-jvm-aot`, `spring4-native` | See [Available Runtimes](#available-runtimes) for defaults |
+| `--runtimes` | `<RUNTIMES>` | The runtimes to test, separated by commas<br/>Accepted values (1 or more of): `quarkus3-jvm`, `quarkus3-leyden`, `quarkus3-virtual`, `quarkus3-virtual-leyden`, `quarkus3-native`, `quarkus4-jvm`, `quarkus4-leyden`, `quarkus4-virtual`, `quarkus4-virtual-leyden`, `quarkus4-native`, `spring3-jvm`, `spring3-leyden`, `spring3-virtual`, `spring3-virtual-leyden`, `spring3-jvm-aot`, `spring3-native`, `spring4-jvm`, `spring4-leyden`, `spring4-virtual`, `spring4-virtual-leyden`, `spring4-jvm-aot`, `spring4-native` | See [Available Runtimes](#available-runtimes) for defaults |
 | `--run-identifier` | `<RUN_IDENTIFIER>` | An optional identifier for this run to be added to the run output | |
 | `--scenario` | `<SCENARIO>` | The scenario to run<br/>Accepted values: `tuned`, `ootb`<br/>`tuned` applies various performance tuning settings to the JVM and OS (generally from the `main` branch). `ootb` runs with out-of-the-box/default settings (generally from the `ootb` branch). | Depends on `--repo-branch`: `main` → `tuned`, `ootb` → `ootb`, anything else → `tuned` |
 | `--springboot3-version` | `<SPRING_BOOT3_VERSION>` | The Spring Boot 3.x version to use<br/>**NOTE:** Its a good practice to set this manually to ensure proper version | Whatever version is set in pom.xml of the Spring Boot 3 app |
@@ -225,6 +226,11 @@ The `--runtimes` option accepts one or more of the following values (comma-separ
 - `quarkus3-virtual` - [Quarkus 3](../../quarkus3-virtual) on JVM with virtual threads
 - `quarkus3-virtual-leyden` - [Quarkus 3](../../quarkus3-virtual) on JVM with virtual threads and [Project Leyden](https://openjdk.org/projects/leyden/) (CDS/AOT)
 - `quarkus3-native` - [Quarkus 3](../../quarkus3) native executable
+- `quarkus4-jvm` - [Quarkus 4](../../quarkus4) on JVM
+- `quarkus4-leyden` - [Quarkus 4](../../quarkus4) on JVM with [Project Leyden](https://openjdk.org/projects/leyden/) (CDS/AOT)
+- `quarkus4-virtual` - [Quarkus 4](../../quarkus4-virtual) on JVM with virtual threads
+- `quarkus4-virtual-leyden` - [Quarkus 4](../../quarkus4-virtual) on JVM with virtual threads and [Project Leyden](https://openjdk.org/projects/leyden/) (CDS/AOT)
+- `quarkus4-native` - [Quarkus 4](../../quarkus4) native executable
 - `spring3-jvm` - [Spring Boot 3](../../springboot3) on JVM
 - `spring3-leyden` - [Spring Boot 3](../../springboot3) on JVM with [Project Leyden](https://openjdk.org/projects/leyden/) (CDS/AOT)
 - `spring3-virtual` - [Spring Boot 3](../../springboot3) on JVM with virtual threads
@@ -301,7 +307,7 @@ If you examine the output directory:
 Runs [all the tests](#available-tests) against [all the runtimes](#available-runtimes) using Quarkus version `3.28.4` and Spring Boot version `3.5.6`.
 
 ```shell
-./run-benchmarks.sh --quarkus-version 3.28.4 --springboot3-version 3.5.6
+./run-benchmarks.sh --quarkus3-version 3.40.1.2 --quarkus4-version 4.0.0.CR1 --springboot3-version 3.5.16
 ```
 
 ### JVM tests only
@@ -309,7 +315,7 @@ Runs [all the tests](#available-tests) against [all the runtimes](#available-run
 Runs [all the tests](#available-tests) only the JVM runtimes using Quarkus version `3.30.5` and Spring Boot versions `3.5.9` & `4.0.1`.
 
 ```shell
-./run-benchmarks.sh --quarkus-version 3.30.5 --springboot3-version 3.5.9 --springboot4-version 4.0.1 --runtimes 'quarkus3-jvm,spring4-jvm,spring3-jvm'
+./run-benchmarks.sh --quarkus3-version 3.40.1.2 --quarkus4-version 4.0.0.CR1 --springboot3-version 3.5.16 --springboot4-version 4.1.2 --runtimes 'quarkus3-jvm,spring4-jvm,spring3-jvm'
 ```
 
 ### Run all the benchmarks on a remote host from a different fork
@@ -320,9 +326,10 @@ Runs [all the tests](#available-tests) against [all the runtimes](#available-run
  ./run-benchmarks.sh \
     --user <REMOTE_USER> \
     --host <REMOTE_HOST> \
-    --quarkus-version 3.28.4 \
-    --springboot3-version 3.5.6 \
-    --springboot4-version 4.0.1 \
+    --quarkus3-version 3.40.1.2 \
+    --quarkus4-version 4.0.0.CR1 \
+    --springboot3-version 3.5.16 \
+    --springboot4-version 4.1.2 \
     --tests 'measure-time-to-first-request,measure-rss,run-load-test' \
     --runtimes 'quarkus3-jvm,quarkus3-native,spring4-jvm,spring4-jvm-aot,spring4-native,spring3-jvm,spring3-jvm-aot,spring3-native' \
     --iterations 5 \

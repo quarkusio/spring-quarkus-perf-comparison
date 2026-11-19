@@ -70,7 +70,7 @@ function _date() {
     # Try to open a TCP connection to the target host and port and use file descriptor 3 for it
     if exec 3<>/dev/tcp/"$HOST"/"$PORT"; then
       # Send HTTP GET request to the server
-      if ! echo -e "GET $URL_PATH HTTP/1.0\r\nHost: $HOST\r\nConnection: close\r\n\r\n" >&3; then
+      if ! echo -e "GET $URL_PATH HTTP/1.1\r\nHost: $HOST\r\nConnection: close\r\n\r\n" >&3; then
         exec 3>&-
         continue
       fi

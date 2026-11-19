@@ -56,9 +56,55 @@ test_count_cpus() {
     "8" "$(count_cpus "0-3,8-11")"
 }
 
+assert_succeeds() {
+  local description="$1"
+  shift
+  TESTS_RUN=$(( TESTS_RUN + 1 ))
+
+  if "$@"; then
+    echo "PASS: ${description}"
+  else
+    echo "FAIL: ${description} (expected success)"
+    TESTS_FAILED=$(( TESTS_FAILED + 1 ))
+  fi
+}
+
+assert_fails() {
+  local description="$1"
+  shift
+  TESTS_RUN=$(( TESTS_RUN + 1 ))
+
+  if "$@"; then
+    echo "FAIL: ${description} (expected failure)"
+    TESTS_FAILED=$(( TESTS_FAILED + 1 ))
+  else
+    echo "PASS: ${description}"
+  fi
+}
+
+test_is_allowed_value() {
+  local allowed=("quarkus4-jvm" "quarkus4-native" "spring4-jvm")
+
+  assert_succeeds "exact match is allowed" \
+    is_allowed_value "quarkus4-jvm" "${allowed[@]}"
+
+  assert_fails "prefix of an allowed value is rejected (quarkus4)" \
+    is_allowed_value "quarkus4" "${allowed[@]}"
+
+  assert_fails "suffix of an allowed value is rejected (jvm)" \
+    is_allowed_value "jvm" "${allowed[@]}"
+
+  assert_fails "unknown value is rejected" \
+    is_allowed_value "quarkus5-jvm" "${allowed[@]}"
+
+  assert_fails "empty value is rejected" \
+    is_allowed_value "" "${allowed[@]}"
+}
+
 # --- Run tests ---
 
 test_count_cpus
+test_is_allowed_value
 
 # --- Summary ---
 
