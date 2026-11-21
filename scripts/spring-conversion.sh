@@ -95,18 +95,13 @@ mv target/spring-pom.xml "${OUTPUT_DIR}/pom.xml"
 echo -e "${GREEN}✓ Replaced ${OUTPUT_DIR}/pom.xml${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 5: Deleting tests (hard to convert for now)...${NC}"
-rm -rf "${OUTPUT_DIR}/src/test"
-echo -e "${GREEN}✓ Deleted tests${NC}"
-echo ""
-
-echo -e "${YELLOW}Step 6: Deleting SpringBootApplication class (not needed with Quarkus)...${NC}"
+echo -e "${YELLOW}Step 5: Deleting SpringBootApplication class (not needed with Quarkus)...${NC}"
 # Find and delete the SpringBootApplication file
 find "${OUTPUT_DIR}/src/main/java" -name "*Application.java" -type f -delete
 echo -e "${GREEN}✓ Deleted SpringBootApplication class${NC}"
 echo ""
 
-echo -e "${YELLOW}Step 7: Deleting Spring-only config classes...${NC}"
+echo -e "${YELLOW}Step 6: Deleting Spring-only config classes...${NC}"
 # The config/ package contains L2CacheConfiguration, GraalVMConfig, and L2CacheRuntimeHints.
 # These wire up Caffeine as a JCache provider for Hibernate L2 cache and register
 # GraalVM native-image reflection hints — all Spring-specific plumbing.
@@ -114,6 +109,26 @@ echo -e "${YELLOW}Step 7: Deleting Spring-only config classes...${NC}"
 # (and won't compile, since the Quarkus pom doesn't include the Caffeine/JCache dependencies).
 rm -rf "${OUTPUT_DIR}/src/main/java/org/acme/config"
 echo -e "${GREEN}✓ Deleted Spring-only config classes${NC}"
+echo ""
+
+echo -e "${YELLOW}Step 7: Removing Spring Boot test infrastructure that Quarkus doesn't need...${NC}"
+# quarkus-test-spring lets @SpringBootTest classes run as Quarkus tests, but it doesn't provide
+# Spring Boot's Testcontainers wiring (Quarkus Dev Services starts the database instead),
+# @Import, or MockMvc. So:
+#  - ContainersConfig and TestApplication are Spring Boot Testcontainers plumbing: delete them
+#  - the tests' @Import(ContainersConfig.class) is no longer needed: remove it
+#  - FruitControllerTests relies on MockMvc, which has no Quarkus equivalent: delete it
+#    (the e2e tests cover the REST layer)
+rm -f "${OUTPUT_DIR}/src/test/java/org/acme/ContainersConfig.java" \
+      "${OUTPUT_DIR}/src/test/java/org/acme/TestApplication.java" \
+      "${OUTPUT_DIR}/src/test/java/org/acme/rest/FruitControllerTests.java"
+find "${OUTPUT_DIR}/src/test/java" -name "*.java" -exec sed -i.bak \
+  -e '/^import org\.acme\.ContainersConfig;$/d' \
+  -e '/^import org\.springframework\.context\.annotation\.Import;$/d' \
+  -e '/^@Import(ContainersConfig\.class)$/d' \
+  {} +
+find "${OUTPUT_DIR}/src/test/java" -name "*.java.bak" -delete
+echo -e "${GREEN}✓ Removed Spring Boot test infrastructure${NC}"
 echo ""
 
 echo -e "${GREEN}=== Dev Mode Conversion Complete ===${NC}"
