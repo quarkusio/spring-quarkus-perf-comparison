@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.1.2</version>
+		<version>4.2.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>org.acme</groupId>
@@ -16,8 +16,20 @@
 	<properties>
 		<java.version>21</java.version>
 		<spring-boot.version>4.2.0</spring-boot.version>
-		<otel.version>2.28.1-alpha</otel.version>
+		<otel.version>2.34.0-alpha</otel.version>
+		<datasource.micrometer.version>2.3.1</datasource.micrometer.version>
 	</properties>
+	<dependencyManagement>
+	    <dependencies>
+        <dependency>
+            <groupId>net.ttddyy.observation</groupId>
+            <artifactId>datasource-micrometer-bom</artifactId>
+            <version>${datasource.micrometer.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -49,10 +61,13 @@
 			<version>${otel.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>io.opentelemetry.instrumentation</groupId>
-			<artifactId>opentelemetry-jdbc</artifactId>
-			<version>${otel.version}</version>
-    </dependency>
+			<groupId>net.ttddyy.observation</groupId>
+			<artifactId>datasource-micrometer-spring-boot</artifactId>
+		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>net.ttddyy.observation</groupId>-->
+<!--			<artifactId>datasource-micrometer-opentelemetry</artifactId>-->
+<!--		</dependency>-->
     <dependency>
 			<groupId>io.micrometer</groupId>
 			<artifactId>micrometer-registry-prometheus</artifactId>

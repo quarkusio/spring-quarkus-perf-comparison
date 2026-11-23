@@ -43,6 +43,7 @@ management:
   observations:
     annotations:
       enabled: true
+    conventions: open-telemetry
   otlp:
     metrics:
       export:
