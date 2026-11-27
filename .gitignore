@@ -15,7 +15,7 @@ buildNumber.properties
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
-/.idea/
+.idea/
 /.profileconfig.json
 .claude
 **/.DS_Store
