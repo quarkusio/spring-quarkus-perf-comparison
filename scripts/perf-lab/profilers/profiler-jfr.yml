@@ -1,0 +1,14 @@
+name: jfr
+scripts:
+
+  jfr-install:
+    - script: async-profiler-install
+
+  jfr-run:
+    - script:
+        name: async-profiler-run
+        async: true
+      with:
+        extension: jfr
+        delay: ${{delay}}
+        duration: ${{duration}}
