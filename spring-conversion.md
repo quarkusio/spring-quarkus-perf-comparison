@@ -10,11 +10,14 @@ This is a great way of seeing that the Quarkus performance gains are because of 
 1. Save the `pom.xml`, which we don't want to write by hand: `cp quarkus3-spring-compatibility/pom.xml spring-pom.xml` 
 2. Delete the compatibility project (we're about to recreate it from scratch!): `rm -rf quarkus3-spring-compatibility`
 3. Replace the spring pom: `mv spring-pom.xml springboot3/pom.xml`
-4. Delete the tests, which are hard to convert ([for now](https://github.com/orgs/quarkusio/projects/60)): `rm -rf springboot3/src/test`. To keep some coverage, you can copy across `quarkus3/src/test/java/org/acme/e2e` end-to-end tests after deleting the Spring ones.
-5. Start the app, with `(cd springboot3; quarkus dev --clean)`. You'll see a failure and a crash.
-6. What's the problem? The `SpringBootApplication` class doesn't compile. The good news is it's not even needed with Quarkus. Delete it.
-7. The `config/` package (`L2CacheConfiguration`, `GraalVMConfig`, `L2CacheRuntimeHints`) also won't compile. These classes wire up Caffeine as a JCache provider for Hibernate's L2 cache and register GraalVM native-image hints — all Spring-specific plumbing. Quarkus handles Hibernate L2 cache automatically, so delete the whole `config/` directory: `rm -rf springboot3/src/main/java/org/acme/config`
-8. Try `quarkus dev` again, and everything should work. Visiting the endpoint in a browser should work. 
+4. Start the app, with `(cd springboot3; quarkus dev --clean)`. You'll see a failure and a crash.
+5. What's the problem? The `SpringBootApplication` class doesn't compile. The good news is it's not even needed with Quarkus. Delete it.
+6. The `config/` package (`L2CacheConfiguration`, `GraalVMConfig`, `L2CacheRuntimeHints`) also won't compile. These classes wire up Caffeine as a JCache provider for Hibernate's L2 cache and register GraalVM native-image hints — all Spring-specific plumbing. Quarkus handles Hibernate L2 cache automatically, so delete the whole `config/` directory: `rm -rf springboot3/src/main/java/org/acme/config`
+7. Try `quarkus dev` again, and everything should work. Visiting the endpoint in a browser should work. 
+8. The tests still use some Spring Boot test infrastructure. `quarkus-test-spring` lets `@SpringBootTest` classes run as Quarkus tests, but Quarkus doesn't support the rest of it:
+   - Delete `ContainersConfig.java` and `TestApplication.java`. They set up Testcontainers the Spring Boot way, but Quarkus Dev Services starts the database for you.
+   - Remove the `@Import(ContainersConfig.class)` annotation (and its imports) from `FruitRepositoryTests` and `SpringBoot3ApplicationTests`.
+   - Delete `FruitControllerTests.java`, which uses `MockMvc`; there is no Quarkus equivalent yet. The end-to-end tests in `quarkus3/src/test/java/org/acme/e2e` cover the REST layer, and can be copied across.
 
 ### Prod mode and stress testing
 
